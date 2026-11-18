@@ -16,8 +16,8 @@ standards are at `https://dev.docs.esoul.cz`.
 | Framework | Laravel | 13 (exact version in `composer.lock`) |
 | Commands and queries | `esoul-cz/laravel-cqrs` | see [cqrs.md](cqrs.md) |
 | User interface | Inertia 3, Vue 3, TypeScript, Tailwind CSS 4, shadcn-vue, Laravel Wayfinder | see [frontend.md](frontend.md) |
-| Node | Node.js | 24 |
-| Node package manager | pnpm | 10.20.0, pinned in `package.json` `packageManager` |
+| Node | Node.js | 26 |
+| Node package manager | pnpm | 12 (the latest release, pinned in `package.json` `packageManager`) |
 | Frontend build | Vite | 8 |
 | Frontend quality | ESLint (flat config), Prettier (`printWidth` 150, `tabWidth` 4), TypeScript, Vitest | `eslint.config.js`, `.prettierrc`, `tsconfig*.json`, `vitest.config.ts` |
 | PHP quality | Pint (`laravel` preset), Larastan (PHPStan level 10 on `app/`), PHPUnit 13 with Paratest | `pint.json`, `phpstan.neon`, `phpunit.xml` |

@@ -31,7 +31,7 @@ The template `Jenkinsfile` loads the shared libraries `dockerHelpers`, `testing`
 ## Image
 
 - The runtime image is based on `rg.fr-par.scw.cloud/esoul-starters/php-cli-roadrunner:8.5`; the application runs as a RoadRunner process, not behind php-fpm.
-- The `Dockerfile` is multi-stage: Composer dependencies (`composer install --no-dev --optimize-autoloader`), a Node 24 stage (corepack, `pnpm install --frozen-lockfile`, `pnpm run build`), a `development` target and a `production` target (the last stage, so the default build target).
+- The `Dockerfile` is multi-stage: Composer dependencies (`composer install --no-dev --optimize-autoloader`), a Node 26 stage (corepack, `pnpm install --frozen-lockfile`, `pnpm run build`), a `development` target and a `production` target (the last stage, so the default build target).
 - The production image holds only what runs: `bin`, `config`, `include`, `routes`, `src`, `templates`, `.rr.yaml`, `psr-worker.php`, `vendor` (without dev dependencies) and the built `build/`. Tests, frontend sources, `node_modules` and tooling configuration are not in it.
 - Only the compiled `build/assets` directory is public (linked into RoadRunner's static directory); the Vite manifest and the application tree stay private.
 - `.dockerignore` keeps host `node_modules`, `vendor`, `temp`, `logs`, `.env` and private configuration out of the build context.

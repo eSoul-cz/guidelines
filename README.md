@@ -129,7 +129,7 @@ Tests cover the risky logic only: H2 merge, managed block replacement, drift ref
 - The note "local additions go below" lives inside the managed block (visible, regenerated), not outside it.
 - `Bez testu: <reason>` (Czech) is kept in `general/testing.md` as the company's PR-description convention from the seed templates.
 - The Jenkins delivery wording in `framework/lsr/deployment.md` follows the template `Jenkinsfile`, which calls the shared `lsrPipeline`; that pipeline does not exist yet in the shared libraries (`laravelPipeline` only) and `astroCmsPipeline` is likewise planned.
-- Baseline stack statements in the layers (PHP 8.5, Laravel 13, Inertia 3 + Vue 3, pnpm 10.20.0, Node 24, Vite 8, Pint, Larastan level 10, PHPUnit 13, sqlite test DB) are the proposed defaults and may change.
+- Baseline stack statements in the layers (PHP 8.5, Laravel 13, Inertia 3 + Vue 3, pnpm 12, Node 26, Vite 8, Pint, Larastan level 10, PHPUnit 13, sqlite test DB) are the proposed defaults and may change.
 - No PHAR build and no Composer plugin or `post-update-cmd` hook is provided.
 
 ## Open questions

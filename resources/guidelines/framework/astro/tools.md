@@ -11,8 +11,8 @@ Company-wide standards are at https://dev.docs.esoul.cz; this file lists the too
 
 | Area            | Tool                                                          | Version / source                                  |
 | --------------- | ------------------------------------------------------------- | ------------------------------------------------- |
-| Runtime         | Node.js                                                       | 24 (`engines` in `package.json`, `.nvmrc`)        |
-| Package manager | pnpm                                                          | 10.20.0 (`packageManager` in `package.json`)      |
+| Runtime         | Node.js                                                       | 26 (`engines` in `package.json`, `.nvmrc`)        |
+| Package manager | pnpm                                                          | 12 (latest release, `packageManager`)             |
 | Framework       | Astro                                                         | 7 (`package.json` is authoritative)               |
 | Styling         | Tailwind CSS 4 via `@tailwindcss/vite`                        | [frontend.md](frontend.md)                        |
 | Islands         | one UI framework (Vue or React), by decision                  | [architecture.md](architecture.md#islands)        |
@@ -22,7 +22,7 @@ Company-wide standards are at https://dev.docs.esoul.cz; this file lists the too
 | Browser tests   | Playwright                                                    | `playwright.config.ts`, `e2e/`                    |
 | Delivery        | Docker or static rsync, Jenkins, Komodo                       | [deployment.md](deployment.md)                    |
 
-`package.json` and `pnpm-lock.yaml` are authoritative for versions. Use the Astro documentation for the installed major (the Astro Docs MCP when available) and check the installed source before concluding that a feature does not exist. pnpm 11 does not work with older Node versions; stay on the pinned pnpm (`corepack prepare pnpm@10.20.0 --activate`).
+`package.json` and `pnpm-lock.yaml` are authoritative for versions. Use the Astro documentation for the installed major (the Astro Docs MCP when available) and check the installed source before concluding that a feature does not exist. Use the pinned pnpm (`corepack enable`; corepack reads `packageManager`).
 
 `tsc --noEmit` alone does not type-check `.vue` files; that is why a site with Vue islands adds `vue-tsc --noEmit` to `pnpm check`.
 
@@ -31,7 +31,7 @@ Company-wide standards are at https://dev.docs.esoul.cz; this file lists the too
 - Run the Astro CLI through pnpm: **`pnpm astro ...`, never `npx`** (and no `npx` for any other CLI the project installs).
 - Start the dev server with `pnpm dev`; an agent runs it in the background and stops it when done.
 - Zod comes from `astro/zod`. Invalid HTML is a compile error; close every non-void element.
-- Jenkins runs the same scripts as local development, in a Node 24 image ([Jenkins `Checks` stage](#jenkins-checks-stage)).
+- Jenkins runs the same scripts as local development, in a Node 26 image ([Jenkins `Checks` stage](#jenkins-checks-stage)).
 - Do not keep the working copy in a cloud-synchronised folder (OneDrive, iCloud, Dropbox): the synchroniser creates duplicate files such as `index 5.html`, which Astro turns into phantom routes. When the build behaves oddly, `rm -rf dist && pnpm build`.
 
 ## pnpm hardening
@@ -39,7 +39,7 @@ Company-wide standards are at https://dev.docs.esoul.cz; this file lists the too
 `pnpm-workspace.yaml` hardens installs; never remove these settings:
 
 - `minimumReleaseAge: 1440` (minutes): new versions install only once they are a day old, so a hijacked release is usually withdrawn before it reaches the project. Exempt a newer version only when it is needed (a security fix), in `minimumReleaseAgeExclude`, with a comment.
-- **Build scripts run only for allow-listed packages.** While the project is pinned to pnpm 10.20.0, **both** `onlyBuiltDependencies` and `allowBuilds` list them: pnpm 10 before 10.26 reads only `onlyBuiltDependencies`, later versions read `allowBuilds`. With one field missing, the build script of a package such as `esbuild` can be skipped silently. Drop `onlyBuiltDependencies` only together with the pnpm upgrade.
+- **Build scripts run only for allow-listed packages.** `allowBuilds` in `pnpm-workspace.yaml` lists them, together with `minimumReleaseAge: 1440`. A package missing from the list, such as `esbuild`, can have its build script skipped silently.
 - `pnpm audit` runs in CI ([Checks stage](#jenkins-checks-stage)). An advisory that cannot be fixed yet is ignored in `auditConfig.ignoreGhsas` of `pnpm-workspace.yaml`, one entry per advisory, with a comment that states the reason and the date it is reviewed again. An entry without both is not accepted in review.
 
 Adding a dependency needs the maintainer's approval. When a maintained library that works with Astro solves the problem, use it instead of writing our own.

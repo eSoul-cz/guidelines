@@ -18,8 +18,8 @@ Company-wide standards are at https://dev.docs.esoul.cz; this file lists the too
 | Code style           | PHP-CS-Fixer (`.php-cs-fixer.php` is the PHP formatting contract)                                |
 | PHP tests            | PHPUnit 13, paratest                                                                             |
 | Mutation testing     | Infection (local, optional)                                                                      |
-| Node                 | 24                                                                                               |
-| Package manager      | pnpm 10.20.0 (`packageManager` in `package.json`)                                                |
+| Node                 | 26                                                                                               |
+| Package manager      | pnpm 12 (the latest release, `packageManager`)                                              |
 | Frontend build       | Vite 8, Vue 3, Inertia 3, TypeScript, Tailwind CSS 4                                             |
 | Frontend checks      | ESLint (flat config), Prettier (printWidth 150, tabWidth 4), `vue-tsc`, Vitest                   |
 

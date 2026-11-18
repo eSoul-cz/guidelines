@@ -37,6 +37,7 @@ A push to `main`, or the publish button in the backend, starts the Jenkins job: 
 ### Publish flow (archetype `C-headless`)
 
 - The build agent fetches the export from the backend over its public URL, so **`CMS_API_ALLOWED_IPS` of the backend MUST contain the address of the build agent**. A changed agent address makes the export answer 403 and blocks every publish until the list is updated; record the address in `README.md`.
+- The CMS admin lives either on `admin.<domain>` or on the same domain under `/admin`; the project records which in `CONTEXT.md`. The static build fetches the export server-side in both modes, and `CMS_API_ALLOWED_IPS` applies in both.
 - A publish that has no result after **`CMS_PUBLISH_TIMEOUT`** minutes (default 30) is marked failed in the backend, so the publish button cannot stay blocked. The Jenkins callback to the backend is best effort and never fails the build; a late callback is still recorded.
 - Concurrent builds are disabled: two publishes would overwrite each other's release.
 - In CI the build fails when the export is unreachable or invalid; it never falls back to a fixture or to old data ([content.md](content.md#c-headless-edited-in-a-separate-backend)).

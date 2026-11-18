@@ -8,7 +8,7 @@ summary: Inertia server side, Wayfinder routes, resources/js layout, design syst
 ## Stack
 
 Inertia 3 with Vue 3, TypeScript, Laravel Wayfinder, Tailwind CSS 4, shadcn-vue, Vite 8 and
-Vitest, on Node 24 with pnpm 10.20.0. `package.json` and its lockfile are authoritative for
+Vitest, on Node 26 with pnpm 12 (the latest release, pinned in `packageManager`). `package.json` and its lockfile are authoritative for
 versions ([tools.md](tools.md#versions)).
 
 ## Project structure and locality
