@@ -16,7 +16,7 @@ Putting knowledge in the wrong place is how a project ends up with three answers
 
 | Place | Holds | Does not hold |
 |---|---|---|
-| [CONTEXT.md](../../CONTEXT.md) | Project conventions: profile, tracker, tasking, commits, languages, sources of truth | Domain terms, decisions, rules for code |
+| [CONTEXT.md](../../CONTEXT.md) | Project conventions only: profile, tracker, tasking, commits, business time zone, locales, language per place, sources of truth | Domain terms, decisions, rules for code |
 | [GLOSSARY.md](../../GLOSSARY.md) | The domain language: term, definition, `_Avoid_` synonyms | Decisions, formulas, process |
 | `docs/adr/` | A decision with real alternatives and consequences, its status, why the alternatives lost, its implementation gaps | Vocabulary, day-to-day conventions |
 | `docs/project_guidelines/` | The rules the code follows: layers, naming, validation, testing, review | Decisions still open, schedules |
@@ -72,14 +72,15 @@ guess is a defect that review cannot see.
   hostnames. Use reserved example domains (`example.com`) in examples.
 - Use the glossary's terms. Keep non-English labels only where they document the client's
   vocabulary or interface copy, and explain them in English prose.
-- Code, identifiers, code comments, commit messages and developer documentation are English unless
-  the project's `CONTEXT.md` states otherwise.
+- The language of each kind of document is set per place and audience in the project's
+  `CONTEXT.md`. Code, identifiers, code comments, commit messages and developer documentation are
+  English; user guides and client-facing material are written in the project's language.
 
 ## Documentation rides with the change
 
-Documentation changes go in the **same pull request** as the code change that makes them
-necessary. Changing `CONTEXT.md`, `GLOSSARY.md`, an ADR or `AGENTS.md` *incidentally* is
-forbidden; the cases below are part of the task, not incidental:
+Documentation that describes a change rides with that change: it goes in the **same pull
+request** as the code that makes it necessary. Changing `CONTEXT.md`, `GLOSSARY.md`, an ADR or
+`AGENTS.md` *incidentally* is forbidden; the cases below are part of the task, not incidental:
 
 - **A new domain term** - add it to `GLOSSARY.md` and mention it in the pull request.
 - **A target-contract change** - add or change an ADR, or link an existing `accepted` one. A
@@ -88,15 +89,15 @@ forbidden; the cases below are part of the task, not incidental:
 - **Closing a gap** - update the ADR's *Implementation status* and remove or rewrite every other
   sentence that names the gap: the `AGENTS.md` rule, a **Target** block in a guideline, a
   suppression entry.
-- **A changed command, script or check** - update [tools.md](tools.md) and any checks table in
-  the contributing documentation or pull request template.
+- **A changed command, script or check** - update the stack's tools guideline (`tools.md`) and any
+  checks table in the contributing documentation or pull request template.
 - **A new rule or boundary** - state it in `AGENTS.md` when every agent needs it, with the detail
   in the matching guideline.
 - **A changed model, migration, relation or stored key** - update the project's data model
   documentation when it has one.
 
-A guideline change is its own pull request, reviewed by the code owners; do not edit guidelines
-incidentally inside a feature pull request.
+Changing an existing guideline rule is its own pull request; do not edit guideline rules
+incidentally inside a feature pull request ([workflow.md](workflow.md#repository-rules)).
 
 A finding about stale documentation is a normal review finding: it names the stale sentence and
 the source that contradicts it ([code-review.md](code-review.md)).
@@ -104,10 +105,10 @@ the source that contradicts it ([code-review.md](code-review.md)).
 ## ADRs
 
 Use an ADR only for a decision with genuine alternatives. Write it in English from the template;
-an `accepted` ADR keeps *Implementation status as of YYYY-MM-DD* with its files, tests and gaps
-(each gap linked to an issue or marked "No issue"). Never reuse a number and never delete a
-superseded record: change its status and link forward. Status authority is in
-[domain.md](domain.md#adr-status-authority).
+an `accepted` ADR keeps an *Implementation status as of YYYY-MM-DD* line with its files, tests and
+known gaps (each gap linked to an issue or marked "No issue"). Never reuse a number and never
+delete a superseded record: set its status to `superseded by ADR-NNNN` and link forward. Status
+authority is in [domain.md](domain.md#adr-status-authority).
 
 ## Generated documentation
 

@@ -55,7 +55,7 @@ them. The tasking and commit conventions chosen for this project are recorded in
 - **Split commits by intention**: implementation, tests, refactoring, documentation, configuration
   or tooling and dependency changes are separate commits, even when they belong to one feature.
   A commit is a coherent change, not necessarily one file.
-- Run the stack's **formatter before every commit** ([tools.md](tools.md)); it is cheap. Tests and
+- Run the stack's **formatter before every commit** (the stack's tools guideline, `tools.md`); it is cheap. Tests and
   static analysis run once on the code that will be pushed
   ([testing.md](testing.md#testing-workflow)).
 - Use the `gitmoji-commit` skill to split, stage and write commits. It inspects the diff, stages
@@ -111,7 +111,7 @@ them. The tasking and commit conventions chosen for this project are recorded in
 2. Create the branch from an up-to-date default branch.
 3. Implement in small steps with behavioural tests ([testing.md](testing.md)).
 4. Format before each commit; run tests and static analysis once on the code that will be pushed
-   ([tools.md](tools.md)).
+   (the stack's tools guideline, `tools.md`).
 5. Commit by intention with the `gitmoji-commit` skill and push.
 6. Open the pull request from the template and work through CI and review until it is approved.
 7. The author merges. The task is then moved to its finished state and the work is reported.

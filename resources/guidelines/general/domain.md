@@ -13,8 +13,8 @@ older document never silently becomes one.
 
 For domain work, read the sources in this order. A higher source wins over a lower one:
 
-1. [GLOSSARY.md](../../GLOSSARY.md) - the mandatory vocabulary - and
-   [CONTEXT.md](../../CONTEXT.md) - the project conventions.
+1. [GLOSSARY.md](../../GLOSSARY.md) - the mandatory domain vocabulary - and
+   [CONTEXT.md](../../CONTEXT.md) - the project conventions, which hold no domain terms.
 2. `docs/adr/` - the decisions that touch the area, following every supersession link.
 3. [AGENTS.md](../../AGENTS.md) and these guidelines - the engineering rules, including where the
    code does not follow them yet.
@@ -38,7 +38,7 @@ for it. A pull request that changes a status updates both.
 |---|---|
 | `accepted` | The target contract, even when the code differs. Record the difference as a gap; never weaken the ADR to match the code. Change it by a dated note or by supersession. |
 | `proposed` | A candidate. It MUST NOT be implemented as if it were decided; work that depends on it waits for the decision. |
-| `superseded` | History only. Follow the link to its successor. |
+| `superseded` | History only. Its status names the successor (`superseded by ADR-NNNN`); follow that link. |
 | `deprecated` | MUST NOT be introduced in new work. |
 
 The *Implementation status* section of an `accepted` ADR, not its *Decision*, tells you what runs
@@ -59,6 +59,8 @@ today.
 - Text marked as open, working, deferred or awaiting confirmation is not a requirement and MUST
   NOT be guessed. An open point blocks only the dependent slice: split it out and ask through the
   question register.
+- A rule that is not written down is not settled. Decide it, and record it where it belongs,
+  before implementing it; never guess a rule because the data seems to imply it.
 - If an issue, a guideline or a proposed change contradicts an `accepted` ADR, or two accepted
   ADRs contradict each other, or a supersession target is missing, report the conflict instead of
   choosing a source silently.
@@ -102,8 +104,10 @@ ADR and follows it.
   scheduled job whose wall-clock hour matters says in which zone the hour is meant.
 - Dates are formatted by one shared formatter with the user's locale and the business time zone,
   so a server render and the browser agree.
-- A test of date logic fixes the clock and includes an instant just after midnight in the business
-  time zone, which is still the previous day in UTC ([testing.md](testing.md)).
+- A calendar fact (a birth date, an invoice date, an opening hour) is stored as `DATE` or `TIME`
+  and is never converted between time zones.
+- The test that proves date logic is in [testing.md](testing.md#writing-tests): it fixes the clock
+  and includes an instant just after midnight in the business time zone.
 
 ## Languages and locales
 

@@ -24,7 +24,10 @@ the application has roles or accounts, the project records its roles and permiss
   integration keys empty, so development values never leak into tests.
 - A secret is never logged, never exported, never returned unmasked by an API, never included in
   an error report and never sent by e-mail.
-- A secret that was committed or pasted anywhere public is rotated, not just deleted.
+- A secret that was committed or pasted anywhere public is **rotated** (revoked and replaced), not
+  just deleted, and only after that may a suppression entry for the scanner be added.
+- Where a pipeline scans for secrets, a scan that scanned nothing (no commits, an empty mount, an
+  unreadable repository) is a failure, never a pass.
 
 ## Personal and client data
 
@@ -57,15 +60,15 @@ the application has roles or accounts, the project records its roles and permiss
   to a production database or to an external system's production environment (payments, banks,
   accounting, shipping, ERP, e-mail providers). Use test-mode keys, or no key at all so the
   integration stays switched off.
-- Tests are guarded: a network guard blocks connections outside localhost, and integration keys
-  are empty in the test environment.
+- Tests never reach a real external system and hold no production keys; the guards are in
+  [testing.md](testing.md#test-doubles).
 - Agents never run a deployment, never push images and never change CI credentials. Deployments
   run only from Jenkins after a merged pull request.
 - A data correction in a real environment ships as a reviewed migration or as a command that goes
   through the application's normal write path, never as manual SQL. Only what goes through that
   path reaches the change history.
-- Data tasks propose code or data-model changes as an issue; they do not change application code
-  or the data model directly.
+- In an issue labelled `data-migration`, code or data-model changes are proposed as a separate
+  issue; the data task does not change application code or the data model directly.
 
 ## Authorization
 
@@ -84,14 +87,9 @@ the application has roles or accounts, the project records its roles and permiss
 
 ### Authorization tests
 
-- Every protected surface has a test for the role that is **allowed** and for at least one role
-  that is **refused**. A test that only proves access is granted is not sufficient.
-- The refused case asserts an explicit status (`403`, `404` or a redirect), never merely "not
-  200".
-- Ownership and scope (tenant, customer, sales channel, legal entity) are tested with two users:
-  each sees their own records and not the other's.
-- Payload restrictions are asserted on the payload (page props, JSON, export rows), not on
-  rendered markup.
+Every protected surface is tested for the allowed and the refused role, and a test fails when any
+route has no authorization decision (default deny). The rules for these tests are in
+[testing.md](testing.md#authorization-tests).
 
 ## Sessions and accounts
 
@@ -103,3 +101,5 @@ the application has roles or accounts, the project records its roles and permiss
   response does not reveal whether an account exists.
 - No seeder creates an account with credentials outside local development. The first account of an
   environment is created interactively in its container and its password is kept in 1Password.
+- Passwords are hashed with the framework's password hashing and are never logged, exported,
+  put in an error report or sent by e-mail. A password reset uses a signed link that expires.

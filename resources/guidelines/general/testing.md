@@ -7,8 +7,8 @@ summary: Which tests the project keeps, how error messages and authorization are
 # Project guidelines - Testing
 
 This file says which tests the project keeps and how they are judged. The runners, file names and
-commands of the stack are in [tools.md](tools.md). Good tests are the priority; CI time is the
-constraint, so the suite stays small, fast and useful.
+commands of the stack are in the stack's tools guideline (`tools.md`). Good tests are the
+priority; CI time is the constraint, so the suite stays small, fast and useful.
 
 ## What belongs in the suite
 
@@ -117,28 +117,37 @@ with neither. Documentation-only and dependency-only pull requests need no line.
   about is set explicitly in that test.
 - Test data is invented. Real client names, addresses, amounts or credentials MUST NOT appear in
   tests or fixtures ([security-and-data.md](security-and-data.md)).
-- A test of date or time logic fixes the clock and includes an instant just after local midnight,
-  which is still the previous day in UTC ([domain.md](domain.md#time-and-dates)).
+- A test of date or time logic fixes the clock and includes an instant just after midnight in the
+  business time zone, which is still the previous day in UTC. The date rules are in
+  [domain.md](domain.md#time-and-dates).
 - A test of rendered HTML (templates, e-mail) asserts the encoded markup (`&lt;script&gt;`) and
   rejects raw executable tags.
 
 ## Authorization tests
 
-Every protected surface is tested for the allowed **and** the refused role; the rules are in
-[security-and-data.md](security-and-data.md#authorization-tests). In tests:
+The rules are in [security-and-data.md](security-and-data.md#authorization). In tests:
 
+- every protected surface has a test for the role that is **allowed** and for at least one role
+  that is **refused**; a test that only proves access is granted is not sufficient;
 - the refused case asserts an explicit status (`403`, `404` or a redirect), never "not 200";
 - a value a role must not see is asserted **absent from the payload** (page props, JSON, export
   rows), not hidden in rendered markup;
-- ownership and scope are tested with two users, each seeing only their own records.
+- ownership and scope (tenant, customer, sales channel, legal entity) are tested with two users,
+  each seeing only their own records;
+- default deny is enforced by one test that fails on any route without an authorization decision,
+  so a new route cannot ship unguarded.
 
 ## Test doubles
 
 Doubles (mocks, stubs, fakes) isolate the code under test from external systems, and from the
 database only when the behaviour under test does not need it.
 
-- Behaviour-specific fakes stay in the individual test. Suite-wide safety guards, such as refusing
-  requests nobody faked, MAY live in the shared base test class.
+- Behaviour-specific fakes stay in the individual test. Suite-wide safety guards MAY live in the
+  shared base test class.
+- **Network guard.** The suite is guarded so that a connection to anything but localhost fails the
+  test, and integration keys are empty in the test environment. A test that needs an external
+  system fakes it; a request nobody faked is a bug, never a silent real call. The stack's testing
+  guideline names the mechanism.
 - Do not install blanket exception or sleep fakes only to make the suite faster.
 - Do not mock the collaborator whose result is the behaviour under test (a calculator in a test of
   its caller). A small real collaborator beats a mock that echoes the implementation.
@@ -204,9 +213,9 @@ issue as above.
 
 ## Running tests
 
-- The whole suite runs with the stack's one command ([tools.md](tools.md)), once, on the code that
-  will be pushed. While editing, run narrowly: one file or one filter, then the test directories
-  of the touched area.
+- The whole suite runs with the stack's one command (named in the stack's tools guideline,
+  `tools.md`), once, on the code that will be pushed. While editing, run narrowly: one file or one
+  filter, then the test directories of the touched area.
 - Run tests with the debugger and coverage driver off unless you need them; they slow a run down
   several times.
 - Coverage shows which lines the tests execute, not whether they check anything.
@@ -217,8 +226,8 @@ issue as above.
    narrowly.
 2. Delete temporary tests and anything else that does not belong in the suite. Do this first, so
    the next steps measure the tests that will be merged.
-3. Run the whole suite and the stack's static analysis ([tools.md](tools.md)) once, on the code
-   that will be pushed; formatters run before every commit instead
+3. Run the whole suite and the stack's static analysis (the stack's tools guideline, `tools.md`)
+   once, on the code that will be pushed; formatters run before every commit instead
    ([workflow.md](workflow.md#commits)). Skip what the change cannot affect: a
    documentation-only change runs no tests.
 4. Mutation testing on the changed lines is encouraged before pushing, where the stack provides
