@@ -1,78 +1,88 @@
 ---
 title: Architecture
 order: 100
-summary: LSR application structure - RoadRunner worker, Nette DI, routing, controllers, request DTOs, Latte shell and technical-layer layout of `src/`.
+summary: LSR application structure - RoadRunner worker, Nette DI, routing, controllers, request DTOs, migrations, caching, Latte shell, worker state and background jobs.
 ---
 # Project guidelines - Architecture
 
-The application is a PHP 8.5 LSR Framework application served by RoadRunner workers. This file describes the structure that new code MUST fit into; command and query rules are in [cqrs.md](cqrs.md), the frontend layout in [frontend.md](frontend.md).
+The application is a PHP 8.5 LSR Framework application served by RoadRunner workers. This file describes the structure that new code MUST fit into; the frontend layout is in [frontend.md](frontend.md). Optional LSR modules (for example `lsr/cqrs`) add their own rules through their own layers.
 
 ## Runtime and entrypoints
 
 - A pool of long-lived PSR-7 workers serves HTTP (`psr-worker.php`, started by `rr serve -c .rr.yaml`); background jobs and the scheduler run under the same RoadRunner server as separate pools/services. The console entrypoint is `bin/console` (Symfony Console).
 - `include/load.php` bootstraps the application once per process: constants, configuration, the DI container and the database connection. `psr-worker.php` and `bin/console` MUST stay thin; application logic does not live in entrypoints.
 - Each request is handled as "one request, one response", but inside a worker process that is **reused** across requests. Read [Long-running worker state](#long-running-worker-state) before adding caches, statics or singletons.
-- Server-side rendering of the Inertia frontend (a separate Node process) is opt-in and described in [deployment.md](deployment.md); the architecture below applies with or without it.
+- Server-side rendering of the Inertia frontend is disabled by default and is described in [frontend.md](frontend.md#inertia-on-the-server); the architecture below applies with or without it.
 
 ## Directory layout
 
 Application code is grouped by **technical layer** under `src/` (PSR-4 namespace `App\` maps to `src/`). Do not introduce a domain or feature top-level structure unless a decision records it.
 
-| Path                                         | Holds                                                                                          |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `src/Http/Controllers`                       | HTTP controllers                                                                               |
-| `src/Http/Requests`                          | request DTOs (validated input)                                                                 |
-| `src/Http/Templates`                         | page and template parameter DTOs (Inertia props, Latte parameters)                             |
-| `src/Http/Middleware`                        | route middleware                                                                               |
-| `src/CQRS`                                   | commands, handlers, queries and their DTOs ([cqrs.md](cqrs.md))                                |
-| `src/Models`                                 | ORM models                                                                                     |
-| `src/Services`                               | services composing queries, models and commands; pure calculations                             |
-| `src/Tasks`                                  | background job tasks                                                                           |
-| `src/Console`                                | console commands                                                                               |
-| `src/Core`                                   | application kernel (`App`, `Loader`, session, cookies)                                         |
-| `src/Install`                                | database installation and migration runner                                                     |
-| `config/`                                    | `services.php`, `di/*.neon`, `migrations/*.neon`                                               |
-| `routes/`                                    | route files, loaded in file-name order (`00-…`, `10-…`)                                        |
-| `templates/`                                 | Latte templates (the layout and the Inertia page shell)                                        |
-| `assets/`                                    | frontend sources ([frontend.md](frontend.md))                                                  |
-| `tests/`                                     | PHPUnit tests mirroring the layers ([testing.md](testing.md))                                  |
+| Path                    | Holds                                                                       |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `src/Http/Controllers`  | HTTP controllers                                                            |
+| `src/Http/Middleware`   | route middleware                                                            |
+| `src/Http/Templates`    | page and template parameter DTOs (Inertia props, Latte parameters)          |
+| `src/Console/Commands`  | console commands                                                            |
+| `src/Core`              | application kernel (`App`, `Loader`, `Controller` base, key-value `Info`)   |
+| `src/Install`           | database installation and migration runner                                  |
+| `config/`               | `services.php`, `di/*.neon`, `migrations/migrations.neon`                   |
+| `routes/`               | route files, loaded in file-name order (`01-middleware.php`, `10-public.php`) |
+| `templates/`            | Latte templates (the layout and the Inertia page shell)                     |
+| `assets/`               | frontend sources ([frontend.md](frontend.md))                               |
+| `tests/`                | PHPUnit tests ([testing.md](testing.md))                                    |
 
+- A layer the template does not ship is created next to these when it is first needed, named after its technical role and mirrored by the namespace: request DTOs in `src/Http/Requests`, ORM models in `src/Models`, services in `src/Services`, job tasks in `src/Tasks`. A new kind of layer needs a decision.
 - Every PHP file declares `strict_types` and exactly one class, interface, trait or enum (PSR-4).
-- Files stay in the existing technical layers (`Controllers`, `Requests`, `Models`, `CQRS`, `Tasks`, ...). A new layer needs a decision.
-- Public service and CQRS boundaries MUST return typed DTOs, ORM models or collections of them; they MUST NOT expose `Dibi\Row` or unstructured associative arrays.
+- Public service boundaries MUST return typed DTOs, ORM models or collections of them; they MUST NOT expose `Dibi\Row` or unstructured associative arrays.
 - Closed sets (status, mode, source, reason, type) are PHP backed enums, not strings or class constants.
 
 ## Dependency injection
 
 - Services are wired with **Nette DI** NEON files. `config/services.php` returns the list of root files; shared wiring lives in `config/di/services-common.neon`, per-environment differences in thin environment files, and local overrides in an uncommitted `services.local.neon`.
 - Keep NEON modular: root files are indexes that `include` focused files (`config/di/extensions/*.neon` for framework extensions, `config/di/configs/*.neon` for application concerns). Do not grow one application-wide file.
-- Broad technical layers are **auto-discovered** (`search:` over `src/Http/Controllers`, console commands, CQRS handlers and queries). Specific or named services are defined explicitly.
-- Constructor injection only. Controllers and services MUST NOT call `App::getService()` / `App::getServiceByType()`; the container is resolved at the bootstrap and in the route handler.
+- Register an `lsr/*` extension only for an installed package, and each extension name once across the whole include graph. Read the installed extension's config schema before adding keys; LSR packages are versioned independently.
+- Broad technical layers are discovered with the Nette `search:` extension (controllers and console commands in the template); register such a directory once. Specific or named services are defined explicitly.
+- Constructor injection is the default. `App::getService()` / `App::getServiceByType()` are allowed only at bootstrap seams (the worker entrypoint, the console entrypoint, the loader); controllers, services and handlers MUST NOT call them. When a lookup by name or type is unavoidable, assert the returned type before use.
 - After changing DI configuration, clear the generated container (`php bin/console container:clean`) before runtime checks.
-- Secrets and machine-specific values come from the environment or from uncommitted private configuration; only `.env.example` (key names, placeholder values) is committed.
 
 ## Routing and controllers
 
-- Routes are defined in `routes/*.php` through the router group API, every route has a `->name(...)`, and shared behaviour is attached through **named middleware groups** (for example `web`, `csrf`, `guest`, `authenticated`, `admin`) declared in one middleware route file loaded first.
-- Controllers extend `Lsr\Core\Controllers\Controller`; Inertia controllers add `Lsr\Inertia\Http\WithInertia`. A controller action is thin: it maps the request, calls a command, query or service, and builds the response.
+- Routes are defined in `routes/*.php`. The files are loaded in file-name order, so the prefix is the order: `01-middleware.php` declares the middleware groups and loads first, `10-public.php` holds the public routes, later files take later numbers. Keep each file focused.
+- Every route has a `->name(...)`; names are globally unique and redirects and links use them.
+- Shared behaviour is attached through **named middleware groups** declared in `routes/01-middleware.php`: `web` (the Inertia middleware, for page routes) and `csrf` (the browser CSRF check for unsafe methods). A new group is added there with a decision.
+- Controllers extend `Lsr\Core\Controllers\Controller` (the template's `App\Core\Controller` base); Inertia controllers add `Lsr\Inertia\Http\WithInertia`. A controller action is thin: it maps the request, calls a service or ORM model, and builds the response.
 - Action arguments are resolved by the route handler: route parameters for scalars and models, the container for services, and `#[MapRequest]` for request DTOs. Controllers MUST NOT read `$_GET`/`$_POST` directly.
-- Business rules and persistence do not live in controllers: writes go through CQRS commands ([cqrs.md](cqrs.md)), reads through queries or ORM models.
-- Authorization is enforced on the server by middleware or inside the command; the frontend only reflects it.
+- Business rules and persistence do not live in controllers.
+- Authorization is enforced on the server by middleware or in the code the controller calls; the frontend only reflects it.
 - When adding a route, check the whole chain together: route file, controller signature, request DTO, response DTO and the frontend page name.
 
 ## Request DTOs and template parameters
 
-- Every endpoint that accepts input maps it to a **request DTO** in `src/Http/Requests` with `Lsr\ObjectValidation\Attributes`. Validation errors are returned or flashed per field; raw request arrays do not travel past the controller.
+- Every endpoint that accepts input maps it to a **request DTO** (`src/Http/Requests`) with `Lsr\ObjectValidation\Attributes`. Validation errors are returned or flashed per field; raw request arrays do not travel past the controller.
 - Page and template data are **typed parameter DTOs** in `src/Http/Templates` (extending `Lsr\Core\Controllers\TemplateParameters`), not plain arrays. DTOs carry only what the page needs and never expose sensitive attributes.
 
 ## Persistence
 
 - Database access goes through `Lsr\Db\DB` (the Dibi-based fluent query builder) and `lsr/orm` models. Models extend the project's base model.
-- App-owned writes use ORM `save()`. A raw DB write MUST clear the affected cache tags explicitly, unless it is install/migration code.
+- App-owned writes use ORM `save()`. A raw DB write MUST clear the affected cache tags explicitly ([Caching](#caching)), unless it is install/migration code.
 - Reads through the DB facade use fluent queries with explicit cache tags and `fetchDto()` / `fetchAllDto()` for projections; simple one-table reads use `Model::query()`.
-- SQL table and column names are `snake_case`, ORM properties `camelCase`. Tables use plural `snake_case` names with an explicit `TABLE` constant and primary keys `id_{model}` declared with `#[PrimaryKey(...)]`.
-- Models declare every mapped field and every relation as an attribute.
-- Schema lives in `config/migrations/*.neon` and is applied by the installer (`php bin/console install`). A change to a model or query that needs new columns changes the migration NEON in the same pull request. `install --fresh` is only for disposable databases.
+- SQL table and column names are `snake_case`, ORM properties `camelCase`. Tables use plural `snake_case` names with an explicit `TABLE` constant and primary keys `id_{model}` declared with `#[PrimaryKey(...)]`. Models declare every mapped field and every relation as an attribute.
+
+### Migrations
+
+- Schema lives in NEON migration files applied by the installer (`php bin/console app:install`). The root index is `config/migrations.neon` or `config/migrations/migrations.neon` (the template uses the latter); it stays a small index that `includes:` focused files per domain. Include paths follow the process working directory (the project root); keep the include graph a tree, because a file loaded twice is rejected as a cyclic include.
+- A change to a model that needs new columns changes the migration in the same pull request. The table definition stays equal to a fresh install, and the change is added as a new `modifications` version.
+- A released `modifications` version key MUST NOT be rewritten; add a new version instead.
+- `php bin/console app:install --fresh` drops all tables. Run it only on a disposable database, never on a shared, staging or production one.
+- After a migration change, install into a disposable database and inspect the resulting columns, indexes and foreign keys; a successful command does not prove the schema is right.
+
+## Caching
+
+- Cache storage is file-based (`lsr/caching`, `temp/`) by default. Redis is a project choice: configure it explicitly as a storage service, never assume it.
+- Redis storage and journal share an application-specific namespace prefix, so applications sharing one Redis instance cannot touch each other's keys.
+- Code MUST NOT clear the whole cache or the whole Redis database (no `FLUSHALL`, no global clean to make a test or a bug go away). Fix the key or the invalidation instead; maintenance cleans by tag (`php bin/console cache:clean --tag=<tag>`).
+- Cached values are tagged with every table or model they depend on, and a write invalidates those tags (ORM `save()` does; a raw DB write does it explicitly). A key includes the user, tenant, locale or permission scope the value varies by.
 
 ## Templates and frontend shell
 
@@ -87,10 +97,12 @@ RoadRunner workers do **not** reset memoized or static state between requests or
 - Request- or job-dependent memoization MUST live on request- or job-local objects.
 - Persistent objects (services, singletons), static properties and global calls MUST NOT hold per-request data (the current user, locale, request, tenant); if they must, the lifecycle clearing is explicit and tested.
 - Workers are recycled by `max_jobs` and `max_worker_memory` in `.rr.yaml`; correctness MUST NOT depend on that recycling.
-- Anything that must survive a worker (sessions, cache, queues) goes to the shared backends (Redis, the database, the RoadRunner jobs pipeline), never to local memory or local files.
+- State that must outlive or be shared between workers (sessions, cache) lives in the configured storage (file storage under `temp/` or the database by default, Redis when the project chose it), never in worker memory.
 
 ## Background work
 
-- Asynchronous work is a command dispatched through the async command bus and executed by the RoadRunner jobs pool; scheduled work runs in the scheduler service (`scheduler:run`).
-- A task MUST be idempotent or guard against double execution, because jobs can be retried.
-- Tasks receive serializable payloads (command DTOs), not services or connections.
+- Jobs run in the RoadRunner jobs pool; scheduled work runs in the scheduler service (`scheduler:run`). A task is a dispatcher class implementing `Lsr\Roadrunner\Tasks\TaskDispatcherInterface`, queued through `TaskProducer` with a payload implementing `TaskPayloadInterface`.
+- `getDiName()` of a dispatcher MUST equal the name of its DI service definition, because the jobs worker resolves the task by that name.
+- A payload carries identifiers, enums, timestamps and small DTO data only: never closures, streams, PDO/Dibi connections, DI services or loaded ORM graphs. The task loads fresh state from the identifiers.
+- A task MUST be idempotent or guard against double execution, because jobs can be retried. Guard the payload type at the start of `process()`.
+- A successful push proves the job was queued, not that it was processed. A task acknowledges only after its durable state change succeeded; a thrown failure is nacked.

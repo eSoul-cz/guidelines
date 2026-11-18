@@ -11,6 +11,7 @@ final class StackDetector
     private const array COMPOSER = [
         'laravel/framework' => 'framework/laravel',
         'lsr/core' => 'framework/lsr',
+        'lsr/cqrs' => 'package/lsr-cqrs',
         'filament/filament' => 'package/filament',
         'lunarphp/lunar' => 'package/lunar',
         'infection/infection' => 'package/mutation-testing',

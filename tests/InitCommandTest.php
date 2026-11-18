@@ -38,4 +38,21 @@ final class InitCommandTest extends TestCase
             json_decode($this->read('esoul-guidelines.json'), true),
         );
     }
+
+    public function testDetectsTheLsrCqrsLayerAfterTheFramework(): void
+    {
+        $this->seedLayers();
+        $this->layer('framework/lsr', 'testing.md', "# Project guidelines - Testing\n");
+        $this->layer('package/lsr-cqrs', 'cqrs.md', "# Project guidelines - CQRS\n");
+        $this->layer('package/mutation-testing', 'testing.md', "# Project guidelines - Testing\n");
+        file_put_contents($this->project . '/composer.json', '{"require":{"lsr/cqrs":"^0.1","lsr/core":"^0.7"},"require-dev":{"infection/infection":"^0.35"}}');
+
+        $tester = $this->run_('init');
+
+        self::assertSame(0, $tester->getStatusCode());
+        self::assertSame(
+            ['layers' => ['general', 'framework/lsr', 'package/lsr-cqrs', 'package/mutation-testing']],
+            json_decode($this->read('esoul-guidelines.json'), true),
+        );
+    }
 }
