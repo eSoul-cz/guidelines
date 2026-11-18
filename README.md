@@ -1,4 +1,4 @@
-# esoul/guidelines
+# esoul-cz/guidelines
 
 Layered, mergeable engineering guidelines for eSoul projects (Laravel, LSR, Astro), installed as plain Markdown into the project and protected against silent overwrites.
 
@@ -13,14 +13,14 @@ What it does:
 ## Install
 
 ```bash
-composer require --dev esoul/guidelines     # from the eSoul Satis repository (packages.esoul.cz)
+composer require --dev esoul-cz/guidelines  # from Packagist
 vendor/bin/esoul-guidelines init            # detects the stack, writes esoul-guidelines.json
 vendor/bin/esoul-guidelines sync            # writes docs/project_guidelines/*, AGENTS.md block, lock
 ```
 
-Commit `esoul-guidelines.json`, `esoul-guidelines.lock`, `docs/project_guidelines/` and `AGENTS.md`. Update later with `composer update esoul/guidelines && vendor/bin/esoul-guidelines sync`.
+Commit `esoul-guidelines.json`, `esoul-guidelines.lock`, `docs/project_guidelines/` and `AGENTS.md`. Update later with `composer update esoul-cz/guidelines && vendor/bin/esoul-guidelines sync`.
 
-The Satis repository must be configured in the consumer's `composer.json` (`"repositories": [{"type": "composer", "url": "https://packages.esoul.cz"}]`) - see the esoul-packages docs.
+The package is published on [Packagist](https://packagist.org/packages/esoul-cz/guidelines); the eSoul Satis repository (`https://packages.esoul.cz`) mirrors it as a fallback.
 
 ## Commands
 
@@ -125,7 +125,7 @@ Tests cover the risky logic only: H2 merge, managed block replacement, drift ref
 - Detection is limited to the packages listed under Commands; monorepos (backend in a sub-folder) are not scanned.
 - Optional LSR modules get their own `package/lsr-<module>` layer, detected from the module's Composer package (`lsr/cqrs` now; `lsr/auth`, `lsr/otel` and others later). The `framework/lsr` layer never describes an optional module.
 - `list` replaces Symfony's built-in `list` (command overview); use `--help` for commands.
-- The package version in the lock is the one reported by Composer for `esoul/guidelines`; a development checkout reports `dev`.
+- The package version in the lock is the one reported by Composer for `esoul-cz/guidelines`; a development checkout reports `dev`.
 - The note "local additions go below" lives inside the managed block (visible, regenerated), not outside it.
 - `Bez testu: <reason>` (Czech) is kept in `general/testing.md` as the company's PR-description convention from the seed templates.
 - The Jenkins delivery wording in `framework/lsr/deployment.md` follows the template `Jenkinsfile`, which calls the shared `lsrPipeline`; that pipeline does not exist yet in the shared libraries (`laravelPipeline` only) and `astroCmsPipeline` is likewise planned.

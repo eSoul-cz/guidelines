@@ -1,5 +1,5 @@
 {
-    "name": "esoul/guidelines",
+    "name": "esoul-cz/guidelines",
     "description": "Layered, mergeable project guidelines for eSoul projects (Laravel, LSR, Astro) with drift detection.",
     "type": "library",
     "license": "MIT",

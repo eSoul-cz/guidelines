@@ -9,7 +9,7 @@ use Composer\InstalledVersions;
 /** Resolves the installed package version from Composer metadata; falls back to `dev`. */
 final class PackageVersion
 {
-    public const string PACKAGE = 'esoul/guidelines';
+    public const string PACKAGE = 'esoul-cz/guidelines';
 
     public static function detect(): string
     {
