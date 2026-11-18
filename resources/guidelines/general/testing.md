@@ -206,7 +206,7 @@ issue as above.
 
 - The whole suite runs with the stack's one command ([tools.md](tools.md)), once, on the code that
   will be pushed. While editing, run narrowly: one file or one filter, then the test directories
-  of the touched area before a commit.
+  of the touched area.
 - Run tests with the debugger and coverage driver off unless you need them; they slow a run down
   several times.
 - Coverage shows which lines the tests execute, not whether they check anything.
@@ -217,8 +217,10 @@ issue as above.
    narrowly.
 2. Delete temporary tests and anything else that does not belong in the suite. Do this first, so
    the next steps measure the tests that will be merged.
-3. Run the whole suite and the stack's checks ([tools.md](tools.md)) once, on the code that will
-   be pushed. Skip what the change cannot affect: a documentation-only change runs no tests.
+3. Run the whole suite and the stack's static analysis ([tools.md](tools.md)) once, on the code
+   that will be pushed; formatters run before every commit instead
+   ([workflow.md](workflow.md#commits)). Skip what the change cannot affect: a
+   documentation-only change runs no tests.
 4. Mutation testing on the changed lines is encouraged before pushing, where the stack provides
    it; work through the escaped mutants.
 5. List the checks you ran, with their results, in the pull request, or the `Bez testu:` line.

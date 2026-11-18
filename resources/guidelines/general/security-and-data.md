@@ -14,6 +14,8 @@ the application has roles or accounts, the project records its roles and permiss
 
 - Credentials, tokens, API keys, private keys and production environment files MUST NOT be
   committed. `.env` is not a template; `.env.example` holds placeholders and local defaults only.
+  Database exports and generated documents holding client data are not committed either; the
+  repository-wide list is in [workflow.md](workflow.md#repository-rules).
 - Production and staging secrets live in Komodo and 1Password. Jenkins reads secrets only through
   `withCredentials`; a pipeline change MUST NOT print a credential or pass it on a logged command
   line.

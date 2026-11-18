@@ -12,18 +12,18 @@ standards are at https://dev.docs.esoul.cz.
 
 ## Who reviews
 
-- Every pull request is reviewed twice: by **CodeRabbit**, which runs automatically with the
-  repository's `.coderabbit.yaml` (inheriting the organisation's policy), and by at least **one
-  human** with write access. A CodeRabbit approval never replaces the human review.
+- Every pull request is reviewed twice: by **CodeRabbit** and by at least **one human** with write
+  access. CodeRabbit review is configured at the platform level; the repository's
+  `.coderabbit.yaml` only excludes generated paths. A CodeRabbit approval never replaces the human
+  review.
 - The author finishes the pull request with the `final-pr-review` skill: green `Jenkins` check,
   every CodeRabbit finding answered, local review run where the skill asks for it.
 - When CodeRabbit hits its rate limit or runs out of credits, nobody waits for it: the
   `pre-pr-review` skill posts a fallback review of the same revision into the pull request, and
   its findings are answered the same way. Once they are resolved, its approval stands in for
   CodeRabbit's. It does not replace the human review.
-- A pull request merges with a **squash merge** after one human approval and a green `Jenkins`
-  check. A human merges from a personal account. Agents never merge, never approve, and never use
-  a ruleset bypass.
+- The author merges under the rules in [workflow.md](workflow.md#pull-requests): one approval and
+  a green `Jenkins` check. Agents never merge, never approve, and never use a ruleset bypass.
 - When review finds defects, the task moves back to `In progress`; review time is logged as a
   work report.
 
@@ -36,9 +36,9 @@ standards are at https://dev.docs.esoul.cz.
   or another maintainability risk.
 - **Low** - local cleanup that can be included with related remediation.
 
-`Blocker` and `High` prevent the merge. `Medium` and `Low` MAY be merged when the author fixes
-them in the same pull request or the project lead accepts a follow-up; a follow-up is a new issue
-and task like any other work.
+`Blocker` and `High` prevent the merge. `Medium` and `Low` are either fixed in the same pull
+request or marked `Deferred`: the pull request merges with a linked follow-up issue, which is a
+new issue and task like any other work.
 
 ### Default Blockers
 
@@ -79,14 +79,16 @@ Read the issue and its acceptance criteria before reading the diff. Then check, 
 1. **The issue.** The change stays within its scope and meets every acceptance criterion. A
    feature is not mixed with unrelated refactoring.
 2. **`accepted` ADRs** that touch the area. The change implements them or records the difference
-   as a gap; a change of the target contract comes with an ADR. A pull request that closes a gap
+   as a gap; a change of the target contract comes with an ADR in the same pull request
+   ([workflow.md](workflow.md#pull-requests)). A pull request that closes a gap
    updates the ADR's *Implementation status*.
 3. **`AGENTS.md` and these guidelines**, in particular the architecture and boundary rules of the
    stack.
 4. **Tests.** New or changed behaviour has a useful test, a bug fix has a regression test that
    fails without the fix, no test asserts the text of an error message, and the checks the
-   author ran are listed in the pull request ([testing.md](testing.md)). Escaped mutants on the
-   lines the author checked with mutation testing are killed or justified in the pull request.
+   author ran are listed in the pull request ([testing.md](testing.md)). When mutation testing
+   was run, escaped mutants on changed lines are killed or listed as accepted in the pull
+   request.
 5. **Vocabulary.** Names follow the glossary; a new term is added in the same pull request
    ([domain.md](domain.md)).
 6. **Documentation.** Text that the change makes stale is updated in the same pull request
@@ -98,12 +100,12 @@ A green `Jenkins` check proves that the automated checks pass. It does not prove
 is solved, that the design is matched or that acceptance testing passes. Those stay the
 reviewer's job.
 
-A pull request that changes more than roughly 30 files SHOULD be split. If that is impossible,
-its description says how to review it in parts.
+A pull request that changes more than roughly 30 files is split
+([workflow.md](workflow.md#pull-requests)).
 
 ## Findings
 
-A finding describes **one problem with one remediation boundary**, not one affected file. Before
+A finding names **one problem with one fix**, not one affected file. Before
 raising a new finding, compare it with the existing ones. If it has the same root cause, intended
 behaviour or remediation, add the evidence to the existing finding instead of opening a second
 one from a different file or symptom.
@@ -116,15 +118,17 @@ Write a finding so that the author can act on it without asking:
 - **Proposed resolution** - the smallest coherent fix;
 - **Verification** - the test or check that proves the fix.
 
-Facts the repository answers are investigated, not asked about. Discuss one decision question at
-a time.
+Facts the repository answers are investigated, not asked about. Decisions are put to the owner
+**one question at a time**: ask, wait for the answer, then ask the next.
 
 ### Findings stay in the pull request
 
 Each finding is one review thread. Findings MUST NOT be recorded in a repository file: no review
 ledger such as `docs/review/PR_<number>.md`, not even for a large pull request or a review that
-takes several rounds. Decisions that should outlive the review (an accepted risk, deferred work)
-go into the pull request description, which survives the squash merge.
+takes several rounds. A pull request too large to review in one pass is split
+([workflow.md](workflow.md#pull-requests)), not tracked in a ledger. Decisions that should
+outlive the review (an accepted risk, deferred work) go into the pull request description, which
+survives the squash merge.
 
 ### Finding states
 
@@ -138,7 +142,7 @@ When findings cannot be closed in one round, track their state in the thread:
 | `In progress` | The remediation is being implemented |
 | `Resolved` | Fix merged and verified |
 | `Accepted` | Behaviour or complexity explicitly accepted without a code change |
-| `Deferred` | Moved out of scope with an agreed follow-up issue and task |
+| `Deferred` | Moved out of scope: the pull request merges with a linked follow-up issue (and task) that owns the work |
 
 A finding is closed only as `Resolved`, `Accepted` or `Deferred`, each with its evidence linked.
 
