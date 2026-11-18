@@ -1,7 +1,7 @@
 ---
 title: Tools
 order: 130
-summary: Versions, pnpm hardening, local checks, the Jenkins Checks stage, Playwright and Lighthouse budgets.
+summary: Versions, pnpm hardening, read-only checks, the Jenkins Checks stage and Playwright for an Astro project.
 ---
 # Project guidelines - Tools
 
@@ -9,20 +9,22 @@ Company-wide standards are at https://dev.docs.esoul.cz; this file lists the too
 
 ## Versions
 
-| Area            | Tool                                                    | Version / source                                  |
-| --------------- | ------------------------------------------------------- | ------------------------------------------------- |
-| Runtime         | Node.js                                                 | 24 (`engines` in `package.json`, `.nvmrc`)        |
-| Package manager | pnpm                                                    | 10.20.0 (`packageManager` in `package.json`)      |
-| Framework       | Astro                                                   | 7 (`package.json` is authoritative)               |
-| Styling         | Tailwind CSS 4 via `@tailwindcss/vite`                  | [frontend.md](frontend.md)                        |
-| Islands         | one UI framework (Vue or React), by decision            | [architecture.md](architecture.md#islands)        |
-| Type checks     | `astro check`, `tsc --noEmit`                           | `tsconfig.json`                                   |
-| Lint and format | ESLint (flat config), Prettier with the Astro plugin    | `eslint.config.mjs`, `prettier.config.mjs`        |
-| Browser tests   | Playwright                                              | `playwright.config.ts`, `e2e/`                    |
-| Audits          | Lighthouse, axe                                         | `scripts/` or `e2e/`                              |
-| Delivery        | Docker or static rsync, Jenkins, Komodo                 | [deployment.md](deployment.md)                    |
+| Area            | Tool                                                          | Version / source                                  |
+| --------------- | ------------------------------------------------------------- | ------------------------------------------------- |
+| Runtime         | Node.js                                                       | 24 (`engines` in `package.json`, `.nvmrc`)        |
+| Package manager | pnpm                                                          | 10.20.0 (`packageManager` in `package.json`)      |
+| Framework       | Astro                                                         | 7 (`package.json` is authoritative)               |
+| Styling         | Tailwind CSS 4 via `@tailwindcss/vite`                        | [frontend.md](frontend.md)                        |
+| Islands         | one UI framework (Vue or React), by decision                  | [architecture.md](architecture.md#islands)        |
+| Type checks     | `astro check`; plus `vue-tsc --noEmit` when the site has Vue islands | `tsconfig.json` (and the Vue tsconfig)     |
+| Lint            | ESLint flat config (Astro and TypeScript rules, Vue rules only with Vue islands; `@typescript-eslint/no-explicit-any` on) | `eslint.config.js` |
+| Format          | Prettier with the Astro plugin                                | `prettier.config.mjs`                             |
+| Browser tests   | Playwright                                                    | `playwright.config.ts`, `e2e/`                    |
+| Delivery        | Docker or static rsync, Jenkins, Komodo                       | [deployment.md](deployment.md)                    |
 
 `package.json` and `pnpm-lock.yaml` are authoritative for versions. Use the Astro documentation for the installed major (the Astro Docs MCP when available) and check the installed source before concluding that a feature does not exist. pnpm 11 does not work with older Node versions; stay on the pinned pnpm (`corepack prepare pnpm@10.20.0 --activate`).
+
+`tsc --noEmit` alone does not type-check `.vue` files; that is why a site with Vue islands adds `vue-tsc --noEmit` to `pnpm check`.
 
 ## Where tools run
 
@@ -30,26 +32,27 @@ Company-wide standards are at https://dev.docs.esoul.cz; this file lists the too
 - Start the dev server with `pnpm dev`; an agent runs it in the background and stops it when done.
 - Zod comes from `astro/zod`. Invalid HTML is a compile error; close every non-void element.
 - Jenkins runs the same scripts as local development, in a Node 24 image ([Jenkins `Checks` stage](#jenkins-checks-stage)).
-- Do not keep the working copy in a cloud-synchronised folder; duplicate folders have produced phantom routes. When the build behaves oddly, `rm -rf dist && pnpm build`.
+- Do not keep the working copy in a cloud-synchronised folder (OneDrive, iCloud, Dropbox): the synchroniser creates duplicate files such as `index 5.html`, which Astro turns into phantom routes. When the build behaves oddly, `rm -rf dist && pnpm build`.
 
 ## pnpm hardening
 
 `pnpm-workspace.yaml` hardens installs; never remove these settings:
 
-- `minimumReleaseAge: 1440`: new versions install only once they are a day old. Exempt a newer version only when it is needed (a security fix), in `minimumReleaseAgeExclude`, with a comment.
-- `trustPolicy: no-downgrade`: an install fails when a version has weaker trust signals than earlier ones. Exempt only exact, verified versions in `trustPolicyExclude`, with a comment.
-- Build scripts run only for packages listed in `allowBuilds`.
-- `engine-strict` keeps everyone on the Node version CI uses.
+- `minimumReleaseAge: 1440` (minutes): new versions install only once they are a day old, so a hijacked release is usually withdrawn before it reaches the project. Exempt a newer version only when it is needed (a security fix), in `minimumReleaseAgeExclude`, with a comment.
+- **Build scripts run only for allow-listed packages.** While the project is pinned to pnpm 10.20.0, **both** `onlyBuiltDependencies` and `allowBuilds` list them: pnpm 10 before 10.26 reads only `onlyBuiltDependencies`, later versions read `allowBuilds`. With one field missing, the build script of a package such as `esbuild` can be skipped silently. Drop `onlyBuiltDependencies` only together with the pnpm upgrade.
+- `pnpm audit` runs in CI ([Checks stage](#jenkins-checks-stage)). An advisory that cannot be fixed yet is ignored in `auditConfig.ignoreGhsas` of `pnpm-workspace.yaml`, one entry per advisory, with a comment that states the reason and the date it is reviewed again. An entry without both is not accepted in review.
 
 Adding a dependency needs the maintainer's approval. When a maintained library that works with Astro solves the problem, use it instead of writing our own.
 
 ## Read-only verification
 
 ```bash
-pnpm check          # astro check + tsc --noEmit
-pnpm lint           # ESLint
+pnpm audit          # known advisories (ignores documented in pnpm-workspace.yaml)
+pnpm lint           # ESLint, read-only
 pnpm format:check   # Prettier, read-only
-pnpm build          # astro build, plus any post-build verification
+pnpm check          # astro check (+ vue-tsc --noEmit with Vue islands)
+pnpm build          # astro build
+pnpm verify         # checks the built dist/ (scripts/verify-dist.mjs)
 pnpm test:e2e       # Playwright smoke and SEO specs at 1440 and 390 px
 ```
 
@@ -57,45 +60,25 @@ Run them before every push; Jenkins runs the same commands. They MUST NOT rewrit
 
 ## Formatting and lint autofixes
 
-`pnpm format` (Prettier `--write`) and `pnpm lint --fix` rewrite files. Run them deliberately, review the diff, then rerun the read-only checks. CI uses the read-only commands only.
-
-## Documentation checks
-
-`README.md` documents how to run, build and deploy the site, how content is edited (Markdown, admin or backend) and how to add a repeated content entry. When the repository ships a documentation launcher (`docs/documentation validate`, `docs/documentation build`), validate the guides with it before publishing them; the build requires Docker.
+`pnpm format` (Prettier `--write`) and `pnpm lint:fix` (ESLint `--fix`) rewrite files. Run them deliberately, review the diff, then rerun the read-only checks. CI uses the read-only commands only.
 
 ## Jenkins `Checks` stage
 
 The `Jenkinsfile` has a **`Checks` stage that is mandatory** and runs before any image is built or any file is deployed. It fails the build when any step fails:
 
-1. `pnpm check`: `astro check` and `tsc --noEmit`;
+1. `pnpm install --frozen-lockfile`, then `pnpm audit`;
 2. `pnpm lint` and `pnpm format:check`;
-3. `pnpm build`, including the post-build verification of the output;
-4. **Playwright smoke** of every route at **1440x900 and 390x844**, against the built site (`pnpm preview` or the built image), failing on any console error, failed request or broken image;
-5. **SEO spec**: every indexable route has a title and description within limits, one `h1`, a canonical URL, Open Graph tags and an image; the sitemap lists exactly the indexable routes; `robots.txt` and `llms.txt` exist ([seo.md](seo.md)).
+3. `pnpm check`: `astro check`, plus `vue-tsc --noEmit` when the site has Vue islands;
+4. `pnpm build`, then **`pnpm verify`**: the output is checked after the build, because Astro and its integrations only log many errors and still finish. Verification covers at least a title and canonical URL on every page, a Content-Security-Policy without `unsafe-inline` or `unsafe-eval` scripts, no internal addresses or `TODO` placeholders in the output, `robots.txt`, and a sitemap that lists exactly the indexable pages (none while `PUBLIC_NOINDEX=true`). A headless site (archetype `C-headless`) adds the **build provenance check**: the build writes the content export it was made from next to the build, and `pnpm verify` compares `dist/` with it (every page and media file of the export exists, nothing else does) ([content.md](content.md#c-headless-edited-in-a-separate-backend));
+5. **Playwright smoke** against the built site (the template serves `dist/` with `e2e/serve.mjs`), at **1440x900 and 390x844**, failing on a console error, a failed request or a broken image;
+6. **SEO spec**: every indexable route has a title and description within limits, one `h1`, a canonical URL, Open Graph tags and an image; the sitemap lists exactly the indexable routes; `robots.txt` and `llms.txt` exist ([seo.md](seo.md)).
 
 ## Playwright
 
-- Specs live in `e2e/*.spec.ts` and import `test` and `expect` from `e2e/fixtures.ts`, which fails any test that logs a console error. A test that causes one on purpose lists it explicitly.
-- Two projects match the design frames: `desktop` (1440x900) and `mobile` (390x844, touch), with the site's locale and time zone.
+- Configuration is in `playwright.config.ts`; specs live in `e2e/*.spec.ts`. The base URL comes from **`E2E_BASE_URL`**; without it the config serves the built `dist/` on **`E2E_PORT`** (default 4330) through `e2e/serve.mjs`. `E2E_BASE_URL` also points the read-only specs at a running or deployed site.
+- CI defaults of the template stay: `forbidOnly` in CI, `retries: 1` in CI, `trace: 'retain-on-failure'` and `screenshot: 'only-on-failure'`, and `reuseExistingServer` only outside CI.
+- Two projects match the design frames: `desktop` (1440x900) and `mobile` (390x844, touch).
+- A spec that logs a console error fails, unless the test lists that error explicitly as expected.
 - Wait for islands to hydrate before interacting with them.
-- A test that changes content is tagged `@writes` and never runs against a deployed environment; `BASE_URL` points the read-only tests at a running deployment.
+- A test that changes content never runs against a deployed environment (`E2E_BASE_URL` pointing at it).
 - Admin end-to-end tests (archetype `B-admin`) log in once in a setup project and never log out the shared session.
-
-## Lighthouse and accessibility
-
-Recommended on every pull request that changes layout, images, fonts or scripts, and **mandatory before launch**:
-
-| Metric (mobile, production build)    | Budget  |
-| ------------------------------------ | ------- |
-| Performance                          | >= 90   |
-| Accessibility, Best practices, SEO   | 100     |
-| Largest Contentful Paint             | < 2.5 s |
-| Cumulative Layout Shift              | < 0.05  |
-
-- axe reports no violations on any route at both widths.
-- While basic auth and `noindex` protect the preview, the SEO score is lower by design; measure it again after they are switched off.
-- Record the measured results with the date in `README.md`.
-
-## Admin checks
-
-When the admin (archetype `B-admin`) uses React, run `pnpm react-doctor --scope changed` after React changes.

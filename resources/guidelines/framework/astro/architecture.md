@@ -14,6 +14,7 @@ The project is an Astro 7 website of one **archetype**, recorded in [CONTEXT.md]
 | `A-static`   | `output: 'static'`                       | Developers or agents through git ([content.md](content.md)) | PHP micro-API in `api/`       | Astro, Tailwind, no or few islands                    |
 | `B-admin`    | `output: 'server'` with `@astrojs/node`  | The client in the project's own admin                     | Astro Actions                 | Astro SSR, admin islands, server services, SQLite     |
 | `C-headless` | `output: 'static'`, data fetched at build | The client in a separate CMS or admin application         | Posted to the backend         | Astro, islands, a Zod-validated content contract     |
+| `D-static-api` | `output: 'static'` plus a **runtime API on the same origin** | Developers through git ([content.md](content.md)); the backend owns transactional data (cart, accounts) | Posted to the backend API on the same origin | Astro, islands, one API client module, a reverse proxy that routes the backend paths |
 
 Decisions are recorded in the project's decision record. Typical topics: render mode and adapter, content editing model, form and anti-spam handling, motion stack, fonts and licences, image pipeline, hosting and preview protection, languages.
 
@@ -66,6 +67,15 @@ Forms submit to Astro Actions with `accept: "form"`, so a plain `<form method="p
 
 Forms post to the backend's form endpoint, whose URL is set at build time; the backend owns recipients, SMTP and stored submissions. Without JavaScript the form posts normally and the backend redirects back with a result anchor. The backend lists the site in its allowed origins.
 
+### Archetype `D-static-api`
+
+Forms and interactive features (login, cart, account) call the backend's API on the **same origin** from islands, so no CORS setup is needed. The pages are still static HTML:
+
+- The backend paths (for example `/api`) are listed once in `astro.config.mjs`, where they feed the dev server proxy and `connect-src` of the CSP; the production proxy routes the same paths ([deployment.md](deployment.md#reverse-proxy-and-headers)).
+- Islands reach the API only through one client module; no component calls `fetch` for the backend itself.
+- Everything an indexable page shows is in the build output; the API supplies only per-visitor data. Pages that exist for a signed-in visitor or a transaction (account, cart, checkout and the like) are `noindex` ([seo.md](seo.md#meta)).
+- A transactional feature that cannot work without JavaScript (login, cart) is the one exception to the no-script form rule; its page still renders all of its content without scripts.
+
 ## Server code
 
 ### Archetype `B-admin`
@@ -77,6 +87,6 @@ Forms post to the backend's form endpoint, whose URL is set at build time; the b
 - The middleware sets security headers (CSP, `nosniff`, `Referrer-Policy`), limits request body sizes, and marks admin and action responses `Cache-Control: private, no-store`.
 - Uploads are validated by decoding their content, stored outside the build, and served only as resized copies; originals (with EXIF and GPS) are served to logged-in administrators only.
 
-### Archetypes `A-static` and `C-headless`
+### Archetypes `A-static`, `C-headless` and `D-static-api`
 
-The site has no server code beyond the form endpoint ([Forms](#forms)). Everything else is produced at build time.
+The site has no server code beyond the form endpoint or the backend API ([Forms](#forms)). Everything else is produced at build time.

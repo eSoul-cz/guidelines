@@ -5,13 +5,12 @@ summary: Design tokens, Tailwind 4, design-to-component map, fonts, images, scop
 ---
 # Project guidelines - Frontend
 
-The project's design file (Pencil, in `docs/design_pencil/` or the location named in [CONTEXT.md](../../CONTEXT.md)) is the source of truth for how the site looks. It is read only through the Pencil MCP tools, never as a plain file, and never modified by the implementation. Code follows the design; a deliberate deviation is recorded with its reason in `README.md` and approved by the client. Colours, fonts and spacing are never changed "to make it nicer". When the design changes, the design file MUST be saved before the implementation is compared against it.
+The project's design file (Pencil; its location is named in [CONTEXT.md](../../CONTEXT.md)) is the source of truth for how the site looks. It is read only through the Pencil MCP tools, never as a plain file, and never modified by the implementation. Code follows the design; a deliberate deviation is recorded with its reason in `README.md` and approved by the client. Colours, fonts and spacing are never changed "to make it nicer". When the design changes, the design file MUST be saved before the implementation is compared against it.
 
 ## Design tokens
 
-- Tokens are defined once, in `src/styles/global.css`, in a single `@theme inline` block that mirrors the design's foundations under **the same names as the design variables**. Raw values sit on `:root`; `@theme inline` maps them to Tailwind. When a design variable changes, the token changes in the same pull request.
+- Tokens come from the design and are defined once, in `src/styles/global.css`, in a plain **`@theme`** block under **the same names as the design variables**. They live only there: no `@theme inline`, no `:root` layer of raw values and no `--color-*: initial` resets of Tailwind's defaults. When a design variable changes, the token changes in the same pull request.
 - Tailwind 4 runs through the `@tailwindcss/vite` plugin; there is no `tailwind.config.js` and no legacy `@astrojs/tailwind` integration.
-- Tailwind's defaults that the design replaces are removed (`--color-*: initial`, `--text-*: initial`, `--radius-*: initial`, and so on), so `bg-white`, `text-gray-500`, `text-xl` or a bare `rounded` do not exist. Use the design's tokens.
 - **No arbitrary values** for anything a token expresses (`text-[15px]`, `bg-[#1E5B48]`, `rounded-[12px]`). Tailwind cannot block them, so review does. If the design needs a value without a token, add the token.
 - Sizes are in **rem**, never px. Type sizes MAY be fluid (`clamp()`) between the design's mobile (390 px) and desktop (1440 px) values, so they need no breakpoint variants.
 - Markup repeated many times per page (rows, list items, icons) uses component classes in `@layer components` instead of long utility strings, to keep the HTML small.
@@ -33,7 +32,7 @@ Every reusable design-system component has one component in `src/components/ui/`
 ## Fonts
 
 - Fonts load through the **Astro Fonts API** (`fonts` in `astro.config.mjs`), self-hosted at build. Only the weights and styles the design uses are loaded.
-- Subsets include **`latin-ext`** for Czech. Fonts needed above the fold are preloaded, the `latin-ext` subset included; preloading only `latin` makes letters with diacritics flash in the fallback font.
+- The subsets follow the project's language: `latin` is enough for English or German; a language with more diacritics (Czech, Slovak, Polish) also needs **`latin-ext`**, with explicit `unicodeRange` values for self-supplied files. A preloaded font preloads every subset the page text uses, because preloading only `latin` makes letters with diacritics flash in the fallback font.
 - The font component is rendered in the head of every page. Licences of non-Google fonts are recorded in a decision.
 
 ## Images
@@ -59,7 +58,6 @@ Every reusable design-system component has one component in `src/components/ui/`
 - Visible focus on every interactive element; colour is never the only carrier of a state; contrast meets WCAG AA in every theme the design defines.
 - Icon-only controls have an accessible name; decorative icons are hidden from assistive technology.
 - The mobile width (390 px) has no horizontal scroll; a browser test checks it.
-- axe reports no violations on any route before launch ([tools.md](tools.md#lighthouse-and-accessibility)).
 
 ## Responsive layout
 

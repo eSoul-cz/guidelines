@@ -47,14 +47,22 @@ The archetype decides who edits content and how it reaches the site ([architectu
 ### C: headless, edited in a separate backend
 
 - The backend exports content through one versioned endpoint. The site fetches it **once per build** for all collections, through a content loader in `src/content.config.ts`.
-- The export is validated by a **Zod schema that is the contract** with the backend's exporter. Changing the contract changes both sides together, with a pull request in each repository (or one pull request in a monorepo), the schema, a fixture and the contract document. An invalid export fails the build, and the previous version stays live.
-- Media are downloaded or verified at build time (by hash), and served from the site's own path, so the site does not depend on the backend at runtime and a changed photo is not visible before publication.
-- Publication is a button in the backend that triggers the site's Jenkins job; the job reports the result back to the backend.
-- A local snapshot of the last export MAY be used in development. **CI never uses a snapshot**: a build stands on current data or fails.
+- The export is validated by a **Zod schema that is the contract** with the backend's exporter. Changing the contract changes both sides together, with a pull request in each repository (or one pull request in a monorepo), the schema, the fixture and the contract document. An invalid export fails the build, and the previous version stays live.
+- The schema enforces the invariants the backend also enforces: **exactly one home page**, **unique page ids and slugs**, a slug pattern (`^[a-z0-9]+(-[a-z0-9]+)*$`, because the slug is a path segment), file URLs of the form `/_cms/<hash>.<ext>` and a content hash for every file.
+- **Golden-file contract test on both sides.** The backend has a test that writes the real output of its exporter over test data to a golden JSON file; the frontend fixture is generated from that file, and a frontend check fails when the fixture differs from it (except `generatedAt`, `contentHash` and file URLs). The contract is therefore tested against the exporter's real output, never against a hand-written sample.
+- **The fixture is refused in CI.** `CMS_SOURCE=fixture` (data from the committed fixture, no backend) is for local and pull-request builds. In CI the build throws when it would use the fixture without `CMS_SOURCE=fixture` set explicitly in the environment, and `CMS_SOURCE=api` without `CMS_API_URL` and `CMS_API_TOKEN` fails.
+- **Build provenance.** The build writes the export it was made from next to the build output; `pnpm verify` compares `dist/` with it: every page of the export exists as HTML, no other page exists, and every media file the HTML references is in the export ([tools.md](tools.md#jenkins-checks-stage)).
+- Media are named by their content hash and verified at build time (a missing file fails the build). Their bytes are not copied into `dist/`: nginx serves them under `/_cms/` from the backend's public volume on the same host, so the site makes **no runtime call to the backend**, but it needs that volume on the host, and a changed photo is not visible before publication.
+- Publication is a button in the backend that triggers the site's Jenkins job; the job reports the result back to the backend, and a publish without a result times out (`CMS_PUBLISH_TIMEOUT`) ([deployment.md](deployment.md#publish-flow-archetype-c-headless)).
+- A local snapshot of the last export is not used: **CI and local builds either stand on current data from the backend or on the fixture, never on a stale copy**. A build that cannot reach the backend fails.
 - View models map the export to the props islands receive, so the export shape does not leak into components. API calls from islands go through one client module.
 - What stays hard-coded in the site (per-slug exceptions, special pages) is listed in `README.md`; a slug change in the backend that would break it fails the build or logs a warning by design.
+
+### D: static, with a runtime API on the same origin
+
+Site copy is edited as in archetype A (through git). Runtime data that belongs to the visitor (cart, account, orders) is not content: it comes from the backend's API through one client module ([architecture.md](architecture.md#archetype-d-static-api)), and no indexable page depends on it.
 
 ## Content and SEO fields
 
 - Every indexable page has a title, a description and an Open Graph image from its content source, checked against the limits in [seo.md](seo.md).
-- `noindex` is a content flag where the archetype supports it, and the sitemap respects it.
+- `noindex` is a content flag where the archetype supports it, and the sitemap respects it. Pages without a content source (account, cart, checkout and the like) are marked `index: false` in the routes module.

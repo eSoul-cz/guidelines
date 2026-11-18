@@ -1,7 +1,7 @@
 ---
 title: SEO
 order: 160
-summary: Canonical origin, URLs, meta limits, Open Graph, JSON-LD, sitemap, redirects and performance budgets.
+summary: Canonical origin, URLs, meta limits, Open Graph, JSON-LD, sitemap and redirects.
 ---
 # Project guidelines - SEO
 
@@ -9,16 +9,17 @@ Search engines and AI assistants read the HTML the build or the server produces.
 
 ## URLs and trailing slash
 
-- The canonical origin is set **once** as `site` in `astro.config.mjs`. Nothing else builds absolute URLs.
-- The trailing slash policy is chosen once and set through `trailingSlash` and `build.format` so that page URLs, canonical URLs, the sitemap, internal links and redirects all agree. The non-canonical form redirects with 301.
+- The canonical origin is set **once**: the `SITE_URL` build variable ([deployment.md](deployment.md#build-arguments)) feeds `site` in `astro.config.mjs`. Nothing else builds absolute URLs.
+- `trailingSlash: 'ignore'` and `build.format: 'directory'` are set in `astro.config.mjs`. `'always'` is not used because it breaks the dev server proxy to the backend; with `'ignore'` the site does not redirect the other form itself.
+- The canonical tag, `og:url`, the sitemap, internal links and redirect targets all use **one form** of the URL (with or without the trailing slash, chosen once per project), so the other form is never advertised and the canonical tag tells search engines which one counts.
 - Slugs are lowercase words of the site's language without diacritics, joined by hyphens. Paths come from the routes module ([content.md](content.md#routes-and-languages)).
 
 ## Meta
 
 - Every indexable page has a unique title of **at most 60 characters** and a description of **110-155 characters**, from its content source; a check verifies the lengths.
 - Every page has exactly one `h1`, matching the page's topic.
-- `<html lang>` carries the page language, `og:locale` matches it and, on a multilingual site, `hreflang` alternates (including `x-default`) list every language the page exists in.
-- Pages that must not be indexed (404, 500, thank-you pages, the admin, and any page the project decides) carry `noindex` through a base layout flag and are left out of the sitemap.
+- `<html lang>` carries the page language, `og:locale` matches it and, on a multilingual site, `hreflang` alternates list every language the page exists in.
+- Pages that must not be indexed (404, 500, thank-you pages, the admin, and, when the site has them, account, cart, checkout, login and search pages, plus any page the project decides) carry `noindex` through a base layout flag and are left out of the sitemap.
 
 ## Canonical and Open Graph
 
@@ -36,23 +37,19 @@ Search engines and AI assistants read the HTML the build or the server produces.
 
 ## Sitemap, robots, `llms.txt` and Markdown
 
-The rules (all bots allowed, sitemap with `lastmod`, `llms.txt`, Markdown versions, IndexNow, the launch gate and exceptions) are the company-wide AI-readiness standards (https://dev.docs.esoul.cz). Astro implementation:
+The rules (all bots allowed, sitemap with `lastmod`, `llms.txt`, Markdown versions, the launch gate and exceptions) are the company-wide AI-readiness standards (https://dev.docs.esoul.cz); the project implements them. Astro implementation:
 
-- `@astrojs/sitemap` writes the sitemap at build time with canonical URLs only, without `noindex` pages and with `lastmod` (`serialize`). On a headless site the sitemap also respects `noindex` set in the backend.
-- `robots.txt`, `llms.txt` and the Markdown versions are static endpoints (`src/pages/robots.txt.ts`, `llms.txt.ts`, `[...slug].md.ts`) built from the same content collections as the pages; the pages advertise the Markdown with `<link rel="alternate" type="text/markdown">`.
-- While the site is a protected preview, `robots.txt` disallows everything and every page is `noindex` ([deployment.md](deployment.md#preview-protection)); `robots.txt` stays reachable without basic auth.
+- `@astrojs/sitemap` writes the sitemap at build time with canonical URLs only and without `noindex` pages (a filter built from the routes module's `index: false` records). On a headless site the sitemap also respects `noindex` set in the backend.
+- `robots.txt` and `llms.txt` are static endpoints (`src/pages/robots.txt.ts`, `src/pages/llms.txt.ts`) built from the same content as the pages. Markdown versions of pages, where the standard asks for them, are static endpoints too, advertised with `<link rel="alternate" type="text/markdown">`.
+- While the site is a protected preview, `robots.txt` disallows everything, every page is `noindex` and no sitemap is built ([deployment.md](deployment.md#preview-protection)); `robots.txt` stays reachable without basic auth.
 
 ## Redirects from the old site
 
 - Every URL of the old site that had traffic or links gets a **301** to its closest new page, as listed in the project's sitemap and meta document. Redirects live in `redirects` in `astro.config.mjs` or in the web server configuration, in one place.
 - Content removed for good returns **410**, not a redirect to the homepage. Old upload paths (for example `/wp-content/uploads/*`) are handled explicitly.
-- Redirect targets use the canonical trailing slash form, so no chain of two redirects exists.
+- Redirect targets use the canonical URL form ([URLs and trailing slash](#urls-and-trailing-slash)), so no chain of two redirects exists.
 - After a slug change, the old slug redirects to the new one.
-
-## Performance is SEO
-
-Lighthouse on mobile: performance >= 90, accessibility, best practices and SEO 100, LCP < 2.5 s, CLS < 0.05 ([tools.md](tools.md#lighthouse-and-accessibility)). These budgets are mandatory before launch.
 
 ## After launch
 
-Register the site and the sitemap in Google Search Console and Bing Webmaster Tools, update the business profiles (Google Business Profile, Firmy.cz) and verify the analytics. The checklist is in the project's launch document.
+Register the site and the sitemap in Google Search Console and Bing Webmaster Tools and verify the analytics. The checklist is in the project's launch document.
