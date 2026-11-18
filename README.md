@@ -26,7 +26,7 @@ The Satis repository must be configured in the consumer's `composer.json` (`"rep
 
 | Command | Purpose |
 |---|---|
-| `init [--no-interaction]` | Detects the stack from `composer.json` / `package.json` (`laravel/framework`, `lsr/core`, `astro`, `filament/filament`, `lunarphp/lunar`, `@inertiajs/vue3`, `infection/infection`), asks you to confirm the layers (multiselect) and writes `esoul-guidelines.json`. `--no-interaction` accepts the detection (or an existing config). Detected stacks without a layer yet are reported and skipped. |
+| `init [--no-interaction]` | Detects the stack from `composer.json` / `package.json` (`laravel/framework`, `lsr/core`, `astro`, `filament/filament`, `lunarphp/lunar`, `@inertiajs/vue3`, `infection/infection`, `esoul-cz/phpunit-test-evidence`), asks you to confirm the layers (multiselect) and writes `esoul-guidelines.json`. `--no-interaction` accepts the detection (or an existing config). Detected stacks without a layer yet are reported and skipped. |
 | `sync [--dry-run] [--force]` | Renders and writes. Refuses to overwrite a managed block whose current hash differs from the lock (a local edit), listing the files, unless `--force`. `--dry-run` prints a summary (`-v` also lists unchanged files, `-vv` prints the changed lines) and writes nothing. |
 | `check` | For CI. Exit 1 on **drift** (a managed block differs from the lock, or is missing) or **outdated** content (the lock differs from a fresh render, or the config/layers changed). Exit 0 otherwise. |
 | `list` | Lists the available layers and their files (`*` = selected in the project). |
@@ -47,7 +47,7 @@ All commands accept `-d|--working-dir=<project root>` (default: current director
 
 ## Layer authoring rules
 
-Sources live in `resources/guidelines/<layer>/<name>.md`; a layer id is `general` or `<group>/<name>` (`framework/laravel`, `framework/lsr`, `framework/astro`, `package/inertia-vue`, `package/mutation-testing`, ...). Files are flat inside a layer; `index.md` is reserved for the generated index.
+Sources live in `resources/guidelines/<layer>/<name>.md`; a layer id is `general` or `<group>/<name>` (`framework/laravel`, `framework/lsr`, `framework/astro`, `package/inertia-vue`, `package/mutation-testing`, `package/test-evidence`, ...). Files are flat inside a layer; `index.md` is reserved for the generated index.
 
 Optional YAML frontmatter:
 
@@ -121,6 +121,7 @@ Tests cover the risky logic only: H2 merge, managed block replacement, drift ref
 - The AGENTS.md block lists files flagged `agents: true` (currently `testing`, `security-and-data`, `workflow`) as links with their summary, not the rule text itself.
 - Layers are flat directories of `.md` files; there are no sub-folders inside a layer. Output file names equal source names.
 - Layer order is the config order with `general` forced first; `init` writes frameworks before packages.
+- `package/mutation-testing` (local, optional mutation testing) and `package/test-evidence` (acceptance tests reported with `esoul-cz/phpunit-test-evidence`; its evidence tests are excluded from the default run by an `evidence` group) contribute to `testing.md` and are detected from `infection/infection` and `esoul-cz/phpunit-test-evidence`. The Laravel testing rules assume the Laravel template: SQLite `:memory:`, `LazilyRefreshDatabase` in the shared feature base class and `php artisan test --parallel`.
 - Detection is limited to the packages listed under Commands; monorepos (backend in a sub-folder) are not scanned.
 - `list` replaces Symfony's built-in `list` (command overview); use `--help` for commands.
 - The package version in the lock is the one reported by Composer for `esoul/guidelines`; a development checkout reports `dev`.

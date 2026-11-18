@@ -114,7 +114,8 @@ php artisan make:cqrs-query Catalog/GetProductDetail --handler --return=ProductD
 - **Concurrent writes are locked.** Rows that concurrent requests may change are updated
   atomically (`UPDATE ... SET x = x + 1`) or read with `lockForUpdate()` inside the transaction.
   Never read, compute in PHP and write back unlocked. Prove such handlers with a concurrency test
-  on the production engine (`db-engine` group, [testing.md](testing.md#test-groups)).
+  on the production engine (the `db-engine` group, where the project has opted in,
+  [testing.md](testing.md#test-groups)).
 - **External writes go through the outbox.** Every write to an external system is an outbox
   message written by the same handler, in the same transaction as the state change. A handler
   never calls an external system directly.

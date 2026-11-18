@@ -9,7 +9,7 @@ PHPUnit tests live in `tests/` under the `Tests` namespace; frontend (Vitest) te
 
 - For `Lsr\ObjectValidation\Exceptions\ValidationException` assert the `property` (and `object`); for `ValidationMultiException` assert the `property` of each entry in `exceptions`.
 - A JSON request failing validation: assert status `422` and `array_keys($payload['errors'])`. A web form failing validation: assert the redirect status, `Location` and the keys of the flashed errors.
-- Error text comes from the translation catalog or is written inline; it depends on locale and copy edits and MUST NOT be pinned by a test.
+- Error text comes from the product copy catalog or is written inline; it depends on locale and copy edits and MUST NOT be pinned by a test.
 
 ## Writing tests
 
@@ -17,8 +17,6 @@ PHPUnit tests live in `tests/` under the `Tests` namespace; frontend (Vitest) te
 - Test method names are `snake_case` and describe the behaviour (`test_open_orders_can_be_cancelled`); the code-style fixer enforces it (`php_unit_method_casing`).
 - Use `assertSame()` for strict values and object identity; compare object state with an appropriate equality assertion or explicit typed values.
 - Data providers use the `#[DataProvider('name')]` attribute, are `public static` camelCase methods in the same test class, return an iterable documented in the docblock, and SHOULD be generators with a descriptive key per scenario (`yield 'unknown alpha-two code' => ['ZZ'];`). When a scenario needs instance data, the provider yields closures with a documented shape.
-- HTML escaping tests (mail templates and other rendered HTML) MUST assert the encoded markup (`&lt;script&gt;`) and reject raw executable tags.
-- Migrations, models and data objects MUST NOT be tested in isolation as the subject of a committed test. Schema, mappings, relations and data transformations are verified through the domain or application behaviour that depends on them; logic placed on a data object is covered through the unit that uses it.
 
 ## Test layout
 
@@ -28,19 +26,9 @@ Tests mirror the technical layers of `src/`: `CQRS`, `Console`, `Core`, `Http`, 
 - CQRS tests live in `tests/CQRS`, HTTP controller and middleware tests in `tests/Http`.
 - `tests/bootstrap.php` defines the constants and loads the autoloader; it does not boot the application or open a database connection. Code that needs the container or a database builds exactly what the test requires.
 
-## Test doubles
-
-Test doubles (mocks, stubs, fakes) isolate the code under test from external services and the database.
-
-- Keep behaviour-specific fakes inside the individual test. Suite-wide safety guards MAY live in a shared base class or in `tests/Support`.
-- Do not install blanket exception or sleep fakes only to make the suite faster.
-- Prefer a small real collaborator over a mock that merely echoes the implementation.
-
 ## Database in tests
 
 - The default suite runs without a database. A test that needs one MUST use an isolated throw-away database: a temporary SQLite file created through a support trait in `tests/Support` and registered with `DB::init()`, created per test and removed afterwards.
-- Tests MUST NOT depend on a shared or real database, on the order of other tests, or on data left by another test.
-- Schema is created from the installer or from the test's own minimal definition, never from a hand-copied production dump.
 
 ## Running tests
 
@@ -78,5 +66,5 @@ XDEBUG_MODE=off ./vendor/bin/phpunit tests/CQRS
 
 ## Testing workflow
 
-- Narrow run: `XDEBUG_MODE=off ./vendor/bin/phpunit <path>`; full suite: `composer test`.
+- Narrow run: `XDEBUG_MODE=off ./vendor/bin/phpunit <path>`; full suite: `composer test` ([Running tests](#running-tests)).
 - Format with `composer cbf` before the pull request ([tools.md](tools.md#formatting-and-lint-autofixes)).

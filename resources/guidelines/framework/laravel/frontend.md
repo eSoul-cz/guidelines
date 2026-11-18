@@ -86,7 +86,7 @@ The rules above are checked, not only reviewed:
 - Mutations validate in a form request and redirect afterwards (`back()` or `to_route()`);
   validation errors and flash messages reach the page through Inertia's shared errors and flash
   data, never as a hand-built JSON error. Page props, errors and flash keys are a contract tested
-  by Laravel feature tests with `assertInertia()` ([testing.md](testing.md#writing-tests)).
+  by Laravel feature tests with `assertInertia()` ([testing.md](testing.md#controller-testing)).
 - Page behaviour on the client (forms, navigation, loading states) is in the Vue guidelines.
 
 ## Routes and Wayfinder

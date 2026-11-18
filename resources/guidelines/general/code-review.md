@@ -85,8 +85,8 @@ Read the issue and its acceptance criteria before reading the diff. Then check, 
    stack.
 4. **Tests.** New or changed behaviour has a useful test, a bug fix has a regression test that
    fails without the fix, no test asserts the text of an error message, and the checks the
-   author ran are listed in the pull request ([testing.md](testing.md)). When the project uses
-   mutation testing, escaped mutants on changed lines are killed or justified.
+   author ran are listed in the pull request ([testing.md](testing.md)). Escaped mutants on the
+   lines the author checked with mutation testing are killed or justified in the pull request.
 5. **Vocabulary.** Names follow the glossary; a new term is added in the same pull request
    ([domain.md](domain.md)).
 6. **Documentation.** Text that the change makes stale is updated in the same pull request

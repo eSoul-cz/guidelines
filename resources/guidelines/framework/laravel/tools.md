@@ -58,9 +58,9 @@ Run these before pushing. They never rewrite tracked files, and CI runs the same
 ### PHP
 
 ```bash
-composer stan   # Larastan (PHPStan level 10) over app/
+composer phpstan   # Larastan (PHPStan level 10) over app/
 composer cs     # pint --test
-composer test   # PHPUnit in parallel (Paratest), Xdebug off
+composer test   # php artisan test --parallel
 ```
 
 ### Frontend
@@ -82,23 +82,9 @@ php artisan test --filter=<TestName>                                  # one beha
 ```
 
 The whole suite runs once on the code that will be pushed, not after every edit
-([testing.md](testing.md#testing-workflow)). Mutation testing, when the project uses it, is
-described in [testing.md](testing.md#mutation-testing).
-
-## Test groups
-
-`phpunit.xml` excludes the groups `sandbox` and `quarantine` from the default run
-([testing.md](testing.md#test-groups)); a test joins one with `#[Group('sandbox')]`, and a
-quarantined test carries its issue URL in a comment on the attribute.
-
-```bash
-php artisan test --group=sandbox      # provider test APIs; skips without credentials
-php artisan test --group=quarantine   # flaky tests waiting for their fix
-```
-
-When production runs a different database engine than the tests, tests marked
-`#[Group('db-engine')]` run in the default SQLite run and again on the production engine, against
-a throwaway database, never the development one ([testing.md](testing.md#database-in-tests)).
+([testing.md](testing.md#testing-workflow)). Mutation testing is optional and local; it is
+described in [testing.md](testing.md#mutation-testing), and the test groups in
+[testing.md](testing.md#test-groups).
 
 ## Static analysis
 

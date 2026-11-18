@@ -14,6 +14,7 @@ final class StackDetector
         'filament/filament' => 'package/filament',
         'lunarphp/lunar' => 'package/lunar',
         'infection/infection' => 'package/mutation-testing',
+        'esoul-cz/phpunit-test-evidence' => 'package/test-evidence',
     ];
 
     /** @var array<string, string> npm package => layer */
