@@ -2,7 +2,7 @@
     "name": "esoul/guidelines",
     "description": "Layered, mergeable project guidelines for eSoul projects (Laravel, LSR, Astro) with drift detection.",
     "type": "library",
-    "license": "proprietary",
+    "license": "MIT",
     "bin": ["bin/esoul-guidelines"],
     "require": {
         "php": "^8.4",
