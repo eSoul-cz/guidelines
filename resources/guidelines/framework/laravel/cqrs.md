@@ -24,8 +24,9 @@ CQRS (Command Query Responsibility Segregation) separates the operations that ch
 
 The project uses the shared packages
 [`esoul-cz/laravel-cqrs`](https://github.com/eSoul-cz/laravel-cqrs) (Laravel integration) and
-`esoul-cz/cqrs` (buses, contracts, attributes). Do not add an application-local copy of the buses
-or contracts.
+`esoul-cz/cqrs` (buses, contracts, attributes). Every Laravel template ships them, installed from
+eSoul's Composer repository `https://packages.esoul.cz`. Do not add an application-local copy of
+the buses or contracts.
 
 - `Esoul\Cqrs\Contracts\CommandInterface` / `QueryInterface`: a command or a query.
 - `Esoul\Cqrs\Contracts\CommandHandlerInterface` / `QueryHandlerInterface`: their handlers.
@@ -62,8 +63,11 @@ when a handler is not picked up.
 - Every class implements the interface of its type, and every handler declares
   `#[HandlesCommand(SomeCommand::class)]` or `#[HandlesQuery(SomeQuery::class)]`.
 - A command handler MAY handle several closely related commands: one attribute per command and an
-  explicit `instanceof` branch per class, ending in a thrown exception for an unsupported class.
-  It MUST NOT group unrelated logic.
+  explicit `instanceof` branch per class, ending in a thrown `RuntimeException` for an unsupported
+  class. It MUST NOT group unrelated logic.
+- `HandlesQuery` is not repeatable: **a query has exactly one handler**.
+- A command or query without a registered handler throws `RuntimeException`. That is a wiring
+  defect to fix, not a condition to catch.
 
 ```php
 #[HandlesCommand(CloseOrderCommand::class)]
@@ -107,6 +111,9 @@ php artisan make:cqrs-query Catalog/GetProductDetail --handler --return=ProductD
 - A command represents a business action, not plain CRUD that a model handles on its own.
 - The command class is a readonly DTO with constructor property promotion and no behaviour. The
   handler holds the logic and does no reads for callers.
+- **A handler orchestrates; it does not calculate.** It loads the rows, builds domain values,
+  calls the framework-free calculator or rule in `App\Domain\<Module>`, and persists or returns
+  the result.
 - **The handler owns the transaction.** A handler that changes more than one row, or reads a row
   it is about to change, runs inside one database transaction (injected
   `ConnectionInterface::transaction()`). A nested `transaction()` joins the caller's, so the whole
@@ -129,7 +136,8 @@ php artisan make:cqrs-query Catalog/GetProductDetail --handler --return=ProductD
   facts as properties. A value that can never be valid raises `InvalidArgumentException`. Callers
   and tests react to the type and properties, never to the message.
 - A handler MAY dispatch other commands and execute queries through buses injected in its
-  constructor, not through facades.
+  constructor, not through facades. It reaches another module's data only that way, never through
+  that module's models ([architecture.md](architecture.md#modules)).
 
 ## Writing queries
 

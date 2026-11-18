@@ -6,10 +6,9 @@ summary: Vue 3 + Inertia rules - component architecture, TypeScript, Inertia dat
 # Project guidelines - Frontend
 
 The frontend is Vue 3 (Composition API, `<script setup lang="ts">`), Inertia 3, TypeScript,
-shadcn-vue and Vitest. React is not supported. `package.json` and its lockfile are authoritative
-for installed versions. Domain behaviour, validation and authorization stay on the server; the
-frontend owns presentation state, interaction state and client-side orchestration only. Code that
-contradicts these rules is a bug to fix, not a precedent to follow.
+shadcn-vue and Vitest. React is not supported. Domain behaviour, validation and authorization stay
+on the server; the frontend owns presentation state, interaction state and client-side
+orchestration only. Code that contradicts these rules is a bug to fix, not a precedent to follow.
 
 ## Component architecture
 
@@ -48,6 +47,10 @@ contradicts these rules is a bug to fix, not a precedent to follow.
   attributes and custom events use kebab-case (`<app-button>`, `@select-item`).
 - Inertia components that collide with native elements are aliased on import: `Link as InertiaLink`,
   `Head as InertiaHead`, `Form as InertiaForm`.
+- Icons are Vue components imported by name from the icon package (`@lucide/vue`) and passed as
+  components. They are never resolved from a string at runtime, and code never imports the whole
+  namespace (`import * as icons from '@lucide/vue'`) or the icons map: that keeps every icon in
+  the bundle. Decorative icons are hidden from assistive technology.
 
 ## TypeScript
 
@@ -78,11 +81,6 @@ contradicts these rules is a bug to fix, not a precedent to follow.
   handled.
 - Scroll and component state are preserved only intentionally. Blanket preservation options MUST
   NOT hide stale server data.
-- Props MUST be minimal, serializable and free of sensitive attributes. Send only the data the
-  page needs and only what the acting user may see; filtering in the browser is not authorization
-  ([security-and-data.md](security-and-data.md#authorization)).
-- Numbers, amounts and dates arrive formatted from the server; the frontend never recomputes them
-  ([domain.md](domain.md#money)).
 
 ## Forms
 
@@ -104,8 +102,10 @@ contradicts these rules is a bug to fix, not a precedent to follow.
 - Avoid deep watchers, repeated expensive template work and unbounded reactive state. Memoize
   derived values with `computed` where it pays off.
 - Remote search SHOULD be debounced, and stale requests MUST be cancelled or ignored.
-- Large datasets MUST use server-side filtering and pagination, and expensive secondary data
-  SHOULD use Inertia deferred props.
+- Heavy components that are not needed for the first render (a map, an editor, a chart, a
+  non-default tab, a dialog or an edit-only form of a heavy feature) SHOULD load lazily through
+  `defineAsyncComponent` or a dynamic `import()`. Content visible on first render MUST NOT be
+  lazy: it only adds a request after the page renders.
 - Entire collections MUST NOT be fetched merely to filter or paginate them in the browser.
 
 ## Frontend tests
@@ -124,6 +124,11 @@ contradicts these rules is a bug to fix, not a precedent to follow.
   page and its props); Vitest MUST NOT duplicate those assertions.
 - Existing tests are not removed mechanically. Redundant or implementation-coupled tests SHOULD be
   removed when their area is changed and no meaningful regression protection is lost.
+- Vitest shares one module graph across test files (`isolate: false`) for speed. A file that calls
+  `vi.mock()`, `vi.doMock()`, `vi.unmock()` or `vi.doUnmock()` runs isolated, in a separate
+  project of `vitest.config.ts` that detects such files, because a module mock registered on the
+  shared graph either misses modules cached by earlier files or leaks into later ones. A new test
+  needs no configuration; do not remove the split.
 - Tests are deterministic: control time, network boundaries and browser globals, and restore mocks
   after each test ([testing.md](testing.md#writing-tests)).
 - Run the narrowest affected test first, then the project's frontend checks (lint, format check,

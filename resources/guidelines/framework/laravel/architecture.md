@@ -29,6 +29,18 @@ at `https://dev.docs.esoul.cz`.
   formula is unit-tested without a database.
 - Value objects used by several modules live in `App\Domain\ValueObjects`; everything else lives
   in the module that owns it.
+- The one exception is `App\Domain\Providers` (next section).
+
+### `App\Domain\Providers` - service providers
+
+- Service providers live in `App\Domain\Providers` (`AppServiceProvider` and the Filament panel
+  provider `App\Domain\Providers\Filament\AdminPanelProvider`) and are listed in
+  `bootstrap/providers.php`.
+- A provider binds contracts to implementations, so it uses the container, facades and
+  `App\Infrastructure`. **It is the one place in `App\Domain` that may**, and the layer
+  architecture test exempts exactly this namespace
+  ([testing.md](testing.md#architecture-tests)). A provider holds wiring only, never a business
+  rule.
 
 ### `App\Domain\CQRS` - commands, queries and their handlers
 
@@ -37,8 +49,8 @@ at `https://dev.docs.esoul.cz`.
 - Handlers MAY read and write the Eloquent models in `App\Infrastructure\Models`. **They are the
   single place a business operation touches persistence**, and they own the transaction and the
   locks.
-- Handlers delegate every calculation and business rule to the framework-free core. They load,
-  call, persist and map; they do not compute.
+- Handlers delegate every calculation and business rule to the framework-free core
+  ([cqrs.md](cqrs.md#writing-commands)).
 
 ### `App\Application`
 
@@ -50,12 +62,10 @@ at `https://dev.docs.esoul.cz`.
 
 ### `App\Infrastructure`
 
-- Eloquent models (`App\Infrastructure\Models`), controllers, form requests, policies,
-  middleware, casts, external clients (`App\Infrastructure\Integration\<System>`), exporters,
-  console commands, jobs, listeners and service providers.
-- **Service providers live in `App\Infrastructure\Providers`** and are listed in
-  `bootstrap/providers.php`. A provider uses the container and facades, which `App\Domain` MUST
-  NOT.
+- Eloquent models (`App\Infrastructure\Models`, including `User`), controllers
+  (`App\Infrastructure\Http\Controllers`), middleware (`App\Infrastructure\Http\Middleware`),
+  form requests (`App\Infrastructure\Http\Requests`), policies, casts, external clients
+  (`App\Infrastructure\Integration\<System>`), exporters, console commands, jobs and listeners.
 - Contains no business rule. Controllers, console commands, listeners and jobs dispatch commands
   and execute queries.
 - **Controllers stay thin**: authorize through the policy, validate in a form request
@@ -64,20 +74,22 @@ at `https://dev.docs.esoul.cz`.
 
 ### Dependency direction
 
-- The framework-free core depends on nothing in the application.
-- CQRS handlers depend on the core, on `App\Application` and on the models in
-  `App\Infrastructure\Models`. They never depend on controllers, requests or the session.
+- `App\Domain` MUST NOT depend on `App\Application` or `App\Infrastructure`, except
+  `App\Domain\Providers` (above) and the CQRS handlers below. The framework-free core depends on
+  nothing else in the application.
+- CQRS handlers depend on the core, on `App\Application` (DTOs, events, contracts) and on the
+  models in `App\Infrastructure\Models`, nothing else in `App\Infrastructure`. They never depend
+  on controllers, requests or the session. Handlers talk to external systems through the contracts
+  in `App\Application\Contract`; the container binds the implementation.
+- `App\Application` MUST NOT depend on `App\Infrastructure`.
 - `App\Infrastructure` depends on the commands, queries and DTOs. Models MAY use domain enums and
   value objects through casts.
-- `App\Domain` MUST NOT reference `App\Infrastructure\Integration`. Domain code talks to the
-  contract in `App\Application\Contract`; the container binds the implementation.
-- `App\Application` MUST NOT reference `App\Infrastructure`.
 - A repository interface MUST NOT be introduced unless a second implementation actually exists.
   A handler uses the Eloquent model directly.
 
-The boundary between `App\Domain\CQRS` (which touches Eloquent) and the rest of `App\Domain`
-(which must not) runs through the middle of a layer, so it is enforced by an architecture test
-that is a named exception in [testing.md](testing.md#architecture-tests).
+The boundaries inside `App\Domain` (the core, `App\Domain\CQRS` which touches Eloquent, and
+`App\Domain\Providers`) run through the middle of a layer, so they are enforced by an architecture
+test that is a named exception in [testing.md](testing.md#architecture-tests).
 
 ## Modules
 
@@ -97,7 +109,7 @@ in. The project lists its modules and what each owns in its `CONTEXT.md` or arch
 An admin panel built on a package (for example Filament) is a separate user interface: the
 frontend rules do not apply to it. It MAY use the package's own resources for plain CRUD; its
 custom actions that perform a business operation dispatch the corresponding command instead of
-reimplementing it.
+reimplementing it. Its panel provider is `App\Domain\Providers\Filament\AdminPanelProvider`.
 
 ## Persistence
 
@@ -125,9 +137,12 @@ The principles are in [domain.md](domain.md#money). On this stack:
 - An amount is a project value object (`App\Domain\ValueObjects\Money`: integer minor units and a
   currency, arithmetic only within one currency), mapped to a `BIGINT` column by a cast.
 - Exact decimals (rates, coefficients, percentages) are `BcMath\Number` or decimal strings
-  computed with bcmath. `float()` is never called on money input, and PHP `round()` is never used
-  on money.
-- Rounding happens once per chain, with an explicit `RoundingMode`, inside the framework-free
-  core.
-- Numbers are formatted on the server by one formatter (`ext-intl`) per kind (money, quantity,
-  date, percentage); the frontend renders the string it receives.
+  computed with bcmath.
+- **One rounding mode for the whole application: half away from zero**
+  (`RoundingMode::HalfAwayFromZero`). It is applied at one place per calculation chain, inside the
+  framework-free core, and is never chosen at a call site. PHP `round()` is never used on money.
+- **A float never carries money, not even for display.** `float()` is never called on money input,
+  and the formatter does not hand an amount to ICU as a float (`NumberFormatter::formatCurrency()`
+  takes one): it builds the string from the integer or decimal-string parts.
+- Numbers are formatted on the server by one formatter per kind (money, quantity, date,
+  percentage); the frontend renders the string it receives.

@@ -35,10 +35,10 @@ request that has already been validated and authorized.
   those rules.
 - A value the client manages as data (a type, a tag, a category) MUST be validated with
   `Rule::exists()` against its table, never with `Rule::in()` against a hardcoded list.
-- An upload is validated by its **content**, not by the type the browser claims, against types
-  and size limits from configuration. Private files use an explicitly configured private disk
-  (privacy is never inferred from the default disk); the request never picks a disk and the
-  command handler writes the file.
+- An upload is validated by its **content** (`finfo`), not by the type the browser claims, against
+  types and size limits from configuration. The form request validates; the command handler
+  writes the file to a private disk through the storage contract
+  ([deployment.md](deployment.md#file-storage)). A request never picks a disk.
 
 ## Decimal input
 

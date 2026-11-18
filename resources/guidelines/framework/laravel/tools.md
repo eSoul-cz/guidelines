@@ -15,7 +15,7 @@ standards are at `https://dev.docs.esoul.cz`.
 | Runtime | PHP | 8.5 |
 | Framework | Laravel | 13 (exact version in `composer.lock`) |
 | Commands and queries | `esoul-cz/laravel-cqrs` | see [cqrs.md](cqrs.md) |
-| User interface | Inertia 3, Vue 3 (React is not supported), TypeScript, Tailwind CSS 4, shadcn-vue, Laravel Wayfinder | see [frontend.md](frontend.md) |
+| User interface | Inertia 3, Vue 3, TypeScript, Tailwind CSS 4, shadcn-vue, Laravel Wayfinder | see [frontend.md](frontend.md) |
 | Node | Node.js | 24 |
 | Node package manager | pnpm | 10.20.0, pinned in `package.json` `packageManager` |
 | Frontend build | Vite | 8 |
@@ -41,7 +41,9 @@ docker compose exec laravel php artisan <command>
 
 Lint, static analysis, formatting and the tests MAY run on the host (PHP, Composer, Node and pnpm
 installed) or in the container. The tests use SQLite `:memory:` and never need the database
-service. Coverage needs a driver (Xdebug or PCOV) that the container provides.
+service. A host-side run exports `OTEL_PHP_DISABLED_INSTRUMENTATIONS=all` when the OpenTelemetry
+PHP extension is installed; it has to be in the shell environment, because `.env` and
+`phpunit.xml` are read only after the autoloader has run.
 
 A fresh checkout or git worktree has no `vendor/` and no `.env`:
 
@@ -58,9 +60,9 @@ Run these before pushing. They never rewrite tracked files, and CI runs the same
 ### PHP
 
 ```bash
-composer phpstan   # Larastan (PHPStan level 10) over app/
-composer cs     # pint --test
-composer test   # php artisan test --parallel
+composer phpstan  # Larastan (PHPStan level 10) over app/
+composer cs       # pint --test
+composer test     # php artisan test --parallel
 ```
 
 ### Frontend
@@ -71,7 +73,6 @@ pnpm format:check
 pnpm tsc
 pnpm test
 pnpm build
-pnpm frontend:check   # all of the above plus the structure and page-path checks, with a summary
 ```
 
 ### Narrow runs
@@ -100,7 +101,7 @@ described in [testing.md](testing.md#mutation-testing), and the test groups in
 vendor/bin/pint --dirty --format agent   # PHP files changed in the working tree
 composer pint                            # the whole PHP tree
 pnpm eslint:fix
-pnpm format:fix
+pnpm format
 ```
 
 - `pint.json` is the PHP formatting contract: the `laravel` preset plus the project rules
@@ -137,8 +138,9 @@ directory, which Jenkins persists between builds. Delete `tmp/` if a cached resu
   does not apply ([deployment.md](deployment.md)).
 - Skills live in `.agents/skills/` and are committed; `.claude/skills/<name>` links to them.
 - `boost.json` and `.mcp.json` are gitignored: every developer runs `php artisan boost:install`
-  once after cloning. `php artisan boost:update` refreshes the guidelines and skills; commit the
-  result only when updating them was the point of the work.
+  once after cloning. **`composer update` runs `php artisan boost:update`** (the
+  `post-update-cmd` script), which refreshes the guidelines and skills; commit the result only
+  when updating them was the point of the work.
 - Boost registers its commands only with `APP_ENV=local` or `APP_DEBUG=true`, so a fresh checkout
   needs its `.env` first. Its database tools need the database reachable, so the MCP server runs
   in the container (`docker compose exec -T laravel php artisan boost:mcp`).

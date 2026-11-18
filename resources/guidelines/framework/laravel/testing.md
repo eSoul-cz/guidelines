@@ -124,8 +124,8 @@ project's choice.
 - Narrow runs: `php artisan test --parallel tests/Feature/<Area>` for an area,
   `php artisan test --filter=<TestName>` for one behaviour. Prefix a run with `XDEBUG_MODE=off`
   unless you need the debugger or coverage.
-- Coverage (`composer coverage`, when the project defines it) needs a coverage driver (PCOV or
-  Xdebug) and writes its HTML report to `test-coverage/`, which is not committed.
+- `composer coverage` needs a coverage driver (PCOV or Xdebug) and writes its HTML report to
+  `test-coverage/`, which is not committed.
 - The commands CI runs are listed in [tools.md](tools.md#read-only-verification).
 
 ## Test groups
@@ -191,9 +191,12 @@ against architecture tests in [Named exceptions](#named-exceptions):
 
 | Rule | Checked in | Forbidden |
 |---|---|---|
-| the domain outside CQRS is framework-free | `App\Domain`, except `App\Domain\CQRS` | `Illuminate\Database`, `Illuminate\Support\Facades`, `Illuminate\Http`, `App\Infrastructure`, the container and the session (including the `app()`, `resolve()`, `request()` and `session()` helpers) |
+| the domain core is framework-free | `App\Domain`, except `App\Domain\CQRS` and `App\Domain\Providers` | `Illuminate\Database`, `Illuminate\Support\Facades`, `Illuminate\Http`, `App\Application`, `App\Infrastructure`, the container and the session (including the `app()`, `resolve()`, `request()` and `session()` helpers) |
 | handlers read only models from infrastructure | `App\Domain\CQRS` | anything in `App\Infrastructure` outside `App\Infrastructure\Models` |
 | the application layer is independent of infrastructure | `App\Application` | anything in `App\Infrastructure` |
+
+`App\Domain\Providers` is exempt from every rule: it is the one place in `App\Domain` that may
+use the container, facades and `App\Infrastructure` ([architecture.md](architecture.md#appdomainproviders---service-providers)).
 
 - `tests/Unit/Architecture/LayerRuleDetectionTest.php` feeds each rule in-memory samples (one per
   kind of breach and one compliant sample) and asserts the exact violations. It is what makes a
