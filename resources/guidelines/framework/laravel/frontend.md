@@ -24,5 +24,5 @@ A Filament admin panel is a separate user interface: the Inertia and Vue rules d
 
 ## Frontend commands
 
-- pnpm is the only package manager: the version is pinned in `package.json` `packageManager` (the latest release), the `pnpm-lock.yaml` is committed, and `npm` or `yarn` are never run in the repository.
+- pnpm is the only package manager ([dependencies.md](dependencies.md#pnpm-repositories)).
 - Vite builds the assets: `pnpm dev` serves them during development and `pnpm build` produces the production build that CI runs ([deployment.md](deployment.md#pipeline)).
