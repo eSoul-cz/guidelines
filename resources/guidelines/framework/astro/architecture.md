@@ -52,7 +52,7 @@ Decisions are recorded in the project's decision record. Typical topics: render 
 
 ## Forms
 
-Forms always post to a backend; a static page never sends mail itself. With a CMS (`C-headless`, the default) the Laravel backend owns forms: recipients, SMTP and stored submissions. Without a CMS (`A-static`) the project adds a small Laravel backend that holds only forms, or posts to a shared form service. The form posts with a plain `<form method="post">` and works without JavaScript; a script MAY enhance it with in-place results. The form endpoint applies:
+Forms always post to a backend; a static page never sends mail itself. With a CMS (`C-headless`, the default) the Laravel backend owns forms: recipients, SMTP and stored submissions. Without a CMS (`A-static`) the project adds a small Laravel backend that holds only forms, or posts to a shared form service. The form posts with a plain `<form method="post">` and works without JavaScript; a script MAY enhance it with in-place results. The form endpoint of `A-static` and `C-headless` applies the following; `B-admin` and `D-static-api` follow their own sections:
 
 1. **honeypot**: a hidden field; when filled, the robot gets a fake success and nothing is sent;
 2. **rate limit**: per client address, state stored outside the webroot;
@@ -96,7 +96,7 @@ Forms and interactive features (login, cart, account) call the backend's API on 
 
 ### Archetypes `A-static` and `C-headless`
 
-The site has no server code. Forms and content live in the backend, which is its own repository ([Repository layout](#repository-layout)); everything else is produced at build time.
+The site has no server code; everything it shows is produced at build time. Forms are posted to a backend (or, for `A-static`, possibly to a shared form service), which is its own repository ([Repository layout](#repository-layout)). Where the content lives differs: on `C-headless` it is stored in the backend, on `A-static` it is in the site's own repository ([content.md](content.md)).
 
 ### Archetype `D-static-api`
 

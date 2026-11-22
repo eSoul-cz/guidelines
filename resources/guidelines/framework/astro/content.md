@@ -22,7 +22,7 @@ Every text a visitor reads has exactly one home, and the client's approved copy 
 - Visible texts of a multilingual site live in **dictionary files per language** (`src/i18n/<lang>.ts`) with the same keys: the default-language dictionary defines the type, the others are typed against it, so a missing key fails the type check.
 - The default language lives at the root (`prefixDefaultLocale: false`), other languages under their prefix. `hreflang` alternates and the language switcher derive from the routes module ([seo.md](seo.md)).
 - Content coming from a source with several languages is selected through one `localize()` helper, not per-component conditionals.
-- When the backend of a headless site also needs the route table, it is copied from the routes module in the same pull request.
+- When the backend of a headless site also needs the route table, it is copied from the routes module through a pull request in the backend repository, linked to the pull request in the frontend repository that changes the routes ([Repository layout](architecture.md#repository-layout)).
 
 ## Content editing model per archetype
 

@@ -7,7 +7,7 @@ The general rules apply to an Astro project with Playwright (browser specs) and,
 
 ## Test doubles
 
-- **Network guard.** Browser specs run against the built `dist/` and fail on a console error, a failed request or a broken image ([tools.md](tools.md#jenkins-checks-stage)). A spec that needs an external system (a map, an embed, a form backend) answers it with `page.route`; a request nobody routed is a bug, never a real call. Vitest tests do not touch the network.
+- **Network guard.** Browser specs run against the built `dist/` and fail on a console error, a failed request or a broken image ([tools.md](tools.md#jenkins-checks-stage)); those checks catch only a request that fails. A spec that needs an external system (a map, an embed, a form backend) answers it with `page.route`. The Playwright setup also adds a catch-all `page.route` that aborts every request to an origin other than the tested site that the spec did not route explicitly, so an unrouted request that would succeed fails the spec instead of making a real call. Explicit mocks keep working. Vitest tests do not touch the network.
 
 ## Test groups
 

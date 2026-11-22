@@ -45,6 +45,7 @@ pnpm audit          # known advisories (ignores documented in pnpm-workspace.yam
 pnpm eslint         # ESLint, read-only
 pnpm format:check   # Prettier, read-only
 pnpm check          # astro check (+ vue-tsc --noEmit with Vue islands)
+pnpm test           # Vitest for islands and helpers with logic, where the project has such tests
 pnpm build          # astro build
 pnpm verify         # checks the built dist/ (scripts/verify-dist.mjs)
 pnpm test:e2e       # Playwright smoke and SEO specs at 1440 and 390 px
@@ -62,7 +63,7 @@ The `Jenkinsfile` has a **`Checks` stage that is mandatory** and runs before any
 
 1. `pnpm install --frozen-lockfile`, then `pnpm audit`;
 2. `pnpm eslint` and `pnpm format:check`;
-3. `pnpm check`: `astro check`, plus `vue-tsc --noEmit` when the site has Vue islands;
+3. `pnpm check`: `astro check`, plus `vue-tsc --noEmit` when the site has Vue islands; then `pnpm test` (Vitest) where the project has Vitest tests;
 4. `pnpm build`, then **`pnpm verify`**: the output is checked after the build, because Astro and its integrations only log many errors and still finish. Verification covers at least a title and canonical URL on every page, a Content-Security-Policy without `unsafe-inline` or `unsafe-eval` scripts, no internal addresses or `TODO` placeholders in the output, `robots.txt`, and a sitemap that lists exactly the indexable pages (none while `PUBLIC_NOINDEX=true`). A headless site (archetype `C-headless`) adds the **build provenance check**: the build writes the content export it was made from next to the build, and `pnpm verify` compares `dist/` with it (every page and media file of the export exists, nothing else does) ([content.md](content.md#c-headless-edited-in-a-separate-backend));
 5. **Playwright smoke** against the built site (the template serves `dist/` with `e2e/serve.mjs`), at **1440x900 and 390x844**, failing on a console error, a failed request or a broken image;
 6. **SEO spec**: every indexable route has a title and description within limits, one `h1`, a canonical URL, Open Graph tags and an image; the sitemap lists exactly the indexable routes; `robots.txt` and `llms.txt` exist ([seo.md](seo.md)).
