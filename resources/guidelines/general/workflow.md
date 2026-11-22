@@ -6,10 +6,8 @@ summary: Tasking basics, branch naming, commit convention, repository rules, pul
 ---
 # Project guidelines - Workflow
 
-How a change travels from a prepared issue to a merged pull request. Company-wide standards are at
-https://dev.docs.esoul.cz; this file specialises them for the repository and never contradicts
-them. The tasking and commit conventions chosen for this project are recorded in
-[CONTEXT.md](../../CONTEXT.md).
+How a change travels from a prepared issue to a merged pull request. The tasking and commit
+conventions chosen for this project are recorded in [CONTEXT.md](../../CONTEXT.md).
 
 ## Tasking
 
