@@ -79,9 +79,9 @@ Application code is grouped by **technical layer** under `src/` (PSR-4 namespace
 
 ## Caching
 
-- Cache storage is file-based (`lsr/caching`, `temp/`) by default. Redis is a project choice: configure it explicitly as a storage service, never assume it.
-- Redis storage and journal share an application-specific namespace prefix, so applications sharing one Redis instance cannot touch each other's keys.
-- Code MUST NOT clear the whole cache or the whole Redis database (no `FLUSHALL`, no global clean to make a test or a bug go away). Fix the key or the invalidation instead; maintenance cleans by tag (`php bin/console cache:clean --tag=<tag>`).
+- Cache storage is file-based (`lsr/caching`, `temp/`) by default. A Valkey cache is a project choice: the Redis-compatible `RedisStorage` talks to the stack's own Valkey service (`REDIS_HOST=valkey`, [deployment.md](deployment.md#cache)). Configure it explicitly as a storage service, never assume it.
+- Valkey storage and journal share an application-specific namespace prefix, so two environments or applications that ever reach the same instance cannot touch each other's keys.
+- Code MUST NOT clear the whole cache or the whole Valkey database (no `FLUSHALL`, no global clean to make a test or a bug go away). Fix the key or the invalidation instead; maintenance cleans by tag (`php bin/console cache:clean --tag=<tag>`).
 - Cached values are tagged with every table or model they depend on, and a write invalidates those tags (ORM `save()` does; a raw DB write does it explicitly). A key includes the user, tenant, locale or permission scope the value varies by.
 
 ## Templates and frontend shell
@@ -97,7 +97,7 @@ RoadRunner workers do **not** reset memoized or static state between requests or
 - Request- or job-dependent memoization MUST live on request- or job-local objects.
 - Persistent objects (services, singletons), static properties and global calls MUST NOT hold per-request data (the current user, locale, request, tenant); if they must, the lifecycle clearing is explicit and tested.
 - Workers are recycled by `max_jobs` and `max_worker_memory` in `.rr.yaml`; correctness MUST NOT depend on that recycling.
-- State that must outlive or be shared between workers (sessions, cache) lives in the configured storage (file storage under `temp/` or the database by default, Redis when the project chose it), never in worker memory.
+- State that must outlive or be shared between workers (sessions, cache) lives in the configured storage (file storage under `temp/` or the database by default, Valkey when the project chose it), never in worker memory.
 
 ## Background work
 
