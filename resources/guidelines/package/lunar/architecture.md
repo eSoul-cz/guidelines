@@ -3,7 +3,7 @@ title: Architecture
 ---
 # Project guidelines - Architecture
 
-Lunar is the shop's e-commerce core: products, variants, prices, carts, orders, customers, channels, taxes and the admin panel. The project extends it and does not replace it. A Lunar project selects `package/filament` and `package/laravel-inertia` next to this layer when it has a Filament-themed admin or an Inertia storefront; the rules here cover only what Lunar adds. The shop's integrations with payment gateways, carriers and ERP systems are in [integrations.md](integrations.md).
+Lunar is the shop's e-commerce core: products, variants, prices, carts, orders, customers, channels, taxes and the admin panel. The project extends it and does not replace it. A Lunar project also carries `package/filament` (its admin is a Filament panel) and, with an Inertia storefront, `package/laravel-inertia`; the rules here cover only what Lunar adds. The shop's integrations with payment gateways, carriers and ERP systems are in [integrations.md](integrations.md).
 
 ## Layers
 
@@ -72,13 +72,13 @@ Lunar keeps some registries as container singletons for the life of a process; t
 
 ## Lunar admin panel
 
-Lunar's admin is a Filament panel: a separate user interface to which the Inertia frontend rules do not apply.
+Lunar's admin is a Filament panel, so a Lunar project carries the `package/filament` layer ([Admin panels](#admin-panels)). It is a separate user interface to which the Inertia frontend rules do not apply.
 
-- The panel is built by a dedicated provider, `App\Domain\Providers\Filament\LunarPanelProvider`, listed in `bootstrap/providers.php`. It configures the panel (`LunarPanel::panel(...)`, path, brand, middleware, pages, resources, extensions) and registers it. Like every provider it holds wiring only, never a business rule.
+- The panel is built by a dedicated provider, `App\Domain\Providers\Filament\LunarPanelProvider`, listed in `bootstrap/providers.php`. It takes the place of the `AdminPanelProvider` of the Filament layer. It configures the panel (`LunarPanel::panel(...)`, path, brand, middleware, pages, resources, extensions) and registers it. Like every provider it holds wiring only, never a business rule.
 - Plain CRUD stays in Lunar's resources. Customisation is panel configuration, resource and page extensions, and project pages and actions in `App\Infrastructure\Admin`, registered by the provider.
 - A custom admin action that changes state dispatches a command. It MUST NOT write the Lunar model directly.
 - A Lunar action that writes state outside the project's command rules (status changes, direct refunds) is replaced or removed. The admin is not a bypass of the storefront's commands.
-- The panel starts with Lunar's default theme; a brand logo and render hooks are allowed on it. A project MAY move to its own Filament theme. The theme rule of `package/filament` then applies, and the project selects that layer.
+- The panel starts with Lunar's default theme; a brand logo and render hooks are allowed on it. A project MAY move to its own Filament theme. The theme rule of the Filament layer ([Tailwind CSS](frontend.md#tailwind-css)) then applies.
 - Admin access is the `staff` guard plus the project's policies and panel middleware.
 - Lunar ships no translations for some locales. The project provides them in `lang/vendor/`. A missing key falls back to the fallback locale; a page never mixes locales by environment.
 

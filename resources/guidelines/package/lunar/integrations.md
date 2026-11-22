@@ -19,11 +19,13 @@ A shop depends on other systems: a payment gateway takes the money, a carrier ta
 
 ## Writes and the outbox
 
+This section applies where the project's outbox ADR applies. Without one, a write to an external system is a queued job that carries a stable idempotency key ([Idempotency keys](#idempotency-keys)), and the rules of [Every integration](#every-integration) still hold.
+
 - A write that must not be lost or duplicated (a payment, a shipment, an invoice or any ERP document) is an outbox message written by the command handler in the same transaction as the state change ([cqrs.md](cqrs.md#writing-commands)). The project's outbox ADR defines the mechanism. Dispatching a job after the commit loses the write when the process dies between the two.
 - The outbox row is the source of truth and the queued job only wakes it up. A message is closed only after the external write succeeded and its response was stored. A lost job, a crash or an ambiguous result (a timeout without a response) leaves it open for the sweeper, which is safe because every write carries a stable idempotency key.
-- Messages are ordered per (aggregate, target): while one is processing or waiting for a retry, later ones of the same pair wait, and a dead message stops only that pair. A dependency across targets (an invoice after a capture) is an explicit link. An operation whose failure must not hold up the rest is listed as non-blocking in configuration.
+- Messages SHOULD be ordered per (aggregate, target): while one is processing or waiting for a retry, later ones of the same pair wait, and a dead message stops only that pair. A dependency across targets (an invoice after a capture) is an explicit link. An operation whose failure must not hold up the rest is listed as non-blocking in configuration.
 - A deduplication key is unique among undelivered messages, and a newer upsert of the same aggregate and operation supersedes the older pending one.
-- Retries are bounded with growing delays for transient failures; a permanent failure goes straight to `dead` with an operator event. A circuit breaker pauses a target that keeps failing. Staff retry, cancel or resolve a message in the admin with a reason, and each action is audited.
+- Retries are bounded with growing delays for transient failures; a permanent failure goes straight to `dead` with an operator event. A circuit breaker SHOULD pause a target that keeps failing. Staff retry, cancel or resolve a message in the admin with a reason, and each action is audited.
 - A transport delivers one operation, throws the typed transient or permanent failure and never retries itself. Only a command handler creates messages. A record imported from the remote system never enters the outbox beyond its link.
 - Retention is part of the ADR: delivered messages lose their payload after a period, dead ones stay until resolved.
 
@@ -68,6 +70,8 @@ A shop depends on other systems: a payment gateway takes the money, a carrier ta
 
 ## Carriers and shipping labels
 
+This section applies when the shop integrates a carrier or a shipping aggregator.
+
 - One port serves every carrier, and a carrier service is one value object in one form, never a string that each caller parses.
 - A shipment has a stable external id (the order number and the shipment sequence). Adding it again returns the first packages, and dropping a missing package succeeds.
 - The transport records the carrier's answer (package numbers, tracking numbers, label location) with a command as soon as the carrier accepts the shipment, before it downloads the label. The label download is a separate outbox operation that runs after the shipment exists and stores the PDF on a private disk. A refused shipment stays a draft for staff. An accepted one whose download failed is retried or dropped at the carrier, and is never sent again with other contents.
@@ -77,6 +81,8 @@ A shop depends on other systems: a payment gateway takes the money, a carrier ta
 - A shipping price is calculated inside Lunar by a shipping modifier from local data ([Calculation cost](architecture.md#calculation-cost)); a carrier API is never called during a cart calculation.
 
 ## ERP export, import and stock
+
+This section applies when the shop integrates an ERP or accounting system.
 
 - When the ERP is the system of record for documents, the shop writes orders and payments to it and reads the numbers, due dates, tax points and stock. It never computes a value the ERP owns, and it never assumes the ERP is reachable: every read has a locally stored answer and every write is queued.
 - An order export is an outbox upsert under the order's idempotency key. A derived document extends that key with the kind of document and the instruction or sequence number, so each document has its own key. A document that depends on another (an invoice after the capture, an advance payment after the advance invoice) names it as a dependency.
