@@ -17,7 +17,6 @@ This file lists the tools the project uses and how to run them.
 | Static analysis      | PHPStan level 10 (`phpstan.neon`); the level MUST NOT be lowered                                 |
 | Code style           | PHP-CS-Fixer (`.php-cs-fixer.php` is the PHP formatting contract)                                |
 | PHP tests            | PHPUnit 13, paratest                                                                             |
-| Mutation testing     | Infection (local, optional)                                                                      |
 | Node                 | 26                                                                                               |
 | Package manager      | pnpm 12 (the latest release, `packageManager`)                                              |
 | Frontend build       | Vite 8, Vue 3, Inertia 3, TypeScript, Tailwind CSS 4                                             |
@@ -43,7 +42,6 @@ Tool caches live under `temp/tools/` (ignored with the rest of `temp/`):
 | PHPStan      | `temp/tools/phpstan`               |
 | PHPUnit      | `temp/tools/phpunit`               |
 | PHP-CS-Fixer | `temp/tools/php-cs-fixer.cache`    |
-| Infection    | `temp/tools/infection`             |
 
 The rest of `temp/` is the application runtime cache (DI container, Latte, models, catalogs, sessions); do not clear one when you mean the other. Clear the generated DI container with `php bin/console container:clean` after changing DI configuration.
 
