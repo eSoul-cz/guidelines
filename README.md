@@ -108,7 +108,7 @@ Run it next to the other read-only checks (it does not write). Exit code 1 means
 
 ## Laravel Boost interop
 
-Boost writes its own `<laravel-boost-guidelines>` block into `AGENTS.md` and this package writes a separate `<!-- esoul-guidelines:begin agents -->` block. The two never edit each other's content, and no Boost guidelines are shipped here. Where generated Boost text conflicts with the project guidelines (for example its Laravel Cloud advice), the project guidelines apply; the Laravel layer states this in `deployment.md` and `tools.md`.
+Boost writes its own `<laravel-boost-guidelines>` block into `AGENTS.md` and this package writes a separate `<!-- esoul-guidelines:begin agents -->` block. The two never edit each other's content, and no Boost guidelines are shipped here. Where generated Boost text conflicts with the project guidelines (for example its Laravel Cloud advice), the project guidelines apply; the Laravel layer states this in `tools.md`, and `general/deployment.md` lists hosted platforms under what not to introduce.
 
 ## Development
 
@@ -143,6 +143,7 @@ build of `main` triggers the Satis mirror. The package supports PHP 8.4 and ever
 - The note "local additions go below" lives inside the managed block (visible, regenerated), not outside it.
 - `No test: <reason>` is the PR-description line for a behaviour change without a test (`general/testing.md`, `general/workflow.md`); it is English like the rest of the guidelines.
 - The Jenkins delivery wording in `framework/lsr/deployment.md` follows the template `Jenkinsfile`, which calls the shared `lsrPipeline`; that pipeline does not exist yet in the shared libraries (`laravelPipeline` only) and `astroCmsPipeline` is likewise planned.
+- `general/deployment.md` is the deployment scheme shared by every stack, written as a reference for project people and agents (only devops deploy and change stacks). The framework `deployment.md` files add runtime detail and reuse its H2 texts (`Environments and releases`, `Local development`, `Reverse proxy and TLS`, `Health endpoint`, `Configuration and secrets`) so the rendered file reads as one; they do not repeat the scheme.
 - Baseline stack statements in the layers (PHP 8.5, Laravel 13, Inertia 3 + Vue 3, pnpm 12, Node 26, Vite 8, Pint, Larastan level 10, PHPUnit 13, sqlite test DB) are the proposed defaults and may change.
 - No PHAR build and no Composer plugin or `post-update-cmd` hook is provided.
 
