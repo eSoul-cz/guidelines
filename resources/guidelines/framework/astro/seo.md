@@ -37,18 +37,15 @@ Search engines and AI assistants read the HTML the build or the server produces.
 
 ## Sitemap, robots, `llms.txt` and Markdown
 
-The rules (all bots allowed, sitemap with `lastmod`, `llms.txt`, Markdown versions, the launch gate and exceptions) are the company-wide AI-readiness standards (https://dev.docs.esoul.cz); the project implements them. Astro implementation:
+What the site publishes and why (all bots allowed, the sitemap with `lastmod`, `llms.txt`, Markdown versions, the preview gate, exceptions by ADR) is stated in [public-website.md](public-website.md) for every public website. The Astro implementation:
 
-- `@astrojs/sitemap` writes the sitemap at build time with canonical URLs only and without `noindex` pages (a filter built from the routes module's `index: false` records). On a headless site the sitemap also respects `noindex` set in the backend.
-- `robots.txt` and `llms.txt` are static endpoints (`src/pages/robots.txt.ts`, `src/pages/llms.txt.ts`) built from the same content as the pages. Markdown versions of pages, where the standard asks for them, are static endpoints too, advertised with `<link rel="alternate" type="text/markdown">`.
-- While the site is a protected preview, `robots.txt` disallows everything, every page is `noindex` and no sitemap is built ([deployment.md](deployment.md#preview-protection)); `robots.txt` stays reachable without basic auth.
+- `@astrojs/sitemap` writes the sitemap at build time with canonical URLs only and without `noindex` pages (a filter built from the routes module's `index: false` records). The integration's `serialize` hook sets `lastmod` from the content's last-changed date. On a headless site the sitemap also respects `noindex` set in the backend.
+- `robots.txt` and `llms.txt` are static endpoints (`src/pages/robots.txt.ts`, `src/pages/llms.txt.ts`) built from the same content as the pages; `robots.txt` names the sitemap and disallows the backend paths the site shares its domain with. Markdown versions of pages are static endpoints too, advertised with `<link rel="alternate" type="text/markdown">`.
+- While the site is a protected preview, one switch (`PUBLIC_NOINDEX`) makes `robots.txt` disallow everything, every page `noindex` and the sitemap absent ([deployment.md](deployment.md#preview-protection)); `pnpm verify` fails when they disagree.
 
 ## Redirects from the old site
 
-- Every URL of the old site that had traffic or links gets a **301** to its closest new page, as listed in the project's sitemap and meta document. Redirects live in `redirects` in `astro.config.mjs` or in the web server configuration, in one place.
-- Content removed for good returns **410**, not a redirect to the homepage. Old upload paths (for example `/wp-content/uploads/*`) are handled explicitly.
-- Redirect targets use the canonical URL form ([URLs and trailing slash](#urls-and-trailing-slash)), so no chain of two redirects exists.
-- After a slug change, the old slug redirects to the new one.
+The rules (301 to the closest page, 410 for removed content, canonical targets without chains, the list in the sitemap document handed over in the deploy notes) are in [public-website.md](public-website.md#redirects-from-an-old-site). Redirects live in the host NGINX site, not in the Astro project. Astro's `redirects` option is used only on an SSR site: a static build writes a meta-refresh page with status 200 for each entry and cannot answer 410.
 
 ## After launch
 
