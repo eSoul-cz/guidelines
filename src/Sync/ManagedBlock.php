@@ -12,37 +12,31 @@ use Esoul\Guidelines\GuidelinesException;
  */
 final class ManagedBlock
 {
-    public static function begin(string $name): string
-    {
+    public static function begin(string $name): string {
         return '<!-- esoul-guidelines:begin ' . $name . ' -->';
     }
 
-    public static function end(string $name): string
-    {
+    public static function end(string $name): string {
         return '<!-- esoul-guidelines:end ' . $name . ' -->';
     }
 
     /** Hash of the block content; line endings and surrounding blank lines are ignored. */
-    public static function hash(string $content): string
-    {
+    public static function hash(string $content): string {
         return hash('sha256', self::normalise($content));
     }
 
-    public static function normalise(string $content): string
-    {
+    public static function normalise(string $content): string {
         return trim(str_replace("\r\n", "\n", $content), "\n");
     }
 
-    public static function render(string $name, string $content): string
-    {
+    public static function render(string $name, string $content): string {
         return self::begin($name) . "\n" . self::normalise($content) . "\n" . self::end($name);
     }
 
     /**
      * @return array{start: int, end: int, content: string}|null byte offsets of the whole block (markers included)
      */
-    public static function find(string $text, string $name): ?array
-    {
+    public static function find(string $text, string $name): ?array {
         $begin = self::begin($name);
         $start = strpos($text, $begin);
         if ($start === false) {
@@ -62,8 +56,7 @@ final class ManagedBlock
     }
 
     /** Replaces the block in place, or returns null when the text has no such block. */
-    public static function replace(string $text, string $name, string $content): ?string
-    {
+    public static function replace(string $text, string $name, string $content): ?string {
         $found = self::find($text, $name);
         if ($found === null) {
             return null;
@@ -73,8 +66,7 @@ final class ManagedBlock
     }
 
     /** Removes the block and the blank-line gap it leaves. Returns the text unchanged without a block. */
-    public static function remove(string $text, string $name): string
-    {
+    public static function remove(string $text, string $name): string {
         $found = self::find($text, $name);
         if ($found === null) {
             return $text;

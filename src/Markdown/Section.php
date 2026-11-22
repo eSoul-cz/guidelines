@@ -14,8 +14,7 @@ final readonly class Section
     ) {
     }
 
-    public static function normaliseKey(string $heading): string
-    {
+    public static function normaliseKey(string $heading): string {
         $heading = str_replace(['`', '*'], '', $heading);
         $heading = preg_replace('/\s+/u', ' ', $heading) ?? $heading;
 

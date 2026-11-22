@@ -10,15 +10,13 @@ use Esoul\Guidelines\Config\ProjectConfig;
 /** CI check: drift (block differs from the lock) and outdated (lock differs from a fresh render). */
 final class Checker
 {
-    public function __construct(private readonly string $root)
-    {
+    public function __construct(private readonly string $root) {
     }
 
     /**
      * @param list<Target> $targets fresh render
      */
-    public function check(ProjectConfig $config, array $targets, ?Lock $lock): CheckResult
-    {
+    public function check(ProjectConfig $config, array $targets, ?Lock $lock): CheckResult {
         if ($lock === null) {
             return new CheckResult([], [sprintf('%s not found. Run `esoul-guidelines sync` and commit the lock file.', Lock::FILE)]);
         }
@@ -48,7 +46,7 @@ final class Checker
             }
         }
         foreach ($lock->files as $path => $entry) {
-            if (!isset($produced[$path])) {
+            if ( ! isset($produced[$path])) {
                 $outdated[] = sprintf('%s: block "%s" is no longer produced by the selected layers. Run `esoul-guidelines sync` to remove it.', $path, $entry->block);
             }
         }

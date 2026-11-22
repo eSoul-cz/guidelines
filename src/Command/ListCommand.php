@@ -12,8 +12,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand(name: 'list', description: 'List the available guideline layers and their files')]
 final class ListCommand extends ProjectCommand
 {
-    protected function handle(string $root, InputInterface $input, SymfonyStyle $io): int
-    {
+    protected function handle(string $root, InputInterface $input, SymfonyStyle $io): int {
         $selected = ProjectConfig::exists($root) ? ProjectConfig::load($root)->layers : [];
 
         $rows = [];

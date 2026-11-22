@@ -21,8 +21,7 @@ final readonly class Change
     }
 
     /** @return array{added: int, removed: int} */
-    public function lineStats(): array
-    {
+    public function lineStats(): array {
         $ops = LineDiff::diff($this->current ?? '', $this->desired ?? '');
         $added = $removed = 0;
         foreach ($ops as [$op]) {

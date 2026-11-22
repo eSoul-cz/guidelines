@@ -26,8 +26,7 @@ final class Merger
     /**
      * @param list<SourceFile> $sources same file name, in layer order (at least one)
      */
-    public function merge(array $sources): MergedGuideline
-    {
+    public function merge(array $sources): MergedGuideline {
         if ($sources === []) {
             throw new GuidelinesException('Cannot merge an empty list of sources.');
         }
@@ -104,8 +103,7 @@ final class Merger
     /**
      * @param list<array{0: string, 1: string}> $parts [layer, text]
      */
-    private function joinParts(array $parts, string $primaryLayer): string
-    {
+    private function joinParts(array $parts, string $primaryLayer): string {
         $rendered = [];
         foreach ($parts as [$layer, $text]) {
             $replace = false;
@@ -125,8 +123,7 @@ final class Merger
         return implode("\n\n", $rendered);
     }
 
-    private function titleFromH1(?string $h1): ?string
-    {
+    private function titleFromH1(?string $h1): ?string {
         if ($h1 === null) {
             return null;
         }

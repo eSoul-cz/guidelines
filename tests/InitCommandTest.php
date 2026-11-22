@@ -6,8 +6,7 @@ namespace Esoul\Guidelines\Tests;
 
 final class InitCommandTest extends TestCase
 {
-    public function testNoInteractionAcceptsTheDetectedStackAndSkipsMissingLayers(): void
-    {
+    public function test_no_interaction_accepts_the_detected_stack_and_skips_missing_layers(): void {
         $this->seedLayers();
         $this->layer('package/inertia-vue', 'frontend.md', "# Project guidelines - Frontend\n");
         file_put_contents($this->project . '/composer.json', '{"require":{"laravel/framework":"^13.0","filament/filament":"^5.0"}}');
@@ -23,8 +22,7 @@ final class InitCommandTest extends TestCase
         self::assertStringContainsString('package/filament', $tester->getDisplay());
     }
 
-    public function testDetectsTheTestingPackageLayers(): void
-    {
+    public function test_detects_the_testing_package_layers(): void {
         $this->seedLayers();
         $this->layer('package/mutation-testing', 'testing.md', "# Project guidelines - Testing\n");
         $this->layer('package/test-evidence', 'testing.md', "# Project guidelines - Testing\n");
@@ -39,8 +37,7 @@ final class InitCommandTest extends TestCase
         );
     }
 
-    public function testDetectsTheLsrCqrsLayerAfterTheFramework(): void
-    {
+    public function test_detects_the_lsr_cqrs_layer_after_the_framework(): void {
         $this->seedLayers();
         $this->layer('framework/lsr', 'testing.md', "# Project guidelines - Testing\n");
         $this->layer('package/lsr-cqrs', 'cqrs.md', "# Project guidelines - CQRS\n");

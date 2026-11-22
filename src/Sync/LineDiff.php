@@ -10,8 +10,7 @@ final class LineDiff
     /**
      * @return list<array{0: '+'|'-'|' ', 1: string}>
      */
-    public static function diff(string $old, string $new): array
-    {
+    public static function diff(string $old, string $new): array {
         $a = $old === '' ? [] : explode("\n", $old);
         $b = $new === '' ? [] : explode("\n", $new);
 

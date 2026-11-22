@@ -29,15 +29,14 @@ final class Renderer
     /**
      * @return list<Target> guideline files (ordered), then the index, then the AGENTS.md block
      */
-    public function render(ProjectConfig $config): array
-    {
+    public function render(ProjectConfig $config): array {
         $byName = [];
         foreach ($config->layers as $layer) {
-            if (!$this->layers->has($layer)) {
+            if ( ! $this->layers->has($layer)) {
                 throw new GuidelinesException(sprintf('Unknown guideline layer "%s". Available: %s.', $layer, implode(', ', $this->layers->layers())));
             }
             foreach ($this->layers->files($layer) as $file) {
-                if (!in_array($file->name, $config->exclude, true)) {
+                if ( ! in_array($file->name, $config->exclude, true)) {
                     $byName[$file->name][] = $file;
                 }
             }
@@ -79,8 +78,7 @@ final class Renderer
     /**
      * @param list<MergedGuideline> $guidelines
      */
-    private function renderIndex(ProjectConfig $config, array $guidelines): string
-    {
+    private function renderIndex(ProjectConfig $config, array $guidelines): string {
         $lines = [
             '# Project guidelines - Index',
             '',
@@ -109,8 +107,7 @@ final class Renderer
     /**
      * @param list<MergedGuideline> $guidelines
      */
-    private function renderAgents(array $guidelines): string
-    {
+    private function renderAgents(array $guidelines): string {
         $lines = [
             '## Project guidelines',
             '',

@@ -26,8 +26,7 @@ final class Synchronizer
     /**
      * @param list<Target> $targets
      */
-    public function plan(array $targets, ?Lock $lock): Plan
-    {
+    public function plan(array $targets, ?Lock $lock): Plan {
         $changes = [];
         $produced = [];
 
@@ -66,7 +65,7 @@ final class Synchronizer
             }
         }
 
-        return new Plan($changes, !is_file($this->root . '/' . self::CLAUDE_FILE));
+        return new Plan($changes, ! is_file($this->root . '/' . self::CLAUDE_FILE));
     }
 
     /**
@@ -74,8 +73,7 @@ final class Synchronizer
      *
      * @param list<Target> $targets
      */
-    public function apply(Plan $plan, array $targets, ProjectConfig $config): void
-    {
+    public function apply(Plan $plan, array $targets, ProjectConfig $config): void {
         foreach ($plan->changes as $change) {
             match ($change->status) {
                 Status::Create => $this->writeBlock($change, create: true),
@@ -95,28 +93,26 @@ final class Synchronizer
         }
         $lock = new Lock($this->packageVersion, $config->layers, $config->exclude, $files);
         $json = $lock->toJson();
-        if (!is_file($this->root . '/' . Lock::FILE) || file_get_contents($this->root . '/' . Lock::FILE) !== $json) {
+        if ( ! is_file($this->root . '/' . Lock::FILE) || file_get_contents($this->root . '/' . Lock::FILE) !== $json) {
             $this->fs->dumpFile($this->root . '/' . Lock::FILE, $json);
         }
     }
 
-    private function currentBlock(string $path, string $block): ?string
-    {
+    private function currentBlock(string $path, string $block): ?string {
         $file = $this->root . '/' . $path;
-        if (!is_file($file)) {
+        if ( ! is_file($file)) {
             return null;
         }
 
         return ManagedBlock::find((string) file_get_contents($file), $block)['content'] ?? null;
     }
 
-    private function writeBlock(Change $change, bool $create): void
-    {
+    private function writeBlock(Change $change, bool $create): void {
         $file = $this->root . '/' . $change->path;
         $content = (string) $change->desired;
         $isAgents = $change->kind === Target::KIND_AGENTS;
 
-        if (!is_file($file)) {
+        if ( ! is_file($file)) {
             $block = ManagedBlock::render($change->block, $content) . "\n";
             $this->fs->dumpFile($file, $isAgents ? "# Agent instructions\n\n" . $block : $block);
 
@@ -134,8 +130,7 @@ final class Synchronizer
         $this->fs->dumpFile($file, $replaced);
     }
 
-    private function removeBlock(Change $change): void
-    {
+    private function removeBlock(Change $change): void {
         $file = $this->root . '/' . $change->path;
         $text = (string) file_get_contents($file);
         $remaining = ManagedBlock::remove($text, $change->block);

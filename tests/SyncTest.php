@@ -9,15 +9,13 @@ use Esoul\Guidelines\Sync\ManagedBlock;
 
 final class SyncTest extends TestCase
 {
-    protected function setUp(): void
-    {
+    protected function setUp(): void {
         parent::setUp();
         $this->seedLayers();
         $this->config('{"layers": ["general", "framework/laravel"]}');
     }
 
-    public function testSyncWritesMergedFilesIndexAgentsBlockLockAndClaudeFile(): void
-    {
+    public function test_sync_writes_merged_files_index_agents_block_lock_and_claude_file(): void {
         file_put_contents($this->project . '/AGENTS.md', "# Agents\n\n<laravel-boost-guidelines>\nboost\n</laravel-boost-guidelines>\n");
 
         self::assertSame(0, $this->run_('sync')->getStatusCode());
@@ -46,8 +44,7 @@ final class SyncTest extends TestCase
         self::assertSame(0, $this->run_('check')->getStatusCode());
     }
 
-    public function testSyncCreatesAgentsFileAndKeepsAnExistingClaudeFile(): void
-    {
+    public function test_sync_creates_agents_file_and_keeps_an_existing_claude_file(): void {
         file_put_contents($this->project . '/CLAUDE.md', 'custom');
 
         $this->run_('sync');
@@ -56,8 +53,7 @@ final class SyncTest extends TestCase
         self::assertSame('custom', $this->read('CLAUDE.md'));
     }
 
-    public function testContentOutsideTheBlockSurvivesAResync(): void
-    {
+    public function test_content_outside_the_block_survives_a_resync(): void {
         $this->run_('sync');
         $path = $this->project . '/docs/project_guidelines/tools.md';
         file_put_contents($path, "Intro above.\n\n" . ltrim((string) file_get_contents($path)) . "\n## Local section\n\nOurs.\n");
@@ -71,8 +67,7 @@ final class SyncTest extends TestCase
         self::assertStringEndsWith("<!-- esoul-guidelines:end tools -->\n\n## Local section\n\nOurs.\n", $tools);
     }
 
-    public function testSyncRefusesLocallyEditedBlockAndForceOverwritesIt(): void
-    {
+    public function test_sync_refuses_locally_edited_block_and_force_overwrites_it(): void {
         $this->run_('sync');
         $path = $this->project . '/docs/project_guidelines/testing.md';
         file_put_contents($path, str_replace('General rule.', 'Edited rule.', (string) file_get_contents($path)));
@@ -91,8 +86,7 @@ final class SyncTest extends TestCase
         self::assertSame(0, $this->run_('check')->getStatusCode());
     }
 
-    public function testDryRunWritesNothingAndReportsChanges(): void
-    {
+    public function test_dry_run_writes_nothing_and_reports_changes(): void {
         $tester = $this->run_('sync', ['--dry-run' => true]);
 
         self::assertSame(0, $tester->getStatusCode());
@@ -101,8 +95,7 @@ final class SyncTest extends TestCase
         self::assertFileDoesNotExist($this->project . '/' . Lock::FILE);
     }
 
-    public function testCheckReportsDriftWhenABlockWasEdited(): void
-    {
+    public function test_check_reports_drift_when_a_block_was_edited(): void {
         $this->run_('sync');
         $path = $this->project . '/docs/project_guidelines/tools.md';
         file_put_contents($path, str_replace('PHP 8.5.', 'PHP 7.', (string) file_get_contents($path)));
@@ -114,8 +107,7 @@ final class SyncTest extends TestCase
         self::assertStringNotContainsString('Outdated', $check->getDisplay());
     }
 
-    public function testCheckReportsOutdatedWhenTheSourcesChanged(): void
-    {
+    public function test_check_reports_outdated_when_the_sources_changed(): void {
         $this->run_('sync');
         $this->layer('framework/laravel', 'tools.md', "---\ntitle: Tools\norder: 20\n---\n# Project guidelines - Tools\n\n## Versions\n\nPHP 8.6.\n");
 
@@ -127,16 +119,14 @@ final class SyncTest extends TestCase
         self::assertStringNotContainsString('Drift', $check->getDisplay());
     }
 
-    public function testCheckFailsWithoutLock(): void
-    {
+    public function test_check_fails_without_lock(): void {
         $check = $this->run_('check');
 
         self::assertSame(1, $check->getStatusCode());
         self::assertStringContainsString(Lock::FILE, $check->getDisplay());
     }
 
-    public function testRemovingALayerRemovesItsContributionAndOrphanedBlocks(): void
-    {
+    public function test_removing_a_layer_removes_its_contribution_and_orphaned_blocks(): void {
         $this->run_('sync');
         $tools = $this->project . '/docs/project_guidelines/tools.md';
         $testing = $this->project . '/docs/project_guidelines/testing.md';
@@ -158,8 +148,7 @@ final class SyncTest extends TestCase
         self::assertSame(0, $this->run_('check')->getStatusCode());
     }
 
-    public function testOrphanedFileKeepsLocalContentButLosesItsBlock(): void
-    {
+    public function test_orphaned_file_keeps_local_content_but_loses_its_block(): void {
         $this->run_('sync');
         $tools = $this->project . '/docs/project_guidelines/tools.md';
         file_put_contents($tools, (string) file_get_contents($tools) . "\nKeep me.\n");
@@ -170,8 +159,7 @@ final class SyncTest extends TestCase
         self::assertSame("Keep me.\n", $this->read('docs/project_guidelines/tools.md'));
     }
 
-    public function testExcludedFilesAreNotProduced(): void
-    {
+    public function test_excluded_files_are_not_produced(): void {
         $this->config('{"layers": ["general", "framework/laravel"], "exclude": ["tools"]}');
 
         $this->run_('sync');
@@ -180,8 +168,7 @@ final class SyncTest extends TestCase
         self::assertStringNotContainsString('tools.md', $this->read('docs/project_guidelines/index.md'));
     }
 
-    public function testUnknownLayerFailsWithAClearMessage(): void
-    {
+    public function test_unknown_layer_fails_with_a_clear_message(): void {
         $this->config('{"layers": ["general", "framework/nope"]}');
 
         $tester = $this->run_('sync');
@@ -190,8 +177,7 @@ final class SyncTest extends TestCase
         self::assertStringContainsString('framework/nope', $tester->getDisplay());
     }
 
-    private function blockOf(string $relative, string $name): string
-    {
+    private function blockOf(string $relative, string $name): string {
         return ManagedBlock::find($this->read($relative), $name)['content'] ?? '';
     }
 }

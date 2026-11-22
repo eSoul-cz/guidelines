@@ -25,8 +25,7 @@ final readonly class Target
     ) {
     }
 
-    public function hash(): string
-    {
+    public function hash(): string {
         return ManagedBlock::hash($this->content);
     }
 }
