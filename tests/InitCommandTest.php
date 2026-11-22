@@ -72,6 +72,39 @@ final class InitCommandTest extends TestCase
         );
     }
 
+    public function test_interactive_internal_repository_without_a_stack_is_saved_with_no_stack_layers(): void {
+        $this->seedProfile();
+
+        // Nothing is detected, so the default answer is the explicit "none" entry.
+        $default = $this->runInteractive('init', ['internal', '']);
+
+        self::assertSame(0, $default->getStatusCode());
+        self::assertSame(
+            ['layers' => ['general', 'profile/internal']],
+            json_decode($this->read('esoul-guidelines.json'), true),
+        );
+
+        unlink($this->project . '/esoul-guidelines.json');
+        $this->runInteractive('init', ['internal', '0']);
+
+        self::assertSame(
+            ['layers' => ['general', 'profile/internal']],
+            json_decode($this->read('esoul-guidelines.json'), true),
+        );
+    }
+
+    public function test_interactive_stack_layers_can_still_be_picked_by_number(): void {
+        $this->seedProfile();
+
+        // 0 is "none", 1 is framework/laravel.
+        $this->runInteractive('init', ['internal', '1']);
+
+        self::assertSame(
+            ['layers' => ['general', 'profile/internal', 'framework/laravel']],
+            json_decode($this->read('esoul-guidelines.json'), true),
+        );
+    }
+
     public function test_interactive_client_is_the_default_and_adds_no_profile(): void {
         $this->seedProfile();
         file_put_contents($this->project . '/composer.json', '{"require":{"laravel/framework":"^13.0"}}');
