@@ -2,7 +2,7 @@
 title: Security and data
 order: 50
 agents: true
-summary: Secrets, personal and client data, anonymized dumps, production access, authorization and its tests, sessions and accounts.
+summary: Secrets, personal and client data, real data and anonymized dumps, production access, authorization and its tests, sessions and accounts.
 ---
 # Project guidelines - Security and data
 
@@ -14,8 +14,8 @@ the application has roles or accounts, the project records its roles and permiss
 
 - Credentials, tokens, API keys, private keys and production environment files MUST NOT be
   committed. `.env` is not a template; `.env.example` holds placeholders and local defaults only.
-  Database exports and generated documents holding client data are not committed either; the
-  repository-wide list is in [workflow.md](workflow.md#repository-rules).
+  Non-anonymised database exports and generated documents holding personal data are not committed
+  either; the repository-wide list is in [workflow.md](workflow.md#repository-rules).
 - Production and staging secrets live in Komodo and 1Password. Jenkins reads secrets only through
   `withCredentials`; a pipeline change MUST NOT print a credential or pass it on a logged command
   line.
@@ -31,10 +31,19 @@ the application has roles or accounts, the project records its roles and permiss
 
 ## Personal and client data
 
-- Real names, contacts, addresses, amounts, rates and documents of the client and its customers
-  live only in the client's source material, kept as evidence. They MUST NOT be copied into code,
-  seeders, factories, fixtures, tests, issues, pull requests, commit messages or published
-  documents. Use invented data and reserved example domains.
+- Personal data of the client's customers (real names, contacts, addresses, identifiers) and
+  non-anonymised database exports MUST NOT be committed or copied into code, seeders, factories,
+  fixtures, tests, issues, pull requests, commit messages or published documents. Use invented
+  data and reserved example domains.
+- Client source material that holds no personal data (documents, exports without personal data)
+  MAY live in the repository's Git LFS `assets/`, kept as evidence and never edited. A fixture
+  derived from it is anonymised.
+- **Public data exception.** Publicly available data (a public register such as ARES, data the
+  client's application is meant to publish) is not covered by the personal-data ban. Whether data
+  counts as public is a per-application decision recorded in the project (`CONTEXT.md` or an ADR).
+  Further personal-data exceptions are allowed case by case with a recorded approval.
+- In every case, data is **reviewed before it is committed**: the author checks that it holds
+  nothing personal or private beyond the recorded exceptions, and a reviewer confirms it.
 - Screenshots and pasted spreadsheet fragments in issues and pull requests are exports too. Redact
   them.
 - A log line names records by id. It carries no personal data, no amounts and no file content.
@@ -43,16 +52,20 @@ the application has roles or accounts, the project records its roles and permiss
 
 ## Anonymized dumps for agents
 
-- Agents and developers work with **anonymized** data only. An agent MUST NOT receive, read or
-  query a non-anonymized production or legacy database, dump or export.
+- **Anonymized** dumps are the default for development.
+- Read-only access to real data is generally allowed, with caution for production. The agent
+  judges from these guidelines and from what it is about to read (personal or sensitive data,
+  production) and asks the owner for confirmation before reading production or sensitive data;
+  dev and staging normally hold no sensitive data. An agent MUST NOT write to real data, and
+  nothing it reads is exported into the repository, issues or pull requests.
 - An anonymized dump is produced by a reviewed, repeatable script that replaces personal fields
   (names, e-mails, phones, addresses, identifiers, free-text notes) and keeps the shape and volume
   needed for development. The script and its field list are versioned; the raw dump is not.
 - Anonymized dumps are stored where the project documents (for example Git LFS) or are produced
   locally from a documented command. They are never kept in gitignored folders and handed around
   by hand.
-- A legacy database is available locally only as such an anonymized dump, through a read-only
-  account.
+- A legacy database is available locally by default as such an anonymized dump, through a
+  read-only account.
 
 ## Production access
 
@@ -62,8 +75,9 @@ the application has roles or accounts, the project records its roles and permiss
   integration stays switched off.
 - Tests never reach a real external system and hold no production keys; the guards are in
   [testing.md](testing.md#test-doubles).
-- Agents never run a deployment, never push images and never change CI credentials. Deployments
-  run only from Jenkins after a merged pull request.
+- Agents MAY trigger Jenkins jobs (builds, image builds, Satis rebuilds) when the owner asks.
+  Agents never deploy outside Jenkins, never push images or artifacts themselves and never change
+  CI credentials. Production deployments run only from Jenkins after a merged pull request.
 - A data correction in a real environment ships as a reviewed migration or as a command that goes
   through the application's normal write path, never as manual SQL. Only what goes through that
   path reaches the change history.
