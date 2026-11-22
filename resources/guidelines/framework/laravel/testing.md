@@ -89,7 +89,7 @@ php artisan test --group=db-engine    # only in a project that opted in
 
 ## CQRS testing
 
-- Handler tests live in `tests/Feature/CQRS`. How many scenarios a handler gets follows [How much to test](#how-much-to-test); a handler test asserts the expected behaviour, the changes in the database and the returned data.
+- Handler tests live in `tests/Feature/CQRS`. A handler reached only through one endpoint is covered by that endpoint's tests, not by its own; a handler reached through several surfaces or none (a job, a console command, a bus-only call) gets feature tests by [How much to test](#how-much-to-test), asserting the expected behaviour, the changes in the database and the returned data.
 - A handler is called in one of two ways:
   - instantiated directly, for a handler without complex dependencies;
   - through the buses taken from the container, so that dependencies resolve the way production code resolves them. This is the preferred form:
@@ -105,7 +105,7 @@ $queryBus = $this->app->get(QueryBusInterface::class);
 ## Controller testing
 
 - Controller tests live in `tests/Feature/Http`. A complex controller MAY be split into several test classes by functionality.
-- How many scenarios an endpoint gets follows [How much to test](#how-much-to-test). The authentication and authorization applied to it are covered by its [authorization tests](#authorization-tests).
+- How many scenarios an endpoint gets follows [How much to test](#how-much-to-test), and they include the flow of the command or query it alone dispatches. The authentication and authorization applied to it are covered by its [authorization tests](#authorization-tests).
 - Every test asserts the status explicitly (`assertOk()`, `assertStatus()`, `assertForbidden()`), before anything else: with debug off an error page is an Inertia response too.
 - Authenticate with `actingAs()` when the route requires it.
 - GET endpoints: the status and, for Inertia responses, the component and the props that carry behaviour (`assertInertia()`).

@@ -130,4 +130,4 @@ final readonly class SomeService
 
 ## Testing
 
-Handler tests live in `tests/Feature/CQRS/<Module>` and run through the buses from the container. How many scenarios a handler gets follows [How much to test](testing.md#how-much-to-test); the acting-user narrowing of a query is covered by its ownership and scope tests ([testing.md](testing.md#authorization-tests)). See [testing.md](testing.md).
+Handler tests live in `tests/Feature/CQRS/<Module>` and run through the buses from the container. A handler reached only through one endpoint is covered by that endpoint's tests; any other handler follows [How much to test](testing.md#how-much-to-test). The acting-user narrowing of a query is covered by its ownership and scope tests ([testing.md](testing.md#authorization-tests)). See [testing.md](testing.md).

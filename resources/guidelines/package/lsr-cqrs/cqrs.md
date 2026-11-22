@@ -83,7 +83,7 @@ class SomeCommandHandler implements CommandHandlerInterface
 
 ## Testing
 
-- Tests for command handlers and queries live in `tests/CQRS`. How many scenarios a handler gets follows [How much to test](testing.md#how-much-to-test); a handler test asserts the expected behaviour, the changes in the database and the returned data.
+- Tests for command handlers and queries live in `tests/CQRS`. A handler reached only through one endpoint is covered by that endpoint's tests; any other handler follows [How much to test](testing.md#how-much-to-test), asserting the expected behaviour, the changes in the database and the returned data.
 - A handler can be exercised in two ways:
   - instantiated directly, for handlers without complex dependencies: `new SomeCommandHandler(new SomeDependency())->handle(new SomeCommand(...))`;
   - through `Lsr\CQRS\CommandBus`, so that the handler is resolved from the container the way production code resolves it.
