@@ -104,8 +104,7 @@ them. The tasking and commit conventions chosen for this project are recorded in
   repository file instead ([code-review.md](code-review.md#findings-stay-in-the-pull-request)).
 - The pull request title follows the commit format (`:emoji: [optional-context] Message`) because
   it becomes the squash commit; the message part is the title shared with the issue and the task.
-  Set at least one other person as
-  **Reviewer** and every contributor as **Assignee**.
+- Set at least one other person as **Reviewer** and every contributor as **Assignee**.
 - Fill in the repository's pull request template. It links the issue (`Closes #<issue>`), lists
   every check you ran with its result ([testing.md](testing.md#testing-workflow)), names accepted
   mutants and the `No test:` line where they apply, and lists decisions you made on your own so
