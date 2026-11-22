@@ -10,8 +10,8 @@ People and agents working on a project do not control deployment. This file is a
 ## How an application reaches production
 
 - A change reaches production only through a merged pull request and the project's CI pipeline in Jenkins. Deploying and changing stacks is done by people with devops access, through Jenkins and the manifest, never by hand in Komodo, on the server or with `docker` commands. Agents never deploy outside Jenkins ([security-and-data.md](security-and-data.md#production-access)).
-- A pull request runs the tests only. With no matching deploy rule nothing is built or deployed.
-- A branch with a deploy rule builds multi-architecture images and pushes them to the company registry under `<registry>/app-images/`, tagged as the rule says (default `latest`) and with every Git tag on the commit.
+- A pull request runs the checks and tests (and, where the pipeline has it, a test build of the images); nothing is pushed or deployed.
+- A branch with a deploy rule builds multi-architecture images and pushes them to the company registry under `<registry>/app-images/`, tagged as the rule says (`latest` for `main`, [Environments and releases](#environments-and-releases)) and with every Git tag on the commit.
 - A pipeline MAY smoke-test the pushed image before deploying (Jenkins capacity is limited, so it is not the default); where it does, a failed smoke test MUST stop the deploy. The image is then already in the registry.
 - The deploy redeploys the project's Komodo stack, which pulls the tag and runs the stack's hooks. Which branch deploys to which stack is part of the project's pipeline configuration ([Environments and releases](#environments-and-releases)).
 - A static site is released as a new directory and switched by one atomic link (`releases/<id>`, `current`). The previous releases stay on the server, so a rollback re-points the link.
@@ -30,7 +30,7 @@ People and agents working on a project do not control deployment. This file is a
 - A project starts with only the `main` branch, which is deployed during development to a **staging** environment. After the release `main` becomes **production**. A `staging` branch, deployed to the staging stack, MAY be added afterwards; it is project-specific and depends on the client's requirements (some clients do not pay for two deployments). The same lifecycle is in [workflow.md](workflow.md#branches).
 - Every environment has its own stack, database, Komodo variables, buckets and secrets. Staging that holds real data is protected like production. A development stack MAY exist; it is not a release environment and holds no production data.
 - The pipeline's deploy rules say which branch goes where, for example `main` to the staging stack before the release and to the production stack after it, and `staging` to the staging stack.
-- Production runs the image built from `main`: tagged `latest`, or with a per-branch tag the deploy rule names. A rollback redeploys an earlier image by its digest or Git tag (or re-points a static site to the previous release). No release-tag step is required.
+- Production runs the image built from `main`, tagged `latest`. Only `main` pushes `latest`; a second deploy branch pushes its own tag (for example `staging`), so a stack that Komodo redeploys on every new `latest` never runs staging code. A rollback redeploys an earlier image by its digest or Git tag (or re-points a static site to the previous release). No release-tag step is required.
 - Migrations run once per deployment, forward-only, and are safe while the previous release still serves requests. Only one container per stack runs them.
 - **Target.** Some stacks are still redeployed by Komodo on every new `latest` image (auto-update); the pipeline deploys them instead once their stacks are managed.
 
