@@ -22,7 +22,7 @@ The application is a Laravel monolith: business operations are commands and quer
 - Contains value objects (money, quantities, rates), enums, domain services and calculators, and the typed domain exceptions (`App\Domain\Exception`) that report a broken business rule.
 - MUST NOT reference `Illuminate\Database`, an Eloquent model, a facade, the container, the request or the session. It takes plain values and returns plain values, so every rule and formula is unit-tested without a database.
 - Value objects used by several modules live in `App\Domain\ValueObjects`; everything else lives in the module that owns it.
-- The one exception is `App\Domain\Providers` (next section).
+- The one exception is `App\Domain\Providers` (next section). A package layer MAY additionally allow the types of the domain model its package provides, and says so in its own architecture file.
 
 ### `App\Domain\Providers` - service providers
 
