@@ -20,18 +20,23 @@ standards are at https://dev.docs.esoul.cz.
   every CodeRabbit finding answered, local review run where the skill asks for it.
 - When CodeRabbit hits its rate limit or runs out of credits, nobody waits for it: the
   `pre-pr-review` skill posts a fallback review of the same revision into the pull request, and
-  its findings are answered the same way. Once they are resolved, its approval stands in for
-  CodeRabbit's. It does not replace the human review.
+  its findings are answered the same way. Once they are resolved, its review (a `COMMENT`, not a
+  GitHub approval) stands in for CodeRabbit's. It does not replace the human review.
 - The author merges under the rules in [workflow.md](workflow.md#pull-requests): one approval and
-  a green `Jenkins` check. Agents never merge, never approve, and never use a ruleset bypass.
+  a green `Jenkins` check. Agents MUST NOT merge, approve or use a ruleset bypass unless the human
+  owner explicitly authorises it for that pull request or batch; the authorisation, and the reason
+  for a bypass, go in the pull request description.
 - When review finds defects, the task moves back to `In progress`; review time is logged as a
   work report.
 
 ## Severity
 
+The names are CodeRabbit's, so human, CodeRabbit and agent findings share one scale.
+
 - **Critical** - the pull request must not merge until the finding is resolved.
-- **Major** - materially wrong behaviour, lost authorised work, or a violation of an `accepted`
-  ADR or of a MUST rule in `AGENTS.md` or these guidelines.
+- **Major** - materially wrong behaviour, work that was already approved or committed being
+  discarded or overwritten (a reverted feature, a migration that drops data), or a violation of
+  an `accepted` ADR or of a MUST rule in `AGENTS.md` or these guidelines.
 - **Minor** - significant duplication, overengineering, a missing test for a non-critical path,
   or another maintainability risk.
 - **Nitpick** - local cleanup that can be included with related remediation.
@@ -54,23 +59,28 @@ A finding is `Critical` by default when it can:
 - make a **data change untraceable**: stored data changed without the record, history entry or
   source reference that lets the change be explained or recomputed;
 - put a **credential or real client data** into code, tests, fixtures, issues or pull requests
-  ([security-and-data.md](security-and-data.md)).
+  ([security-and-data.md](security-and-data.md));
+- **break a published contract without a migration path**: the public API of a released package,
+  a webhook, REST or export payload that another system consumes, or an irreversible migration
+  without a rollback plan.
 
-These are the findings a later fix does not repair. A project MAY add its own default Critical findings in
-its project-specific guidelines.
+These are the findings a later fix does not repair. A project MAY add its own default Critical
+findings in its project-specific guidelines.
 
 ## Keeping review short
 
 - At most three `Nitpick` findings per review. Style a formatter or linter can enforce goes into the tool,
   not into review comments.
-- Generated code, vendored assets and fixtures copied from a client export are not reviewed line
-  by line; review the generator, its input and the rule that produced them.
+- Generated code, vendored assets and anonymised fixtures derived from a client export
+  ([security-and-data.md](security-and-data.md)) are not reviewed line by line; review the
+  generator, its input and the rule that produced them.
 - A problem the pull request did not introduce is marked **Pre-existing**. It is reported only
   when it is `Critical` or `Major`, and it is fixed in this pull request only when the fix is
   small and in scope; otherwise it becomes a follow-up.
 - A pattern is reported once, with every instance, so it is fixed in one go.
 - A finding that keeps coming back in reviews becomes a rule: a lint or static analysis rule, a
-  test, a line in `AGENTS.md`, or a line in these guidelines.
+  test, a line in `AGENTS.md`, or a line in these guidelines. The author of the pull request where
+  it recurs proposes the rule, in that pull request or a linked follow-up.
 
 ## What a reviewer checks against
 
@@ -85,8 +95,11 @@ Read the issue and its acceptance criteria before reading the diff. Then check, 
 3. **`AGENTS.md` and these guidelines**, in particular the architecture and boundary rules of the
    stack.
 4. **Tests.** New or changed behaviour has a useful test, a bug fix has a regression test that
-   fails without the fix, no test asserts the text of an error message, and the checks the
-   author ran are listed in the pull request ([testing.md](testing.md)). When mutation testing
+   fails without the fix, no test asserts the text of a user-facing error message (assert the
+   type or class, error keys or codes, field names or HTTP status instead; the text of an
+   internal error message, such as an exception or a developer-facing validation or
+   configuration error, MAY be asserted), and the checks the author ran are listed in the pull
+   request ([testing.md](testing.md)). When mutation testing
    was run, escaped mutants on changed lines are killed or listed as accepted in the pull
    request.
 5. **Vocabulary.** Names follow the glossary; a new term is added in the same pull request
@@ -101,7 +114,8 @@ is solved, that the design is matched or that acceptance testing passes. Those s
 reviewer's job.
 
 A pull request that changes more than roughly 30 files is split
-([workflow.md](workflow.md#pull-requests)).
+([workflow.md](workflow.md#pull-requests)). Mechanical changes (formatter output, generated
+files, lock files) in their own commit do not count towards the limit.
 
 ## Findings
 
@@ -118,8 +132,9 @@ Write a finding so that the author can act on it without asking:
 - **Proposed resolution** - the smallest coherent fix;
 - **Verification** - the test or check that proves the fix.
 
-Facts the repository answers are investigated, not asked about. Decisions are put to the owner
-**one question at a time**: ask, wait for the answer, then ask the next.
+Facts the repository answers are investigated, not asked about. Decisions are put to the owner in
+rounds: ask together the questions that do not depend on each other, wait for the answers, then
+ask the ones that depended on them.
 
 ### Findings stay in the pull request
 
@@ -128,18 +143,17 @@ ledger such as `docs/review/PR_<number>.md`, not even for a large pull request o
 takes several rounds. A pull request too large to review in one pass is split
 ([workflow.md](workflow.md#pull-requests)), not tracked in a ledger. Decisions that should
 outlive the review (an accepted risk, deferred work) go into the pull request description, which
-survives the squash merge.
+survives the squash merge. A reviewer MAY keep a temporary local ledger as working evidence; it
+is never committed or pushed.
 
 ### Finding states
 
-When findings cannot be closed in one round, track their state in the thread:
+When findings cannot be closed in one round, track their state in the thread. A finding is `open`
+until it is closed with one of the outcomes below:
 
 | State | Meaning |
 |---|---|
-| `Candidate` | Raised, awaiting the owner's confirmation |
-| `Confirmed` | Agreed; must be fixed or explicitly accepted |
-| `Planned` | Assigned to a remediation pull request |
-| `In progress` | The remediation is being implemented |
+| `open` | Raised and not yet closed |
 | `Resolved` | Fix merged and verified |
 | `Accepted` | Behaviour or complexity explicitly accepted without a code change |
 | `Deferred` | Moved out of scope: the pull request merges with a linked follow-up issue (and task) that owns the work |
@@ -154,3 +168,5 @@ A finding is closed only as `Resolved`, `Accepted` or `Deferred`, each with its 
 - Do not resolve another person's thread silently. Reply with what changed and the commit that
   changed it.
 - An accepted finding states who accepted it and why.
+- A valid finding that arrives after the merge is fixed in a follow-up pull request linked from
+  the thread; it is not left unanswered.
