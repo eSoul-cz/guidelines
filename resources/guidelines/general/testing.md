@@ -23,7 +23,7 @@ these:
 - **boundaries and invariants**: limits, empty and null input, uniqueness, immutability, state
   transitions, rounding, amount units, idempotency;
 - **failure paths**: validation (which field, never the wording), authorization, exceptions a
-  caller handles (their type and metadata, never their message).
+  caller handles (their type and metadata; never the text of a user-facing message).
 
 The following do **not** belong in the committed suite. Remove them when you find them, and turn
 them into a behavioural test when the behaviour behind them matters:
@@ -58,10 +58,12 @@ Migration, backfill, schema, seeder, data-import, performance and exploratory te
 
 ## Error and validation messages
 
-Tests MUST NOT assert the text of an error message: exception messages, validation messages,
-flashed errors and error bodies, however the text is reached (an exception-message expectation,
-`getMessage()` compared with a literal, a validation or flash assertion with a value, a JSON
-`message` or error value, an assertion on rendered error text). Assert the machine-readable part:
+Tests MUST NOT assert the text of a user-facing error message: a message shown to users,
+translated or subject to rewording (validation messages, flashed errors, error bodies and the
+exception messages that reach them), however the text is reached (an exception-message
+expectation, `getMessage()` compared with a literal, a validation or flash assertion with a value,
+a JSON `message` or error value, an assertion on rendered error text). Assert the
+machine-readable part:
 
 | Failure | Assert |
 |---|---|
@@ -75,15 +77,19 @@ When the class alone does not tell two failure causes apart, the error is missin
 (a field key, a reason enum, a dedicated class, a code) and assert that instead of telling the
 causes apart by wording.
 
+Asserting the text of an *internal* error message is fine: an exception or a developer-facing
+validation or configuration error that no user reads, translates or rewords. Such a test pins the
+developer-facing contract of the failure.
+
 Why: user-facing text is translated and edited, and some errors are shown to users. A test pinned
 to the wording fails although no behaviour changed, and stays green when the wrong rule fires with
 the same text. Callers depend on the type, the keys and the codes; those are the contract.
 
-The rule covers error text only. Text users read in normal operation (labels, notification and
+The rule covers user-facing error text only. Text users read in normal operation (labels, notification and
 e-mail copy, page props) is product content and stays testable where it is the behaviour under
 test. Text a test supplies itself and expects to be forwarded unchanged is test data, not
 wording: `assertSame($message, $failure->getMessage())` for an exception built with `$message` is
-fine, a retyped sentence is not. Existing tests that pin wording are not a precedent; replace the
+fine, a retyped sentence is not. Existing tests that pin user-facing wording are not a precedent; replace the
 assertion whenever you change the test or the code it covers.
 
 ## Every behaviour change carries a test
