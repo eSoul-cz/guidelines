@@ -14,8 +14,8 @@ the application has roles or accounts, the project records its roles and permiss
 
 - Credentials, tokens, API keys, private keys and production environment files MUST NOT be
   committed. `.env` is not a template; `.env.example` holds placeholders and local defaults only.
-  Non-anonymised database exports and generated documents holding personal data are not committed
-  either; the repository-wide list is in [workflow.md](workflow.md#repository-rules).
+  Non-anonymised database exports and generated documents (PDFs are build artifacts) are not
+  committed either; the repository-wide list is in [workflow.md](workflow.md#repository-rules).
 - Production and staging secrets live in Komodo and 1Password. Jenkins reads secrets only through
   `withCredentials`; a pipeline change MUST NOT print a credential or pass it on a logged command
   line.
@@ -41,8 +41,9 @@ the application has roles or accounts, the project records its roles and permiss
   factories, fixtures and tests only anonymised, unless the project records an exception
   (`CONTEXT.md` or an ADR).
 - Client source material that holds no personal data (documents, exports without personal data)
-  MAY live in the repository's Git LFS `assets/`, kept as evidence and never edited. A fixture
-  derived from it is anonymised.
+  MAY live in the repository's Git LFS `assets/`, kept as evidence and never edited. Only source
+  material goes there: a generated PDF is a build artifact and is never committed, not even to
+  Git LFS. A fixture derived from source material is anonymised.
 - **Public data exception.** Publicly available data (a public register such as ARES, data the
   client's application is meant to publish) is not covered by the personal-data ban. Whether data
   counts as public is a per-application decision recorded in the project (`CONTEXT.md` or an ADR).

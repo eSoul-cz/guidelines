@@ -135,6 +135,6 @@ authority is in [domain.md](domain.md#adr-status-authority).
 
 User and developer guides MAY be rendered into reproducible PDFs with the
 `esoul-maintain-application-documentation` skill. The configuration lists each PDF's sources;
-generated PDFs are build artifacts and are not committed. A successful build is a mechanical
+generated PDFs are build artifacts, reproducible from their sources, and are never committed, not even to Git LFS. A successful build is a mechanical
 check, not proof of correctness: review the rendered PDF and resolve or explicitly accept every
 privacy and content finding before publication.
