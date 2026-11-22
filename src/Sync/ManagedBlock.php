@@ -45,7 +45,7 @@ final class ManagedBlock
     {
         $begin = self::begin($name);
         $start = strpos($text, $begin);
-        if ($start === null || $start === false) {
+        if ($start === false) {
             return null;
         }
         $end = self::end($name);

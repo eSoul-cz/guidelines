@@ -36,7 +36,9 @@ abstract class ProjectCommand extends Command
         }
 
         try {
-            return $this->handle(rtrim(realpath($root) ?: $root, '/'), $input, $io);
+            $resolved = realpath($root);
+
+            return $this->handle(rtrim($resolved === false ? $root : $resolved, '/'), $input, $io);
         } catch (GuidelinesException $e) {
             $io->error($e->getMessage());
 
