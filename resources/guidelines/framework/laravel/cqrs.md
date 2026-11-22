@@ -78,7 +78,7 @@ php artisan make:cqrs-query Catalog/GetProductDetail --handler --return=ProductD
 - The command class is a readonly DTO with constructor property promotion and no behaviour. The handler holds the logic and does no reads for callers.
 - **A handler orchestrates; it does not calculate.** It loads the rows, builds domain values, calls the framework-free calculator or rule in `App\Domain\<Module>`, and persists or returns the result.
 - **The handler owns the transaction.** A handler that changes more than one row, or reads a row it is about to change, runs inside one database transaction (injected `ConnectionInterface::transaction()`). A nested `transaction()` joins the caller's, so the whole operation commits or rolls back together.
-- **Concurrent writes are locked.** Rows that concurrent requests may change are updated atomically (`UPDATE ... SET x = x + 1`) or read with `lockForUpdate()` inside the transaction. Never read, compute in PHP and write back unlocked. Prove such handlers with a concurrency test on the production engine (the `db-engine` group, where the project has opted in, [testing.md](testing.md#test-groups)).
+- **Concurrent writes are locked.** Rows that concurrent requests may change are updated atomically (`UPDATE ... SET x = x + 1`) or read with `lockForUpdate()` inside the transaction. Never read, compute in PHP and write back unlocked. Review checks this; a multi-process concurrency test exists only for a named damaging invariant, in the `db-engine` group ([testing.md](testing.md#keeping-the-integration-run-short)).
 - **External writes go through a contract.** A handler reaches an external system only through a contract in `App\Application\Contract`. Where the project's outbox ADR applies (writes that must not be lost or duplicated: payments, invoices, ERP), the write is an outbox message in the same transaction instead.
 - **Changes are traceable.** An operation that must be recorded writes its history entry in the same transaction, with the acting user the command carries.
 - Scope that differs per tenant, sales channel or legal entity is an explicit command property, resolved once by the caller. Handlers never read the request, the session or global state.
@@ -130,4 +130,4 @@ final readonly class SomeService
 
 ## Testing
 
-Handler tests live in `tests/Feature/CQRS/<Module>` and run through the buses from the container. Every handler has tests of its successful and unsuccessful scenarios, including the business rule violations it reports and, for queries, the acting-user narrowing. See [testing.md](testing.md).
+Handler tests live in `tests/Feature/CQRS/<Module>` and run through the buses from the container. How many scenarios a handler gets follows [How much to test](testing.md#how-much-to-test); the acting-user narrowing of a query is covered by its ownership and scope tests ([testing.md](testing.md#authorization-tests)). See [testing.md](testing.md).
