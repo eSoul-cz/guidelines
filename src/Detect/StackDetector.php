@@ -18,6 +18,11 @@ final class StackDetector
         'esoul-cz/phpunit-test-evidence' => 'package/test-evidence',
     ];
 
+    /** @var array<string, list<string>> layer => composer packages that must all be required */
+    private const array COMPOSER_COMBINED = [
+        'package/laravel-inertia' => ['laravel/framework', 'inertiajs/inertia-laravel'],
+    ];
+
     /** @var array<string, string> npm package => layer */
     private const array NPM = [
         'astro' => 'framework/astro',
@@ -29,9 +34,15 @@ final class StackDetector
      */
     public function detect(string $root): array {
         $found = [];
-        foreach ($this->dependencies($root . '/composer.json', ['require', 'require-dev']) as $package) {
+        $composer = $this->dependencies($root . '/composer.json', ['require', 'require-dev']);
+        foreach ($composer as $package) {
             if (isset(self::COMPOSER[$package])) {
                 $found[self::COMPOSER[$package]] = true;
+            }
+        }
+        foreach (self::COMPOSER_COMBINED as $layer => $packages) {
+            if (array_diff($packages, $composer) === []) {
+                $found[$layer] = true;
             }
         }
         foreach ($this->dependencies($root . '/package.json', ['dependencies', 'devDependencies']) as $package) {

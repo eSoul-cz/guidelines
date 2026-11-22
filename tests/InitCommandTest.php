@@ -9,7 +9,7 @@ final class InitCommandTest extends TestCase
     public function test_no_interaction_accepts_the_detected_stack_and_skips_missing_layers(): void {
         $this->seedLayers();
         $this->layer('package/inertia-vue', 'frontend.md', "# Project guidelines - Frontend\n");
-        file_put_contents($this->project . '/composer.json', '{"require":{"laravel/framework":"^13.0","filament/filament":"^5.0"}}');
+        file_put_contents($this->project . '/composer.json', '{"require":{"laravel/framework":"^13.0","lunarphp/lunar":"^1.0"}}');
         file_put_contents($this->project . '/package.json', '{"dependencies":{"@inertiajs/vue3":"^3.0"}}');
 
         $tester = $this->run_('init');
@@ -19,7 +19,46 @@ final class InitCommandTest extends TestCase
             ['layers' => ['general', 'framework/laravel', 'package/inertia-vue']],
             json_decode($this->read('esoul-guidelines.json'), true),
         );
-        self::assertStringContainsString('package/filament', $tester->getDisplay());
+        self::assertStringContainsString('package/lunar', $tester->getDisplay());
+    }
+
+    public function test_detects_the_laravel_inertia_layer_only_with_both_packages(): void {
+        $this->seedLayers();
+        $this->layer('package/laravel-inertia', 'frontend.md', "# Project guidelines - Frontend\n");
+        $this->layer('package/inertia-vue', 'frontend.md', "# Project guidelines - Frontend\n");
+        file_put_contents($this->project . '/composer.json', '{"require":{"laravel/framework":"^13.0","inertiajs/inertia-laravel":"^3.0"}}');
+        file_put_contents($this->project . '/package.json', '{"dependencies":{"@inertiajs/vue3":"^3.0"}}');
+
+        $tester = $this->run_('init');
+
+        self::assertSame(0, $tester->getStatusCode());
+        self::assertSame(
+            ['layers' => ['general', 'framework/laravel', 'package/inertia-vue', 'package/laravel-inertia']],
+            json_decode($this->read('esoul-guidelines.json'), true),
+        );
+
+        file_put_contents($this->project . '/composer.json', '{"require":{"inertiajs/inertia-laravel":"^3.0"}}');
+        unlink($this->project . '/esoul-guidelines.json');
+        $this->run_('init');
+
+        self::assertSame(
+            ['layers' => ['general', 'package/inertia-vue']],
+            json_decode($this->read('esoul-guidelines.json'), true),
+        );
+    }
+
+    public function test_detects_the_filament_layer(): void {
+        $this->seedLayers();
+        $this->layer('package/filament', 'architecture.md', "# Project guidelines - Architecture\n");
+        file_put_contents($this->project . '/composer.json', '{"require":{"laravel/framework":"^13.0","filament/filament":"^5.0"}}');
+
+        $tester = $this->run_('init');
+
+        self::assertSame(0, $tester->getStatusCode());
+        self::assertSame(
+            ['layers' => ['general', 'framework/laravel', 'package/filament']],
+            json_decode($this->read('esoul-guidelines.json'), true),
+        );
     }
 
     public function test_detects_the_testing_package_layers(): void {
