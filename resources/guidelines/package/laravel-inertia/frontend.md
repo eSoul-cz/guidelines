@@ -140,7 +140,7 @@ components/ProductSummary                          several branches
   response header. Large pages can exceed a proxy's header limit (a load balancer may accept only
   about 15 kB) and fail with a 502, so keep each page's static module graph small and cap the
   number of preloaded assets in `bootstrap/app.php` as a safety net, not a budget. The proxy's
-  buffers are in [deployment.md](deployment.md#proxy).
+  buffers are in [deployment.md](deployment.md#reverse-proxy-and-tls).
 - Code MUST NOT pull a whole library into a shared chunk through a namespace import, a re-exported
   map or a lookup by name; import specific exports so tree-shaking works.
 - Chunk grouping lives in `build.rolldownOptions.output.codeSplitting.groups` in `vite.config.ts`.
