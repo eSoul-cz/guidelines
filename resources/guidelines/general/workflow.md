@@ -94,7 +94,7 @@ them. The tasking and commit conventions chosen for this project are recorded in
   **Reviewer** and every contributor as **Assignee**.
 - Fill in the repository's pull request template. It links the issue (`Closes #<issue>`), lists
   every check you ran with its result ([testing.md](testing.md#testing-workflow)), names accepted
-  mutants and the `Bez testu:` line where they apply, and lists decisions you made on your own so
+  mutants and the `No test:` line where they apply, and lists decisions you made on your own so
   the reviewer can confirm them.
 - A pull request includes the documentation, changelog and glossary updates its change requires,
   and a change to the architecture or to an external contract comes with its ADR in the same
