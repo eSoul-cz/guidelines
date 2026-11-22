@@ -31,6 +31,7 @@
 - Prefix by work type: `feature/`, `fix/`, `chore/`, `data/`, `docs/`, `design/`, `ci/`,
   `release/`, `refactor/` or `test/`.
 - One branch equals one request.
+- **Branch lifecycle.** A project starts with only `main`, which is deployed to staging during development. After the release `main` is production, and a `staging` branch (deployed to the staging stack) MAY be added afterwards; it depends on the client's requirements. Which branch deploys where is the pipeline's deploy rule ([deployment.md](deployment.md#environments-and-releases)).
 
 ## Pull requests
 
@@ -44,14 +45,17 @@
   never tracked in a repository file instead
   ([code-review.md](code-review.md#findings-stay-in-the-pull-request)).
 - The pull request title follows the commit format (`:emoji: [optional-context] Message`) because
-  it becomes the squash commit; the message part is the title shared with the issue and the task.
+  it becomes the squash commit; the message part is the title shared with the issue and the task,
+  when they exist.
 - Set a reviewer when one is available; otherwise the owner's explicit go-ahead is enough. Set
   every contributor as **Assignee**.
 - Fill in the repository's pull request template. It links the issue (`Closes #<issue>`) when
   there is one, otherwise the plan slice or the owner's request. It lists every check you ran with
   its result ([testing.md](testing.md#testing-workflow)), names accepted mutants and the
-  `No test:` line where they apply, and lists decisions you made on your own so the reviewer can
-  confirm them.
+  `No test:` line where they apply, lists decisions you made on your own so the reviewer can
+  confirm them, and carries a **Deploy notes** line naming what devops must do before the deploy:
+  new or changed configuration variables, secrets, buckets, a migration that needs a backup first,
+  or `none` ([deployment.md](deployment.md#configuration-and-secrets)).
 - A pull request SHOULD include the documentation, changelog and glossary updates its change
   requires; a separate pull request, preferably stacked on the change, is allowed. A change to
   the architecture or to an external contract comes with its ADR in the same pull request
@@ -64,3 +68,14 @@
   merge, approve or use a ruleset bypass unless the human owner explicitly authorises it for that
   pull request or batch; the authorisation is recorded in the pull request description
   ([code-review.md](code-review.md#who-reviews)).
+
+## From issue to merge
+
+<!-- replace -->
+1. Read the issue, plan slice or owner's request, its acceptance criteria and the guidelines of the area you touch.
+2. Create the branch from an up-to-date default branch.
+3. Implement in small steps with behavioural tests ([testing.md](testing.md)).
+4. Format before each commit; run tests and static analysis once on the code that will be pushed (the stack's tools guideline, `tools.md`).
+5. Commit by intention with the `gitmoji-commit` skill and push.
+6. Open the pull request from the template and work through CI and review until it is approved or the owner gives the go-ahead.
+7. The author merges (an agent only with the owner's explicit authorisation recorded in the pull request). The task, when one exists, is then moved to its finished state and the work is reported.
