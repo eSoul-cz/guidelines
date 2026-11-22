@@ -43,7 +43,7 @@ Tool caches live under `temp/tools/` (ignored with the rest of `temp/`):
 | PHPUnit      | `temp/tools/phpunit`               |
 | PHP-CS-Fixer | `temp/tools/php-cs-fixer.cache`    |
 
-The rest of `temp/` is the application runtime cache (DI container, Latte, models, catalogs, sessions); do not clear one when you mean the other. Clear the generated DI container with `php bin/console container:clean` after changing DI configuration.
+The rest of `temp/` is the application runtime cache (DI container, Latte, models, catalogs, sessions); do not clear one when you mean the other. Clear the generated DI container with `php bin/console container:clean` after changing DI configuration. `temp/queue/` is not cache: it holds the jobs queue file ([Background work](architecture.md#background-work)), and no cache clean removes it.
 
 ## Read-only verification
 
