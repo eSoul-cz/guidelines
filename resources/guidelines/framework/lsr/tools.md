@@ -5,7 +5,7 @@ summary: Versions, composer and pnpm scripts, tool caches, read-only checks, mut
 ---
 # Project guidelines - Tools
 
-Company-wide standards are at https://dev.docs.esoul.cz; this file lists the tools the project uses and how to run them.
+This file lists the tools the project uses and how to run them.
 
 ## Versions
 

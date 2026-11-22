@@ -5,8 +5,7 @@ summary: Versions, where tools run, read-only checks, static analysis, autofixes
 ---
 # Project guidelines - Tools
 
-The commands below are the project's contract with developers, agents and CI. The company-wide
-standards are at `https://dev.docs.esoul.cz`.
+The commands below are the project's contract with developers, agents and CI.
 
 ## Versions
 
