@@ -71,8 +71,7 @@ php artisan test --filter=<TestName>                                  # one beha
 ```
 
 The whole suite runs once on the code that will be pushed, not after every edit
-([testing.md](testing.md#testing-workflow)). Mutation testing is optional and local; it is
-described in [testing.md](testing.md#mutation-testing), and the test groups in
+([testing.md](testing.md#testing-workflow)); the test groups are in
 [testing.md](testing.md#test-groups).
 
 ### Frontend
