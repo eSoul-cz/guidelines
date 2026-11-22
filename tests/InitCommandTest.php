@@ -61,16 +61,17 @@ final class InitCommandTest extends TestCase
         );
     }
 
-    public function test_detects_the_lunar_layer(): void {
+    public function test_detects_the_lunar_layer_together_with_the_filament_layer(): void {
         $this->seedLayers();
         $this->layer('package/lunar', 'architecture.md', "# Project guidelines - Architecture\n");
+        $this->layer('package/filament', 'architecture.md', "# Project guidelines - Architecture\n");
         file_put_contents($this->project . '/composer.json', '{"require":{"laravel/framework":"^13.0","lunarphp/lunar":"^1.5"}}');
 
         $tester = $this->run_('init');
 
         self::assertSame(0, $tester->getStatusCode());
         self::assertSame(
-            ['layers' => ['general', 'framework/laravel', 'package/lunar']],
+            ['layers' => ['general', 'framework/laravel', 'package/filament', 'package/lunar']],
             json_decode($this->read('esoul-guidelines.json'), true),
         );
     }

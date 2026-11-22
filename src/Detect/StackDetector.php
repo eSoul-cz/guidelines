@@ -29,6 +29,11 @@ final class StackDetector
         '@inertiajs/vue3' => 'package/inertia-vue',
     ];
 
+    /** @var array<string, string> layer => layer it brings along (Lunar's admin is a Filament panel, though the project never requires Filament directly) */
+    private const array IMPLIES = [
+        'package/lunar' => 'package/filament',
+    ];
+
     /**
      * @return list<string> detected layers (without `general`), frameworks first
      */
@@ -48,6 +53,12 @@ final class StackDetector
         foreach ($this->dependencies($root . '/package.json', ['dependencies', 'devDependencies']) as $package) {
             if (isset(self::NPM[$package])) {
                 $found[self::NPM[$package]] = true;
+            }
+        }
+
+        foreach (self::IMPLIES as $layer => $implied) {
+            if (isset($found[$layer])) {
+                $found[$implied] = true;
             }
         }
 
