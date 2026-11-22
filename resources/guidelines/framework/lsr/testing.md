@@ -53,11 +53,10 @@ XDEBUG_MODE=off ./vendor/bin/phpunit tests/Http
 
 - Tests for HTTP controllers and middleware live in `tests/Http`. A complex controller MAY be split into several test cases by functionality.
 - Every test asserts the response status code with an explicit assertion (`self::assertSame(200, $response->getStatusCode())`).
-- Every controller endpoint MUST be covered, with successful and unsuccessful scenarios (validation errors, unauthorized access).
+- How many scenarios an endpoint gets follows [How much to test](#how-much-to-test).
 - GET endpoints: assert the status and, for Inertia responses, the component and the props that carry behaviour.
 - POST, PUT, PATCH and DELETE endpoints: assert the status and the changes in the database or in the response data.
-- Middleware applied to the endpoint (authentication, authorization, rate limits) is covered in its own scenarios.
-- An endpoint that is a thin wrapper around a service SHOULD repeat the essential scenarios of the code it calls.
+- The authentication and authorization applied to the endpoint are covered by its [authorization tests](#authorization-tests).
 - JSON responses: assert the structure, so the response is guaranteed to contain the expected data.
 
 ## Testing workflow
