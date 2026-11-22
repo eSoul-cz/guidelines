@@ -47,7 +47,7 @@ On Laravel, running the application on the host (`artisan serve`, Sail, a host d
 
 ## Pipeline
 
-The `Jenkinsfile` loads eSoul's shared Jenkins libraries (`dockerHelpers`, `testing`, `deploy` and `pipelines`) and calls the shared `laravelPipeline` step as its only statement; only what differs from the step's defaults is configured (image names and targets, prepare command, extra checks, deploy rule, timeouts). The step reports the required `Jenkins` check on every branch and pull request. Its stages, in order:
+The `Jenkinsfile` loads eSoul's shared Jenkins libraries (`dockerHelpers`, `testing`, `deploy` and `pipelines`) and calls the shared `laravelPipeline` step as its only statement; only what differs from the step's defaults is configured (image names and targets, prepare command, deploy rule, timeouts; an extra check only as the list below allows). The step reports the required `Jenkins` check on every branch and pull request. Its stages, in order:
 
 1. **Checkout**, **Docker Login**, **Pull testing images**.
 2. **Prepare**: `composer install`, an `.env` from `.env.example` with a fresh key, config cleared; a frontend layer adds its generation steps.
@@ -65,9 +65,10 @@ Jenkins is shared by every eSoul project, so build time matters:
 - A newer push to the same pull request aborts its running build.
 - Push a coherent unit, and push review fixes together once they pass locally; every push starts a full build. A red build is reproduced locally before its fix is pushed; never push to see whether CI agrees.
 - When the multibranch job discovers both branches and pull requests, a commit with an open pull request can be built twice; building each commit once is a job setting, not a reason to skip stages in one of the two jobs.
-- Integration tests follow [testing.md](testing.md#keeping-the-integration-run-short).
+- Integration tests follow [testing.md](testing.md#keeping-the-integration-run-short), and the test stage stays within the [suite time budget](testing.md#suite-time-budget).
 - The release-image test build is the slowest stage; it runs on pull requests. It reuses the layer cache by default; `testDockerBuild: [noCache: true]` in the pipeline configuration builds it without the cache, for a project that needs a clean build or while a cache problem is ruled out.
 - Paratest processes (and the worker count of a JS test runner, where there is one) match the Jenkins agent; a value of 1 has a comment saying why.
+- `extraChecks` and any other stage added to `laravelPipeline` are new checks in the push build ([How an application reaches production](#how-an-application-reaches-production)): they need an accepted ADR and a human's approval first. A check that needs the production engine (locking, collations, engine-specific SQL) is a `db-engine` test in the scheduled job, never an `extraChecks` entry.
 - A separate scheduled Jenkins job runs what the push build does not (the `sandbox`, `quarantine` and `db-engine` groups on the production engine, [testing.md](testing.md#test-groups)). It does not report the required check, and every failure becomes an issue.
 
 ## Environments and releases
