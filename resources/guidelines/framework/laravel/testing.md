@@ -3,7 +3,7 @@ title: Testing
 ---
 # Project guidelines - Testing
 
-On this stack tests are PHPUnit 13 classes in `tests/` under the `Tests` namespace.
+On this stack tests are PHPUnit classes in `tests/` under the `Tests` namespace.
 
 ## Named exceptions
 
