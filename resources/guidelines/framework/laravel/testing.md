@@ -50,10 +50,12 @@ The suite has two directories: `tests/Unit/` and `tests/Feature/`. Feature tests
 - A feature test lives in `tests/Feature/`, extends `Tests\TestCase` and goes through the real entry point: an HTTP route, a bus (`CommandBusInterface`, `QueryBusInterface`) or an Artisan command.
 - `Tests\TestCase` is the shared base: it boots Laravel, refuses HTTP requests nobody faked (`Http::preventStrayRequests()`) and uses `LazilyRefreshDatabase` ([Database in tests](#database-in-tests)). A feature test does not add a database trait of its own.
 - A feature test is a scenario: one realistic flow, all its observable outcomes asserted, only the data it asserts on created.
+- Every feature test pays for booting the application, so service providers stay lean: a provider that only registers container bindings is deferred (`DeferrableProvider` with `provides()`), and work that not every request needs (reading large files, building lists) runs on first use, not in `register()` or `boot()`.
 
 ## Test doubles
 
-- Fake the Laravel facades the test touches (`Http::fake()`, `Queue::fake()`, `Mail::fake()`, `Event::fake()`) in the test itself; the base class keeps only `Http::preventStrayRequests()`.
+- Fake the Laravel facades the test touches (`Http::fake()`, `Queue::fake()`, `Mail::fake()`, `Event::fake()`) in the test itself; the base class keeps `Http::preventStrayRequests()` and the fake of derived data below.
+- **Derived data is faked in the base class.** `Tests\TestCase::setUp()` fakes the recomputation of read models, search indexing, projections, feeds and sitemaps, so a feature test pays only for the source data it asserts on. A test of that derivation uses the opt-in trait `Tests\Concerns\WithDerivedData`, which restores the real recomputation for that test class; no other test calls it to build a precondition.
 - A test that writes files uses `Storage::fake()`, never a real disk.
 
 ## Database in tests
@@ -69,6 +71,7 @@ The suite has two directories: `tests/Unit/` and `tests/Feature/`. Feature tests
 
 - `composer test` runs `php artisan test --parallel`, which gives each worker its own database token and is much faster than a serial run.
 - `phpunit.xml` sets `memory_limit` for every test process, workers included, through `<ini>`. PHPUnit applies `<ini>` after `php -d`, so `-d memory_limit` has no effect on a test run; change the value in `phpunit.xml`.
+- Opcache is on for CLI test runs: `opcache.enable_cli=1` in the `php.ini` of every environment that runs tests (development image, CI testing image). It is a system setting that `phpunit.xml`'s `<ini>` cannot set, and it cuts the boot of every test by about 15%. **Target.** The shared CI testing image still ships with it off.
 - Narrow runs: `php artisan test --parallel tests/Feature/<Area>` for an area, `php artisan test --filter=<TestName>` for one behaviour. Prefix a run with `XDEBUG_MODE=off` unless you need the debugger or coverage.
 - `composer coverage` needs a coverage driver (PCOV or Xdebug) and writes its HTML report to `test-coverage/`, which is not committed.
 - The commands CI runs are listed in [tools.md](tools.md#read-only-verification).
@@ -86,7 +89,7 @@ php artisan test --group=db-engine    # only in a project that opted in
 
 ## CQRS testing
 
-- Handler tests live in `tests/Feature/CQRS`. Every command handler and query is covered: the expected behaviour, the changes in the database, the returned data, and both successful and unsuccessful paths (validation errors, business rule violations, unauthorized access where it applies).
+- Handler tests live in `tests/Feature/CQRS`. How many scenarios a handler gets follows [How much to test](#how-much-to-test); a handler test asserts the expected behaviour, the changes in the database and the returned data.
 - A handler is called in one of two ways:
   - instantiated directly, for a handler without complex dependencies;
   - through the buses taken from the container, so that dependencies resolve the way production code resolves them. This is the preferred form:
@@ -102,14 +105,13 @@ $queryBus = $this->app->get(QueryBusInterface::class);
 ## Controller testing
 
 - Controller tests live in `tests/Feature/Http`. A complex controller MAY be split into several test classes by functionality.
-- Every endpoint is covered, successful and unsuccessful scenarios alike, including validation errors, unauthorized access and the middleware applied to it (authentication, authorization, rate limits).
+- How many scenarios an endpoint gets follows [How much to test](#how-much-to-test). The authentication and authorization applied to it are covered by its [authorization tests](#authorization-tests).
 - Every test asserts the status explicitly (`assertOk()`, `assertStatus()`, `assertForbidden()`), before anything else: with debug off an error page is an Inertia response too.
 - Authenticate with `actingAs()` when the route requires it.
 - GET endpoints: the status and, for Inertia responses, the component and the props that carry behaviour (`assertInertia()`).
 - POST, PUT, PATCH and DELETE endpoints: the status and the changes in the database or in the response data.
-- Validation: the field keys (`assertSessionHasErrors(['field'])`, `assertJsonValidationErrors(['field'])`), including every custom rule, never the message.
+- Validation: the field keys (`assertSessionHasErrors(['field'])`, `assertJsonValidationErrors(['field'])`), never the message. One request that breaks the rules covers the keys of an endpoint; the variants of a custom rule are unit tests of the rule.
 - JSON responses: the structure (`assertJsonStructure()`), so the payload is guaranteed to hold the expected data.
-- An endpoint that only wraps a command or query repeats the essential scenarios of the underlying handler.
 
 ## Architecture tests
 
