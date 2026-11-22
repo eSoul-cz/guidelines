@@ -41,7 +41,8 @@ The names are CodeRabbit's, so human, CodeRabbit and agent findings share one sc
   or another maintainability risk.
 - **Nitpick** - local cleanup that can be included with related remediation.
 
-`Critical` and `Major` prevent the merge. `Minor` and `Nitpick` are either fixed in the same pull
+`Critical` and `Major` findings on the changes of the pull request prevent the merge (a **Pre-existing**
+problem is the exception, see [Keeping review short](#keeping-review-short)). `Minor` and `Nitpick` are either fixed in the same pull
 request or marked `Deferred`: the pull request merges with a linked follow-up issue, which is a
 new issue and task like any other work.
 
@@ -58,8 +59,10 @@ A finding is `Critical` by default when it can:
   export, a notification or a log. Filtering in the browser is not a boundary;
 - make a **data change untraceable**: stored data changed without the record, history entry or
   source reference that lets the change be explained or recomputed;
-- put a **credential or real client data** into code, tests, fixtures, issues or pull requests
-  ([security-and-data.md](security-and-data.md));
+- put a **credential, personal data or non-public client data** (real amounts, rates, prices,
+  documents) into code, tests, fixtures, issues or pull requests, except what
+  [security-and-data.md](security-and-data.md#personal-and-client-data) allows (public data and
+  recorded exceptions);
 - **break a published contract without a migration path**: the public API of a released package,
   a webhook, REST or export payload that another system consumes, or an irreversible migration
   without a rollback plan.
@@ -76,7 +79,8 @@ findings in its project-specific guidelines.
   generator, its input and the rule that produced them.
 - A problem the pull request did not introduce is marked **Pre-existing**. It is reported only
   when it is `Critical` or `Major`, and it is fixed in this pull request only when the fix is
-  small and in scope; otherwise it becomes a follow-up.
+  small and in scope; otherwise it does not block this pull request and becomes a `Deferred`
+  follow-up.
 - A pattern is reported once, with every instance, so it is fixed in one go.
 - A finding that keeps coming back in reviews becomes a rule: a lint or static analysis rule, a
   test, a line in `AGENTS.md`, or a line in these guidelines. The author of the pull request where
@@ -114,7 +118,8 @@ is solved, that the design is matched or that acceptance testing passes. Those s
 reviewer's job.
 
 A pull request that changes more than roughly 30 files is split
-([workflow.md](workflow.md#pull-requests)). Mechanical changes (formatter output, generated
+([workflow.md](workflow.md#pull-requests)); when it cannot be split, its description says how to
+review it in parts. Mechanical changes (formatter output, generated
 files, lock files) in their own commit do not count towards the limit.
 
 ## Findings
@@ -140,8 +145,9 @@ ask the ones that depended on them.
 
 Each finding is one review thread. Findings MUST NOT be recorded in a repository file: no review
 ledger such as `docs/review/PR_<number>.md`, not even for a large pull request or a review that
-takes several rounds. A pull request too large to review in one pass is split
-([workflow.md](workflow.md#pull-requests)), not tracked in a ledger. Decisions that should
+takes several rounds. A pull request too large to review in one pass is split (or, when it cannot
+be split, described so that it can be reviewed in parts; [workflow.md](workflow.md#pull-requests)),
+not tracked in a ledger. Decisions that should
 outlive the review (an accepted risk, deferred work) go into the pull request description, which
 survives the squash merge. A reviewer MAY keep a temporary local ledger as working evidence; it
 is never committed or pushed.
@@ -154,11 +160,13 @@ until it is closed with one of the outcomes below:
 | State | Meaning |
 |---|---|
 | `open` | Raised and not yet closed |
-| `Resolved` | Fix merged and verified |
+| `Resolved` | The fix is committed to the pull request branch (or merged) and verified |
 | `Accepted` | Behaviour or complexity explicitly accepted without a code change |
 | `Deferred` | Moved out of scope: the pull request merges with a linked follow-up issue (and task) that owns the work |
 
-A finding is closed only as `Resolved`, `Accepted` or `Deferred`, each with its evidence linked.
+A finding is closed only as `Resolved`, `Accepted` or `Deferred`, each with its evidence linked. A
+finding on code of the pull request is `Resolved` as soon as the verified fix is on the branch, so
+a `Critical` finding can be closed before the merge.
 
 ## Answering findings
 
