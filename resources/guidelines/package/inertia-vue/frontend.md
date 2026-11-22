@@ -1,11 +1,11 @@
 ---
 title: Frontend
 order: 70
-summary: Vue 3 + Inertia rules - project structure and locality, component architecture, TypeScript, Inertia data flow, forms, performance, design system, Tailwind usage, frontend commands and tests.
+summary: Vue + Inertia rules - project structure and locality, component architecture, TypeScript, Inertia data flow, forms, performance, design system, Tailwind usage, frontend commands and tests.
 ---
 # Project guidelines - Frontend
 
-The frontend is Vue 3 (Composition API, `<script setup lang="ts">`), Inertia 3, TypeScript, shadcn-vue and Vitest. React is not supported. Domain behaviour, validation and authorization stay on the server; the frontend owns presentation state, interaction state and client-side orchestration only. Code that contradicts these rules is a bug to fix, not a precedent to follow.
+The frontend is Vue (Composition API, `<script setup lang="ts">`), Inertia, TypeScript, shadcn-vue and Vitest. React is not supported. Domain behaviour, validation and authorization stay on the server; the frontend owns presentation state, interaction state and client-side orchestration only. Code that contradicts these rules is a bug to fix, not a precedent to follow.
 
 Paths in this file are relative to the JavaScript asset root, written `<js-root>`. The framework's frontend section names it, and the `@` import alias points to it.
 
