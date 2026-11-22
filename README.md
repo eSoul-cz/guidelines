@@ -2,7 +2,7 @@
 
 Layered, mergeable engineering guidelines for eSoul projects (Laravel, LSR, Astro), installed as plain Markdown into the project and protected against silent overwrites.
 
-A standalone Symfony Console app (`bin/esoul-guidelines`). It has **no Laravel/Artisan dependency** and is **not a Composer plugin**, so it works in Laravel and LSR repositories and, through `composer global` or a PHAR later, in Astro repositories.
+A standalone Symfony Console app (`bin/esoul-guidelines`). It has **no Laravel/Artisan dependency** and is **not a Composer plugin**, so it works in Laravel and LSR repositories and, through `composer global`, in Astro and other repositories without PHP ([Repositories without PHP](#repositories-without-php); a Docker image and a PHAR are planned).
 
 What it does:
 
@@ -18,9 +18,56 @@ vendor/bin/esoul-guidelines init            # asks the repository kind, detects 
 vendor/bin/esoul-guidelines sync            # writes docs/project_guidelines/*, AGENTS.md block, lock
 ```
 
-Commit `esoul-guidelines.json`, `esoul-guidelines.lock`, `docs/project_guidelines/` and `AGENTS.md`. Update later with `composer update esoul-cz/guidelines && vendor/bin/esoul-guidelines sync`.
+Commit `esoul-guidelines.json`, `esoul-guidelines.lock`, `docs/project_guidelines/` and `AGENTS.md`. A PHP project runs `sync` automatically after `composer update` ([below](#sync-on-composer-update)); how projects pick up new guideline versions is in [Releases and updates](#releases-and-updates).
 
 The package is published on [Packagist](https://packagist.org/packages/esoul-cz/guidelines); the eSoul Satis repository (`https://packages.esoul.cz`) mirrors it as a fallback.
+
+### Sync on `composer update`
+
+A project that requires the package syncs on every `composer update`, so the generated files never lag behind the installed guidelines. The project's own `composer.json` carries the hook (the package ships none, and is not a plugin):
+
+```json
+{
+    "scripts": {
+        "post-update-cmd": [
+            "esoul-guidelines sync"
+        ]
+    }
+}
+```
+
+- Composer puts `vendor/bin` on the `PATH` of its scripts, so the command needs no prefix.
+- When Laravel Boost is installed, its `boost:update` is already a `post-update-cmd` entry. Put `esoul-guidelines sync` **after** it, so the project guidelines are written last ([Laravel Boost interop](#laravel-boost-interop)):
+
+  ```json
+  "post-update-cmd": [
+      "@php artisan boost:update --ansi",
+      "esoul-guidelines sync"
+  ]
+  ```
+
+- `sync` refuses to overwrite a managed block that was edited locally, and a non-zero exit stops `composer update`: move the edit below the block or use `sync --force`, as in [Output, managed blocks, lock and drift](#output-managed-blocks-lock-and-drift).
+- CI still runs `esoul-guidelines check` ([CI usage](#ci-usage)); it never writes.
+
+### Repositories without PHP
+
+A repository without Composer (a fully static Astro site, for example) needs no monorepo and no PHP project around it. The tool is installed globally, once per machine and in the CI image:
+
+```bash
+composer global require esoul-cz/guidelines   # installs the esoul-guidelines binary
+esoul-guidelines init                         # in the repository root, as above
+esoul-guidelines sync
+```
+
+- The binary is `esoul-guidelines` (the `bin` entry of `composer.json`); Composer's global `bin` directory (`composer global config bin-dir --absolute`) must be on the `PATH`.
+- Update with `composer global update esoul-cz/guidelines`, then `sync` in each repository. CI runs `esoul-guidelines check` the same way.
+- **Planned** (plan item G6): a Docker image and a PHAR build, both published by CI, for machines and pipelines that have no PHP. Until they exist, the global Composer install is the supported route.
+
+### Releases and updates
+
+- The package is released with **SemVer tags**. A release is a pull request that changes only the changelog, merged and then tagged; there is no tag per guideline change and no rolling `main` for projects.
+- A project updates with `composer update esoul-cz/guidelines` and `sync` (the `post-update-cmd` above runs it), and commits the result.
+- The repository has no `CODEOWNERS`; review follows [workflow.md](resources/guidelines/general/workflow.md) like any other change.
 
 ## Commands
 
@@ -93,7 +140,7 @@ Your own additions here are preserved forever.
 
 - Everything outside the block is never touched. The same applies to `AGENTS.md`: the tool owns only `<!-- esoul-guidelines:begin agents -->...end`; other content (for example `<laravel-boost-guidelines>`) is left alone. A missing `AGENTS.md` is created, a missing `CLAUDE.md` is created with `@AGENTS.md`.
 - A block that is missing from an existing file is re-inserted (at the top of a guideline file, at the end of `AGENTS.md`).
-- `esoul-guidelines.lock` (JSON, committed) stores `schema_version`, the package version (Composer installed metadata, fallback `dev`), the selected layers and exclusions and, per managed block, the sha256 of the block content and the source files with their hashes. Line endings and blank lines around the block are ignored by the hash.
+- `esoul-guidelines.lock` (JSON, committed) stores `schema_version`, the package version (Composer installed metadata, fallback `dev`), the selected layers and exclusions and, per managed block, the sha256 of the block content and the source files with their hashes. Line endings and blank lines around the block are ignored by the hash. It does not pin guideline versions per layer: the package version identifies the guidelines, and the hashes detect what changed.
 - **Drift** = current block hash differs from the lock (someone edited inside the block, or the lock has no entry for it). `sync` refuses and lists the files; move the change below the block or use `--force` to discard it.
 - **Outdated** = the lock matches the block but a fresh render differs (guidelines package updated, layers or exclusions changed). `sync` updates it.
 - A file that is no longer produced (layer or file removed) loses its managed block on `sync`; local content around it is kept, and the file is deleted only when nothing else is left (never `AGENTS.md`). A removed block with local edits is also refused without `--force`.
@@ -108,7 +155,7 @@ Run it next to the other read-only checks (it does not write). Exit code 1 means
 
 ## Laravel Boost interop
 
-Boost writes its own `<laravel-boost-guidelines>` block into `AGENTS.md` and this package writes a separate `<!-- esoul-guidelines:begin agents -->` block. The two never edit each other's content, and no Boost guidelines are shipped here. Where generated Boost text conflicts with the project guidelines (for example its Laravel Cloud advice), the project guidelines apply; the Laravel layer states this in `tools.md`, and `general/deployment.md` lists hosted platforms under what not to introduce.
+Boost writes its own `<laravel-boost-guidelines>` block into `AGENTS.md` and this package writes a separate `<!-- esoul-guidelines:begin agents -->` block. The two never edit each other's content, and no Boost guidelines are shipped here. Where generated Boost text conflicts with the project guidelines (for example its Laravel Cloud advice), the project guidelines apply; the Laravel layer states this in `tools.md`, and `general/deployment.md` lists hosted platforms under what not to introduce. When both run from `post-update-cmd`, `boost:update` runs first and `esoul-guidelines sync` last.
 
 ## Development
 
@@ -126,10 +173,10 @@ CI is the `Jenkinsfile`: one call to `phpPackagePipeline` from the eSoul Jenkins
 check and composer audit, then PHPUnit on PHP 8.5, and PHPUnit on 8.4 and 8.6 after Composer re-resolved the dependencies on that version. A
 build of `main` triggers the Satis mirror. The package supports PHP 8.4 and every later 8.x release (`^8.4`).
 
-## Draft assumptions
+## Design notes
 
-- Layer content is first-draft quality, seeded from the esoul-project-lifecycle template folder and the reference projects' guideline files with project names removed. Expect a review pass per layer.
-- `package/lunar` is **not written** (no source guide exists yet). `init` detects `lunarphp/lunar`, reports it and skips it until the layer exists. `package/filament` is started with what is decided (the admin panel rule and a theming note); full Filament guidelines come from a real project.
+- Layer content was seeded from the esoul-project-lifecycle template folder and the reference projects' guideline files, with project names removed.
+- `package/lunar` is **not written** (no source guide exists yet). `init` detects `lunarphp/lunar`, reports it and skips it until the layer exists. `package/filament` holds what is decided so far: the admin panel rule and a theming note; it grows when a real project needs more.
 - `package/laravel-inertia` (detected when Composer requires both `laravel/framework` and `inertiajs/inertia-laravel`) holds the Inertia-specific part of the Laravel frontend and tools guidelines (`resources/js` structure, Inertia server side, Wayfinder, design system, Vite chunking, the `pnpm` quality commands); `framework/laravel` keeps what holds for every Laravel user interface. Inertia and Vue rules shared with LSR stay in `package/inertia-vue`.
 - Frontmatter has one key beyond the brief: `summary` (one line for the index and the AGENTS.md block). `title` falls back to the H1.
 - The AGENTS.md block lists files flagged `agents: true` (currently `testing`, `security-and-data`, `workflow`) as links with their summary, not the rule text itself.
@@ -145,13 +192,6 @@ build of `main` triggers the Satis mirror. The package supports PHP 8.4 and ever
 - The Jenkins delivery wording in `framework/lsr/deployment.md` follows the template `Jenkinsfile`, which calls the shared `lsrPipeline`; that pipeline does not exist yet in the shared libraries (`laravelPipeline` only) and `astroCmsPipeline` is likewise planned.
 - `general/deployment.md` is the deployment scheme shared by every stack, written as a reference for project people and agents (only devops deploy and change stacks). The framework `deployment.md` files add runtime detail and reuse its H2 texts (`Environments and releases`, `Local development`, `Reverse proxy and TLS`, `Health endpoint`, `Configuration and secrets`) so the rendered file reads as one; they do not repeat the scheme.
 - `general/public-website.md` states the crawling, sitemap, `llms.txt`, Markdown and preview-gate rules for any application with public pages; `framework/astro/seo.md` keeps only the Astro implementation and links to it. `general/dependencies.md` holds the pnpm install hardening for every repository with a `package.json`; `framework/astro/tools.md` links to it.
-- Baseline stack statements in the layers (PHP 8.5, Laravel 13, Inertia 3 + Vue 3, pnpm 12, Node 26, Vite 8, Pint, Larastan level 10, PHPUnit 13, sqlite test DB) are the proposed defaults and may change.
-- No PHAR build and no Composer plugin or `post-update-cmd` hook is provided.
-
-## Open questions
-
-- Should `sync` run automatically on `composer update` (a consumer-side `post-update-cmd` script) or stay explicit?
-- Should `esoul-guidelines.lock` pin the guideline versions per layer (today only the package version and source hashes)?
-- Where do Astro-only repositories get PHP from: a PHAR, `composer global`, or a Node port?
-- Should the blocks of `AGENTS.md` and the index also support a Czech variant for Czech-language projects?
-- Who owns each layer (CODEOWNERS) and how are guideline changes released (tag per change, or a rolling `main`)?
+- Stack versions (PHP, Laravel, Inertia and Vue, Node, pnpm, Vite and the like) are stated in the `Versions` table of each framework's `tools.md`, the one place to change them.
+- The package is not a Composer plugin and ships no hook of its own: a project's `post-update-cmd` calls `sync` ([Sync on `composer update`](#sync-on-composer-update)). A Docker image and a PHAR are planned ([Repositories without PHP](#repositories-without-php)).
+- The guidelines and the generated files are English only; there is no Czech variant of the blocks, the index or the layers.
