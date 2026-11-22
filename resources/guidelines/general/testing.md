@@ -2,7 +2,7 @@
 title: Testing
 order: 20
 agents: true
-summary: Which tests the project keeps, how error messages and authorization are tested, regression and test-writing rules, the cost of integration tests, test groups, flaky tests and the testing workflow.
+summary: Which tests the project keeps and how many per risk tier, how error messages and authorization are tested, regression and test-writing rules, the cost of integration tests, the suite time budget, test groups, flaky tests and the testing workflow.
 ---
 # Project guidelines - Testing
 
