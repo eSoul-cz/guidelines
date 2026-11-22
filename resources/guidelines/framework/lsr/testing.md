@@ -27,11 +27,21 @@ Tests sit in the directory that mirrors the layer of `src/` they cover (`tests/H
 
 - The default suite runs without a database. A test that needs one uses a temporary SQLite file created through a support trait in `tests/Support` and registered with `DB::init()`, created per test and removed afterwards.
 
+## Test doubles
+
+- The network guard of the general rules lives in `tests/Support` (a base test class or a PHPUnit extension) and makes a connection to anything but localhost fail the test. The integration keys (the variables of external services) are empty when `APP_ENV=test`, which `phpunit.xml` sets.
+- **Target.** The LSR template has neither the guard nor an external-HTTP fake yet. Until it does, a test that would call an external system injects a fake of that service through the container instead, and a project that adds an HTTP client adds the guard with it (V2 template item).
+
+## Test groups
+
+- A test joins a group with the PHPUnit attribute (`#[Group('sandbox')]`). `phpunit.xml` excludes `sandbox` and `quarantine` from the default run; run a group on demand with `XDEBUG_MODE=off ./vendor/bin/phpunit --group=sandbox` (or `--group=quarantine`).
+- **Target.** The LSR template's `phpunit.xml` declares no group exclusion yet; the first project that uses a group adds `<groups><exclude>` to it, and the template follows (V2 template item).
+
 ## Running tests
 
 Run the whole suite with `composer test`, or `composer test:parallel` (paratest) for a faster run. PHPUnit keeps its cache in `temp/tools/phpunit`.
 
-Narrower runs; prefix them with `XDEBUG_MODE=off` unless you need the debugger or coverage (`composer test` runs with `XDEBUG_MODE=coverage`):
+Narrower runs; prefix them with `XDEBUG_MODE=off` unless you need the debugger or coverage. `composer test` runs with the debugger and coverage driver off; coverage is a separate script (`composer test:coverage`, which sets `XDEBUG_MODE=coverage`). **Target.** The template's `test` and `test:parallel` scripts still set `XDEBUG_MODE=coverage` and it has no `test:coverage` script; the template follows (V2 template item).
 
 ```bash
 XDEBUG_MODE=off ./vendor/bin/phpunit tests/Http/SomeTest.php
