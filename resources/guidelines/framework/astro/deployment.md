@@ -5,7 +5,7 @@ summary: Jenkins delivery of a static (or Node) Astro site, build arguments, pre
 ---
 # Project guidelines - Deployment and runtime
 
-An Astro project has no `lsrPipeline`: its `Jenkinsfile` composes the shared libraries (`testing`, `dockerHelpers`, `deploy`) itself, with the `Checks` stage first ([tools.md](tools.md#jenkins-checks-stage)). A shared `astroCmsPipeline` for the Astro frontend with a Laravel/Filament CMS backend is planned. The hosting choice is recorded in the project's decision record.
+Astro runtime detail added to the deployment scheme. An Astro project has no `lsrPipeline`: its `Jenkinsfile` composes the shared libraries (`testing`, `dockerHelpers`, `deploy`) itself, with the `Checks` stage first ([tools.md](tools.md#jenkins-checks-stage)). A shared `astroCmsPipeline` for the Astro frontend with a Laravel/Filament CMS backend is planned. The hosting choice is recorded in the project's decision record.
 
 ## Delivery paths
 
@@ -14,25 +14,25 @@ An Astro project has no `lsrPipeline`: its `Jenkinsfile` composes the shared lib
 Used by archetypes `A-static` with a PHP API and `B-admin`; archetype `D-static-api` uses it when its hosting decision says so.
 
 ```text
-push to main
+push to a branch with a deploy rule
   └─ Jenkins
        ├─ Checks stage
        ├─ dockerBuildMultiArch → rg.fr-par.scw.cloud/app-images/<app>:latest (+ Git tags)
        └─ deployKomodoStack    → the project's Komodo stack
 ```
 
-- The `Dockerfile` is multi-stage. The build stage runs `pnpm install --frozen-lockfile` and `pnpm build` (it needs network: the Fonts API downloads fonts). The runtime stage holds only what runs: the built site (served by nginx) and, where it exists, the server code or the PHP API with its production dependencies.
+- The `Dockerfile` is multi-stage. The build stage runs `pnpm install --frozen-lockfile` and `pnpm build` (it needs network: the Fonts API downloads fonts). The runtime stage holds only what runs: the built site and, where it exists, the server code or the PHP API with its production dependencies. The image contains no web server for static files: the host NGINX serves them.
 - `.dockerignore` keeps host `node_modules`, `.env`, runtime data, `docs/`, source photos and tests out of the build context. Native modules are installed inside the build, for the target platform.
 - The container runs as an unprivileged user under an init process; an entrypoint MAY start as root only to hand persistent directories to that user.
-- A static site served by a separate nginx container is copied into a shared volume on **every** start, so a new image never leaves the old site in the volume.
+- Where the host NGINX serves client files (the `node-http` shape), the deploy hook copies them out of the image into the run directory (`./client`) on **every** deploy, so a new image never leaves the old site behind.
 - Migrations, seeds and settings validation run before the server listens; a failure exits the container instead of serving errors. The server stops gracefully on `SIGTERM`.
-- Every image has a healthcheck. Persistent state (database, uploads, form backups, logs) lives in named volumes listed in `README.md`, with the backup and restore procedure.
+- Every image has a healthcheck. Persistent state (database, uploads, form backups, logs) is bind-mounted from the stack's run directory (`./data` in the `node-http` shape) and listed in `README.md`; the infrastructure's backups cover it.
 
-### Static build to rsync
+### Static build to a release directory
 
 Used by archetype `C-headless` and by static sites without a PHP API.
 
-A push to `main`, or the publish button in the backend, starts the Jenkins job: install, the `Checks` stage (which includes `pnpm build` and `pnpm verify`), then a deployment of `dist/` to the server's release directory (`deployStaticSite`). A failed build leaves the previous version live; releases are kept so a rollback re-points the current release. HTML is served `no-cache`; hashed assets (`/_astro/*` and the media path) get a long, immutable cache.
+A push to `main`, or the publish button in the backend, starts the Jenkins job: install, the `Checks` stage (which includes `pnpm build` and `pnpm verify`), then `deployStaticSite` uploads `dist/` to a new `releases/<id>/` directory of the server and switches the `current` link atomically; old releases are pruned. A failed build leaves the previous version live; a rollback re-points `current` to an earlier release. HTML is served `no-cache`; hashed assets (`/_astro/*` and the media path) get a long, immutable cache.
 
 ### Publish flow (archetype `C-headless`)
 
@@ -60,20 +60,20 @@ A static build bakes public values in at build time, so they are passed as build
 
 Until launch, the deployed site is a protected preview:
 
-- **HTTP basic auth** in the web server, with a throwaway password kept in the repository on purpose. It is a barrier against accidental visitors, not a secret. `robots.txt` stays reachable without auth.
+- **HTTP basic auth** in the web server. The password is a secret: it is kept as a manifest secret (a Komodo variable) and in the NGINX site, never in the repository. It is a barrier against accidental visitors, but it is still a credential. `robots.txt` stays reachable without auth.
 - **`noindex`**: `PUBLIC_NOINDEX=true` puts `noindex` on every page and `robots.txt` disallows everything.
 - The preview URL is recorded in `README.md`.
 
 Switching protection off is a launch step in the project's launch checklist: remove basic auth, set `PUBLIC_NOINDEX=false`, allow crawling in `robots.txt`, deploy, then verify headers, sitemap and indexability. Nothing else changes in the same deploy.
 
-## Reverse proxy and headers
+## Reverse proxy and TLS
 
-- TLS ends at the reverse proxy; the site is HTTPS-only with HSTS, and `www` and non-`www` redirect to the canonical host.
+- TLS ends at the load balancer; the site is HTTPS-only with HSTS, and `www` and non-`www` redirect to the canonical host. A static site has no upstream; an SSR site on Node is one of the specific cases the host NGINX reaches over plain HTTP (the `node-http` shape).
 - The proxy sends `X-Forwarded-Host`, `X-Forwarded-Proto: https` and an `X-Forwarded-For` that it **replaces**, not appends; an SSR site trusts forwarded headers only for its own domains (`security.allowedDomains`). Rate limits depend on the client address being right.
 - The **Content-Security-Policy of a static site comes from Astro's `security.csp`** at build time (a `<meta>` tag per page; the build computes the hashes of inline scripts and styles, so no `unsafe-inline` is needed). `frame-ancestors` does not work in `<meta>`.
 - nginx sets the other response headers on every response, static files included: `X-Frame-Options` (or `frame-ancestors` in a header CSP), `X-Content-Type-Options: nosniff`, `Referrer-Policy` and HSTS. In nginx, a `location` with its own `add_header` repeats the shared header snippet, because nginx drops inherited headers.
 - On a site that shares one domain with its backend (`C-headless`, `D-static-api`), only the backend's own paths are routed to it; everything else is the static site. A runtime API call from the browser needs those paths in `connect-src` of `security.csp`.
-- On `C-headless`, nginx serves the media under `/_cms/` from the backend's public volume on the same host. The site makes no runtime call to the backend, but its media depend on that volume being readable by nginx.
+- On `C-headless`, NGINX serves the media under `/_cms/` from the backend's public directory on the same host (under the backend's run directory). The site makes no runtime call to the backend, but its media depend on that directory being readable by NGINX.
 
 ## Forms in production
 
