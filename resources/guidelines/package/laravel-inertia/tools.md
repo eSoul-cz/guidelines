@@ -31,7 +31,7 @@ pnpm format
 ```
 
 - Prettier uses `printWidth` 150 and `tabWidth` 4; ESLint uses the flat config (`eslint.config.js`). Do not add a second formatter or a legacy `.eslintrc`.
-- CI uses only the read-only frontend commands (`pnpm eslint`, `pnpm format:check`).
+- CI uses only the read-only frontend commands of [Read-only verification](#read-only-verification): `pnpm eslint`, `pnpm format:check` and `pnpm tsc` in the JS static checks, `pnpm test` in the JS tests ([deployment.md](deployment.md#pipeline)).
 
 ## Code generators
 
