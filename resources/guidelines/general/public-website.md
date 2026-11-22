@@ -12,7 +12,7 @@ The page tree, the meta texts, the redirect list and what the client still has t
 ## Content in the HTML
 
 - Every text, heading, link and image of an indexable page MUST be in the HTML the server returns. Most AI crawlers and link-preview bots do not run JavaScript.
-- Interactive enhancement MAY add behaviour on top. Content that a script would reveal MUST have a no-script rendering.
+- Interactive enhancement MAY add behaviour on top. Content that a script would reveal MUST have a no-script rendering. A form protected by reCAPTCHA is the exception that needs JavaScript to submit: its page still renders without scripts and shows a contact alternative next to the form.
 
 ## Crawling and indexing
 

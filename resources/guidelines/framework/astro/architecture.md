@@ -47,16 +47,16 @@ Decisions are recorded in the project's decision record. Typical topics: render 
 ## Content must not depend on JavaScript
 
 - Every text, link, image and heading of a public page is in the HTML that the server or the build produces. Search engines, AI crawlers, link previews and visitors without JavaScript see the whole page.
-- Interactive enhancements (tabs, filters, carousels, lightboxes, instant validation) are progressive enhancement: without JavaScript all content is visible and every form still submits. Use `noscript:` variants or the base layer to reveal what scripts would otherwise toggle.
+- Interactive enhancements (tabs, filters, carousels, lightboxes, instant validation) are progressive enhancement: without JavaScript all content is visible and a form without reCAPTCHA still submits. A form protected by reCAPTCHA is the stated exception ([Forms](#forms)): the page and the form's contact alternative still render without JavaScript. Use `noscript:` variants or the base layer to reveal what scripts would otherwise toggle.
 - Animations never hide content that has no other way to appear ([frontend.md](frontend.md#motion)).
 
 ## Forms
 
-Forms always post to a backend; a static page never sends mail itself. With a CMS (`C-headless`, the default) the Laravel backend owns forms: recipients, SMTP and stored submissions. Without a CMS (`A-static`) the project adds a small Laravel backend that holds only forms, or posts to a shared form service. The form posts with a plain `<form method="post">` and works without JavaScript; a script MAY enhance it with in-place results. The form endpoint of `A-static` and `C-headless` applies the following; `B-admin` and `D-static-api` follow their own sections:
+Forms always post to a backend; a static page never sends mail itself. With a CMS (`C-headless`, the default) the Laravel backend owns forms: recipients, SMTP and stored submissions. Without a CMS (`A-static`) the project adds a small Laravel backend that holds only forms, or posts to a shared form service. The form posts with a plain `<form method="post">`; a script MAY enhance it with in-place results. A form protected by reCAPTCHA needs JavaScript to obtain its token, so it does not submit without it (see the reCAPTCHA rule); the page and a contact alternative (an e-mail address or a phone number next to the form) still render without JavaScript. The form endpoint of `A-static` and `C-headless` applies the following; `B-admin` and `D-static-api` follow their own sections:
 
 1. **honeypot**: a hidden field; when filled, the robot gets a fake success and nothing is sent;
 2. **rate limit**: per client address, state stored outside the webroot;
-3. **reCAPTCHA v3**: verified on the server with a score threshold when the request carries a token; without a secret (local development only) verification is skipped with a logged warning. A submission without a token (the form was posted without JavaScript, which is what generates it) is not rejected for that reason alone: it skips the score check, MUST pass the honeypot and the rate limit, and is stored flagged as unverified;
+3. **reCAPTCHA v3**: the token is verified on the server with a score threshold; without a secret (local development only) verification is skipped with a logged warning. A submission **without a token** is rejected with a clear message that names the cause and the alternative (for example "Enable JavaScript or contact us at <contact>"); it is not accepted on the honeypot and the rate limit alone;
 4. **delivery**: e-mail over SMTP **and** a database record as a backup;
 5. **last resort**: when both fail, the submission is appended to a file outside the webroot.
 
@@ -64,7 +64,7 @@ The client address is stored only as a hash.
 
 ### Archetype `B-admin`
 
-Forms submit to Astro Actions with `accept: "form"`, so a plain `<form method="post">` works without JavaScript and the page renders the result from `Astro.getActionResult()`. A script MAY take over for instant validation and in-place results.
+Forms submit to Astro Actions with `accept: "form"`, so a plain `<form method="post">` works without JavaScript (unless the decision adds a reCAPTCHA, which needs JavaScript as in [Forms](#forms)) and the page renders the result from `Astro.getActionResult()`. A script MAY take over for instant validation and in-place results.
 
 - The action validates with a schema shared with the browser, **stores the submission first** and sends the notification in the background: a mail failure never fails the submission.
 - Spam protection is a honeypot plus a rate limit per client; a captcha only by decision.
@@ -72,7 +72,7 @@ Forms submit to Astro Actions with `accept: "form"`, so a plain `<form method="p
 
 ### Archetype `C-headless`
 
-Forms post to the backend's form endpoint, whose URL is set at build time; the backend owns recipients, SMTP and stored submissions. Without JavaScript the form posts normally and the backend redirects back with a result anchor. The backend lists the site in its allowed origins.
+Forms post to the backend's form endpoint, whose URL is set at build time; the backend owns recipients, SMTP and stored submissions. Without JavaScript a reCAPTCHA-protected form gets no token, so the backend rejects it with the message of the reCAPTCHA rule and the page shows the contact alternative; otherwise the form posts normally and the backend redirects back with a result anchor. The backend lists the site in its allowed origins.
 
 ### Archetype `D-static-api`
 
@@ -81,7 +81,7 @@ Forms and interactive features (login, cart, account) call the backend's API on 
 - The backend paths (for example `/api`) are listed once in `astro.config.mjs`, where they feed the dev server proxy and `connect-src` of the CSP; the production proxy routes the same paths ([deployment.md](deployment.md#reverse-proxy-and-tls)).
 - Islands reach the API only through one client module; no component calls `fetch` for the backend itself.
 - Everything an indexable page shows is in the build output; the API supplies only per-visitor data. Pages that exist for a signed-in visitor or a transaction (account, cart, checkout and the like) are `noindex` ([seo.md](seo.md#meta)).
-- A transactional feature that cannot work without JavaScript (login, cart) is the one exception to the no-script form rule; its page still renders all of its content without scripts.
+- A transactional feature that cannot work without JavaScript (login, cart) is an exception to the no-script form rule, as is a reCAPTCHA-protected form; the page still renders all of its content without scripts.
 
 ## Server code
 
