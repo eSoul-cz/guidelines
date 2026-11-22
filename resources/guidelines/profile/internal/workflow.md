@@ -51,8 +51,8 @@
   every contributor as **Assignee**.
 - Fill in the repository's pull request template. It links the issue (`Closes #<issue>`) when
   there is one, otherwise the plan slice or the owner's request. It lists every check you ran with
-  its result ([testing.md](testing.md#testing-workflow)), names accepted mutants and the
-  `No test:` line where they apply, lists decisions you made on your own so the reviewer can
+  its result ([testing.md](testing.md#testing-workflow)) and the `No test:` line where it
+  applies, lists decisions you made on your own so the reviewer can
   confirm them, and carries a **Deploy notes** line naming what devops must do before the deploy:
   new or changed configuration variables, secrets, buckets, a migration that needs a backup first,
   or `none` ([deployment.md](deployment.md#configuration-and-secrets)).
