@@ -20,8 +20,10 @@ the application has roles or accounts, the project records its roles and permiss
   `withCredentials`; a pipeline change MUST NOT print a credential or pass it on a logged command
   line.
 - A new environment variable is added to `.env.example` with a placeholder or an empty value and a
-  comment when its effect is not obvious. Test environment files hold test-only values and leave
-  integration keys empty, so development values never leak into tests.
+  comment when its effect is not obvious, and is named in the pull request's deploy notes so that
+  devops add it to the stack before the deploy ([deployment.md](deployment.md#configuration-and-secrets)).
+  Test environment files hold test-only values and leave integration keys empty, so development
+  values never leak into tests.
 - A secret is never logged, never exported, never returned unmasked by an API, never included in
   an error report and never sent by e-mail.
 - A secret that was committed or pasted anywhere public is **rotated** (revoked and replaced), not

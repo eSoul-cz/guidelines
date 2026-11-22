@@ -37,6 +37,7 @@ them. The tasking and commit conventions chosen for this project are recorded in
 - Prefix by work type: `feature/`, `fix/`, `chore/`, `data/`, `docs/`, `design/`, `ci/`,
   `release/`, `refactor/` or `test/`.
 - One branch equals one issue.
+- **Branch lifecycle.** A project starts with only `main`, which is deployed to staging during development. After the release `main` is production, and a `staging` branch (deployed to the staging stack) MAY be added afterwards; it depends on the client's requirements. Which branch deploys where is the pipeline's deploy rule ([deployment.md](deployment.md#environments-and-releases)).
 
 ## Commits
 
@@ -109,8 +110,10 @@ them. The tasking and commit conventions chosen for this project are recorded in
 - Set at least one other person as **Reviewer** and every contributor as **Assignee**.
 - Fill in the repository's pull request template. It links the issue (`Closes #<issue>`), lists
   every check you ran with its result ([testing.md](testing.md#testing-workflow)), names accepted
-  mutants and the `No test:` line where they apply, and lists decisions you made on your own so
-  the reviewer can confirm them.
+  mutants and the `No test:` line where they apply, lists decisions you made on your own so the
+  reviewer can confirm them, and carries a **Deploy notes** line naming what devops must do before
+  the deploy: new or changed configuration variables, secrets, buckets, a migration that needs a
+  backup first, or `none` ([deployment.md](deployment.md#configuration-and-secrets)).
 - A pull request SHOULD include the documentation, changelog and glossary updates its change
   requires; a separate pull request, preferably stacked on the change, is allowed. A change to
   the architecture or to an external contract comes with its ADR in the same pull request
