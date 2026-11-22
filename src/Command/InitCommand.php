@@ -16,6 +16,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand(name: 'init', description: 'Detect the project stack and write esoul-guidelines.json')]
 final class InitCommand extends ProjectCommand
 {
+    private const string NO_STACK = 'none';
+
     protected function handle(string $root, InputInterface $input, SymfonyStyle $io): int {
         $existing = ProjectConfig::exists($root) ? ProjectConfig::load($root) : null;
         $detected = new StackDetector()->detect($root);
@@ -43,18 +45,20 @@ final class InitCommand extends ProjectCommand
                 $internal = $kind === 'internal';
             }
 
-            $choices = array_values(array_filter($this->layers->layers(), $isStack));
+            $stacks = array_values(array_filter($this->layers->layers(), $isStack));
+            // Entry 0 selects no stack layer: a multiselect refuses an empty answer.
+            $choices = [self::NO_STACK, ...$stacks];
             $defaultIndexes = array_keys(array_filter($choices, static fn (string $l): bool => in_array($l, $default, true)));
             $question = new ChoiceQuestion(
-                'Which guideline layers apply? (`general` is always included; comma-separated numbers)',
+                sprintf('Which guideline layers apply? (`general` is always included; `%s` selects no stack layer; comma-separated numbers)', self::NO_STACK),
                 $choices,
-                $defaultIndexes === [] ? null : implode(',', $defaultIndexes),
+                $defaultIndexes === [] ? '0' : implode(',', $defaultIndexes),
             );
             $question->setMultiselect(true);
             /** @var list<string> $selected */
             $selected = new QuestionHelper()->ask($input, $io, $question);
             // Keep the order of the available layers, not the order in which numbers were typed.
-            $selected = array_values(array_filter($choices, static fn (string $l): bool => in_array($l, $selected, true)));
+            $selected = array_values(array_filter($stacks, static fn (string $l): bool => in_array($l, $selected, true)));
         }
 
         $profile = $internal ? [LayerRepository::PROFILE_INTERNAL] : [];
