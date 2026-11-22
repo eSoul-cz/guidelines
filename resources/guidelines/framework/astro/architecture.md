@@ -1,22 +1,31 @@
 ---
 title: Architecture
 order: 100
-summary: Astro site archetypes, layouts, components, islands, progressive enhancement, forms and server code.
+summary: Astro site archetypes, repository layout, layouts, components, Vue islands, progressive enhancement, forms and server code.
 ---
 # Project guidelines - Architecture
 
-The project is an Astro 7 website of one **archetype**, recorded in [CONTEXT.md](../../CONTEXT.md) (*Project profile*) and decided in the project's decision record. The archetype fixes the render mode, how content is edited and how forms are handled; changing it is a new decision, not a refactor.
+The project is an Astro website of one **archetype**, recorded in [CONTEXT.md](../../CONTEXT.md) (*Project profile*) and decided in the project's decision record. The archetype fixes the render mode, how content is edited and how forms are handled; changing it is a new decision, not a refactor. Versions are named only in [tools.md](tools.md#versions).
 
 ## Archetypes
 
-| Archetype    | Render mode                              | Content edited by                                         | Forms                         | Typical stack                                         |
-| ------------ | ---------------------------------------- | --------------------------------------------------------- | ----------------------------- | ----------------------------------------------------- |
-| `A-static`   | `output: 'static'`                       | Developers or agents through git ([content.md](content.md)) | PHP micro-API in `api/`       | Astro, Tailwind, no or few islands                    |
-| `B-admin`    | `output: 'server'` with `@astrojs/node`  | The client in the project's own admin                     | Astro Actions                 | Astro SSR, admin islands, server services, SQLite     |
-| `C-headless` | `output: 'static'`, data fetched at build | The client in a separate CMS or admin application         | Posted to the backend         | Astro, islands, a Zod-validated content contract     |
-| `D-static-api` | `output: 'static'` plus a **runtime API on the same origin** | Developers through git ([content.md](content.md)); the backend owns transactional data (cart, accounts) | Posted to the backend API on the same origin | Astro, islands, one API client module, a reverse proxy that routes the backend paths |
+The default is a **static site with a Laravel/Filament CMS** (`C-headless`). `A-static` is the same site without the CMS. `B-admin` and `D-static-api` are exceptions: each needs an ADR, and none has a template yet.
 
-Decisions are recorded in the project's decision record. Typical topics: render mode and adapter, content editing model, form and anti-spam handling, motion stack, fonts and licences, image pipeline, hosting and preview protection, languages.
+| Archetype    | Status                         | Render mode                              | Content edited by                                         | Forms                                          | Typical stack                                         |
+| ------------ | ------------------------------ | ---------------------------------------- | --------------------------------------------------------- | ---------------------------------------------- | ----------------------------------------------------- |
+| `C-headless` | **default**                    | `output: 'static'`, data fetched at build | The client in the Laravel/Filament CMS (the backend)      | Posted to the CMS backend                      | Astro, Vue islands, a Zod-validated content contract, Laravel + Filament |
+| `A-static`   | allowed, no CMS                | `output: 'static'`                       | Developers or agents through git ([content.md](content.md)) | Posted to a small Laravel backend or a shared form service | Astro, Tailwind, no or few islands                    |
+| `B-admin`    | exception, ADR (no template)   | `output: 'server'` with `@astrojs/node`  | The client in the project's own admin                     | Astro Actions (the Astro server is the backend) | Astro SSR, admin islands, server services, SQLite     |
+| `D-static-api` | exception, ADR (no template) | `output: 'static'` plus a **runtime API on the same origin** | Developers through git ([content.md](content.md)); the backend owns transactional data (cart, accounts) | Posted to the backend API on the same origin | Astro, islands, one API client module, a reverse proxy that routes the backend paths |
+
+Decisions are recorded in the project's decision record. Typical topics: render mode and adapter, content editing model, form and anti-spam handling, motion stack, fonts and licences, image pipeline, hosting and preview protection, languages. A site that cannot be built statically (SSR, `B-admin`) also needs a deployment of its own, which is part of its ADR until a template exists.
+
+## Repository layout
+
+- A site with a backend is a **monorepo with two git submodules**, `frontend` (the Astro site) and `backend` (the Laravel/Filament CMS, or the small form backend of `A-static`). Each submodule is its own repository, so Jenkins builds and deploys each separately ([deployment.md](deployment.md#delivery-paths)).
+- The monorepo itself holds the shared documentation and tools and exists for working convenience: nothing is built or deployed from it, and the submodule pointers are updated when a half is released.
+- A change to the contract between the halves ([content.md](content.md#c-headless-edited-in-a-separate-backend)) is a pull request in each repository, linked to each other.
+- A static site that posts to a shared form service has no backend of its own and is a single repository.
 
 ## Pages, layouts and components
 
@@ -31,7 +40,7 @@ Decisions are recorded in the project's decision record. Typical topics: render 
 - **Use the lightest hydration directive that works**: none, then `client:visible`, then `client:idle`; `client:load` only for an island that must react before the user scrolls to it. Each `client:load` is justified in the pull request.
 - Island props MUST be serializable. When a component needs functions (plurals, formatters), hydrate it through a small wrapper island that builds them on the client.
 - An island used on a public page keeps its JavaScript small; a library that adds weight to every page needs a decision.
-- A project uses one UI framework for islands (Vue or React, recorded in a decision); a second one needs a decision.
+- Vue is the island framework. React is used only when an ADR records why; a project never mixes the two.
 - Islands do not import `astro:content` or the content-source modules; they receive view models.
 - A plain `<script>` on a page that uses `<ClientRouter />` runs on `astro:page-load`, not once.
 
@@ -43,9 +52,7 @@ Decisions are recorded in the project's decision record. Typical topics: render 
 
 ## Forms
 
-### Archetype `A-static`
-
-Forms post to a PHP micro-API in `api/` (Slim, PHP-DI, PHPMailer) served next to the static build:
+Forms always post to a backend; a static page never sends mail itself. With a CMS (`C-headless`, the default) the Laravel backend owns forms: recipients, SMTP and stored submissions. Without a CMS (`A-static`) the project adds a small Laravel backend that holds only forms, or posts to a shared form service. The form posts with a plain `<form method="post">` and works without JavaScript; a script MAY enhance it with in-place results. The form endpoint applies:
 
 1. **honeypot**: a hidden field; when filled, the robot gets a fake success and nothing is sent;
 2. **rate limit**: per client address, state stored outside the webroot;
@@ -53,7 +60,7 @@ Forms post to a PHP micro-API in `api/` (Slim, PHP-DI, PHPMailer) served next to
 4. **delivery**: e-mail over SMTP **and** a database record as a backup;
 5. **last resort**: when both fail, the submission is appended to a file outside the webroot.
 
-The client address is stored only as a hash. The form posts with a plain `<form method="post">` and works without JavaScript; a script MAY enhance it with in-place results.
+The client address is stored only as a hash.
 
 ### Archetype `B-admin`
 
@@ -87,6 +94,10 @@ Forms and interactive features (login, cart, account) call the backend's API on 
 - The middleware sets security headers (CSP, `nosniff`, `Referrer-Policy`), limits request body sizes, and marks admin and action responses `Cache-Control: private, no-store`.
 - Uploads are validated by decoding their content, stored outside the build, and served only as resized copies; originals (with EXIF and GPS) are served to logged-in administrators only.
 
-### Archetypes `A-static`, `C-headless` and `D-static-api`
+### Archetypes `A-static` and `C-headless`
 
-The site has no server code beyond the form endpoint or the backend API ([Forms](#forms)). Everything else is produced at build time.
+The site has no server code. Forms and content live in the backend, which is its own repository ([Repository layout](#repository-layout)); everything else is produced at build time.
+
+### Archetype `D-static-api`
+
+The site has no server code beyond the backend API ([Forms](#forms)). Everything else is produced at build time.
