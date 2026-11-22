@@ -65,7 +65,7 @@ A pull request that changes more than roughly 30 files is split ([workflow.md](w
 
 ## Findings
 
-A finding names **one problem with one fix**, not one affected file. Before raising a new finding, compare it with the existing ones. If it has the same root cause, intended behaviour or remediation, add the evidence to the existing finding instead of opening a second one from a different file or symptom.
+A finding names **one problem with one fix**, not one affected file. Before raising a new finding, compare it with the existing ones. If it has the same root cause or the same remediation, add the evidence to the existing finding instead of opening a second one from a different file or symptom. A shared intended behaviour alone is not enough: two defects that need two independent fixes are two findings.
 
 Write a finding so that the author can act on it without asking:
 
@@ -92,7 +92,7 @@ When findings cannot be closed in one round, track their state in the thread. A 
 | `Accepted` | Behaviour or complexity explicitly accepted without a code change |
 | `Deferred` | Moved out of scope: the pull request merges with a linked follow-up issue (and task) that owns the work |
 
-A finding is closed only as `Resolved`, `Accepted` or `Deferred`, each with its evidence linked. A finding on code of the pull request is `Resolved` as soon as the verified fix is on the branch, so a `Critical` finding can be closed before the merge.
+A finding is closed only as `Resolved`, `Accepted` or `Deferred`, each with its evidence linked. A finding on code of the pull request is `Resolved` as soon as the verified fix is on the branch, so a `Critical` finding can be closed before the merge. A finding that is **invalid** is closed as `Resolved` with no code change: the reply that shows why it does not apply (the file and line, the test, the ADR or the guideline, as in [Answering findings](#answering-findings)) is its linked evidence.
 
 ## Answering findings
 
