@@ -62,12 +62,13 @@ Sail, a host database) is not supported. `docker-compose.yml` starts:
 | Service | Purpose |
 |---|---|
 | `laravel` | php-fpm, queue worker, scheduler and Vite under Supervisor; the repository is bind-mounted |
-| `nginx` | Serves the application on `${APP_PORT:-80}` |
+| `nginx` | Serves the application on `${APP_PORT:-8080}` |
 | database service | The production engine, named volume, health-checked |
-| `mailpit` | Catches all outgoing e-mail; UI on localhost only. `.env.example` points the mail settings at it |
+| `mailpit` | Catches all outgoing e-mail. `.env.example` points the mail settings at it |
 
-Every published port of a support service binds to `127.0.0.1`. Credentials come from `.env`,
-copied from `.env.example`. Tests never use the development database
+Developer convenience wins for the ports of the support services (database, `mailpit`): they MAY
+be bound to `127.0.0.1`, which is not required. Credentials come from `.env`, copied from
+`.env.example`. Tests never use the development database
 ([testing.md](testing.md#database-in-tests)).
 
 ## Pipeline
@@ -91,7 +92,10 @@ pull request. Its stages, in order:
 5. **Build and push image** on a branch with a deploy rule (`main` by default): multi-architecture
    images tagged `latest` and with any Git tag on the commit, pushed to
    `rg.fr-par.scw.cloud/app-images/`.
-6. **Deploy**: the rule's Komodo stack is redeployed. A rule without a stack only publishes the
+6. **Smoke test** (optional, the pipeline's `smoke` option): a Compose smoke test of the pushed
+   images by their immutable reference, after `Build and push image` and before `Deploy`. The
+   stage does not exist without the option.
+7. **Deploy**: the rule's Komodo stack is redeployed. A rule without a stack only publishes the
    images.
 
 Keep the stage names stable: the required check is the multibranch job's `Jenkins` status.
@@ -110,8 +114,9 @@ Jenkins is shared by every eSoul project, so build time matters:
   request can be built twice; building each commit once is a job setting, not a reason to skip
   stages in one of the two jobs.
 - Integration tests follow [testing.md](testing.md#keeping-the-integration-run-short).
-- The release-image test build is the slowest stage; it runs on pull requests and uses the
-  registry layer cache rather than `--no-cache` unless a cache problem is being ruled out.
+- The release-image test build is the slowest stage; it runs on pull requests. It reuses the layer
+  cache by default; `testDockerBuild: [noCache: true]` in the pipeline configuration builds it
+  without the cache, for a project that needs a clean build or while a cache problem is ruled out.
 - Vitest worker count and Paratest processes match the Jenkins agent; a value of 1 has a comment
   saying why.
 - A separate scheduled Jenkins job runs what the push build does not (the `sandbox`, `quarantine`
