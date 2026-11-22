@@ -27,7 +27,7 @@ The pages are Inertia with Vue and TypeScript, with Laravel Wayfinder for routes
 
 ## Vite and bundling
 
-- The Wayfinder plugin runs next to the Laravel plugin in Vite.
+- The Wayfinder plugin runs next to the Laravel plugin in Vite with `formVariants: true` (`wayfinder({ formVariants: true })`), because its default is `false` and `pnpm dev` and `pnpm build` would otherwise regenerate the modules without the `.form()` variants.
 - Every module a page imports statically is preloaded, and Laravel repeats it in the `Link` response header. Large pages can exceed a proxy's header limit (a load balancer may accept only about 15 kB) and fail with a 502, so keep each page's static module graph small and cap the number of preloaded assets in `bootstrap/app.php` as a safety net, not a budget. The proxy's buffers are in [deployment.md](deployment.md#reverse-proxy-and-tls).
 - Code MUST NOT pull a whole library into a shared chunk through a namespace import, a re-exported map or a lookup by name; import specific exports so tree-shaking works.
 - Chunk grouping lives in `build.rolldownOptions.output.codeSplitting.groups` in `vite.config.ts`. Do not add groups without measuring the number of preloaded assets and the gzipped size of typical pages. After changing imports in a page or shared module, check the entries in `public/build/manifest.json` reachable through `imports`; a sharp increase points to a static import that should be lazy or more specific.
