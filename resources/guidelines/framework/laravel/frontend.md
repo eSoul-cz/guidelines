@@ -17,7 +17,7 @@ A Filament admin panel is a separate user interface: the Inertia and Vue rules d
 
 ## Tailwind CSS
 
-- Tailwind CSS 4, configured CSS-first in `resources/css/app.css`; no JavaScript Tailwind configuration and no deprecated v3 utilities.
+- Tailwind CSS, configured CSS-first in `resources/css/app.css` (the version is in [tools.md](tools.md#versions)); no JavaScript Tailwind configuration and no deprecated utilities of earlier majors.
 - Colours, type, spacing and radii come from the semantic design tokens declared in `app.css` (`@theme`), which mirror the project's design source. Use semantic colours (`bg-background`, `text-foreground`, `text-muted-foreground`, `border-border`); no hex values and no arbitrary values where a token or a standard utility exists.
 - New UI works at the application's responsive breakpoints and, when the project supports dark mode, in dark mode.
 - Global CSS is limited to tokens, base styles and genuinely global behaviour.
