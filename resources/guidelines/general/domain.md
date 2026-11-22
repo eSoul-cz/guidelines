@@ -66,7 +66,8 @@ today.
 - A rule that is not written down is not settled. Decide it, and record it where it belongs,
   before implementing it; never guess a rule because the data seems to imply it.
 - If an issue, a guideline or a proposed change contradicts an `accepted` ADR, or two accepted
-  ADRs contradict each other, or a supersession target is missing, report the conflict instead of
+  ADRs contradict each other, or an `accepted` ADR and a decision in the plan's decision register
+  contradict each other, or a supersession target is missing, report the conflict instead of
   choosing a source silently.
 
 ## Money
