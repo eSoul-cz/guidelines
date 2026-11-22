@@ -10,7 +10,7 @@ Laravel runtime detail added to the deployment scheme: how the application is bu
 ## Images
 
 - Every image starts from the shared eSoul base image `rg.fr-par.scw.cloud/esoul-starters/php-fpm-laravel:8.5`, which already provides the common PHP extensions. A missing extension is added to the base image, not installed ad hoc in a project Dockerfile (a temporary exception names the reason and the issue in the Dockerfile).
-- **PHP runs as php-fpm and is reached through FastCGI on port 9000.** The app image contains no web server and the stack has no nginx container: the host NGINX serves the files of `public/` and passes every other request to php-fpm ([Reverse proxy and TLS](#reverse-proxy-and-tls)). Octane (Swoole, RoadRunner, FrankenPHP) is not used and MUST NOT be added; code may rely on one process per request.
+- **PHP runs as php-fpm and is reached through FastCGI on port 9000.** The host NGINX serves the files of `public/` and passes every other request to php-fpm ([Reverse proxy and TLS](#reverse-proxy-and-tls)). Octane (Swoole, RoadRunner, FrankenPHP) is not used and MUST NOT be added; code may rely on one process per request.
 - One multi-stage `docker/production/Dockerfile` builds the release images (one target per image); `docker/dev/Dockerfile` builds the development image. **The Composer packages are their own stage**, rebuilt only when `composer.json` or `composer.lock` change.
 
 | Image | Runs | Never runs |
@@ -29,12 +29,12 @@ Laravel runtime detail added to the deployment scheme: how the application is bu
 ## Reverse proxy and TLS
 
 - php-fpm listens on port 9000. The host NGINX serves existing files of `public/` from a copy taken out of the image at deploy time, and a path that is not a file there is a route of the application.
-- The trusted-proxies list is the `TRUSTED_PROXIES` setting, **never `*`**.
+- Trusted proxies are the `TRUSTED_PROXIES` setting.
 - Body and buffer sizes match the application's limits. NGINX accepts a request body at least as large as the largest upload the application allows (the manifest's `nginx.client_max_body_size`, in step with PHP's `upload_max_filesize` and `post_max_size` and the validation limit), and FastCGI response headers of at least 32 KB (`fastcgi_buffer_size 32k; fastcgi_buffers 16 32k;` is the minimum; the rendered sites use 64k for the first buffer). The preload `Link` header of a large page is the reason ([frontend.md](frontend.md#vite-and-bundling)).
 
 ## Local development
 
-Local development always runs in Docker; running the application on the host (`artisan serve`, Sail, a host database) is not supported. `docker-compose.yml` starts:
+On Laravel, running the application on the host (`artisan serve`, Sail, a host database) is not supported. `docker-compose.yml` starts:
 
 | Service | Purpose |
 |---|---|
@@ -42,9 +42,8 @@ Local development always runs in Docker; running the application on the host (`a
 | `nginx` | Serves the application on `${APP_PORT:-8080}` (local only) |
 | database service | The production engine, named volume, health-checked |
 | `mailpit` | Catches all outgoing e-mail. `.env.example` points the mail settings at it |
-| further services | Whatever the application needs besides: Valkey, a search node, an S3-compatible container |
 
-`.env.example` points the application at these services. Tests never use the development database ([testing.md](testing.md#database-in-tests)).
+`.env.example` points the application at these services.
 
 ## Pipeline
 
