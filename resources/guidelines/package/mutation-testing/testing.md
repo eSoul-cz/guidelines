@@ -9,7 +9,7 @@ Mutation testing checks that tests are useful, not only that they pass. Infectio
 
 It is **local, optional and encouraged**: run it on the changed lines before pushing. It is never a CI gate and never fails on a score; the project sets no threshold. Delete temporary tests first, so the run judges only the tests that stay.
 
-`composer mutation` mutates the application source lines changed against the base branch ([tools.md](tools.md#mutation-testing-local-optional)); keep the local base branch up to date. Every run first collects coverage, then runs the mutants without a coverage driver, executing only the tests that cover each mutated line. Arguments after `--` go to Infection (for example `--show-mutations`). Infection never edits the application source. A change that touches tests only is checked by mutating the file under test in full (`--filter=<source file>`). The commands each stack defines are in [Stack specifics](#stack-specifics).
+`composer mutation` mutates the application source lines changed against the base branch ([tools.md](tools.md#mutation-testing-local-optional)); keep the local base branch up to date. Every run first collects coverage, then runs the mutants without a coverage driver, executing only the tests that cover each mutated line. Arguments after `--` go to Infection (for example `--show-mutations`). Infection never edits the application source. A change that touches tests only is checked by mutating the file under test in full (`--filter=<source file>`). The commands each stack defines are in [Mutation testing per stack](#mutation-testing-per-stack).
 
 ### Reading the output
 
@@ -46,7 +46,7 @@ The summary reports Mutation Code Coverage (mutants on lines any test executes),
 Tests do not assert user-facing wording ([testing rules](#error-and-validation-messages)), so a mutant that changes only wording can never be killed and is not worth killing. The skip configuration lives in the project's `infection.json5`, not in a test: it skips only the cases recognisable without ambiguity, each by the narrowest rule that identifies it, with a comment explaining it. Every mutator stays enabled everywhere else.
 
 - A ternary between two multi-word sentence literals and `parent::__construct($message);` in exceptions are skipped by `ignoreSourceCodeByRegex` and reported as `I`.
-- Methods that only supply wording (a validation request's message methods) get no mutants: `global-ignore` on the method name. Custom messages never decide whether a rule fires. The names are in [Stack specifics](#stack-specifics).
+- Methods that only supply wording (a validation request's message methods) get no mutants: `global-ignore` on the method name. Custom messages never decide whether a rule fires. The names are in [Mutation testing per stack](#mutation-testing-per-stack).
 
 Still generated and judged by the [Soft gate](#soft-gate): request validation rules (removed rules, rule strings built with `.`, boundaries); the conditions that decide whether an error is raised, the field keys, the exception class and `throw`; enum labels and other UI labels (product content); and message text built inside logic (a concatenation or interpolation passed to an error collector or an exception). Accept such a mutant when only wording changes, kill it when a key, a class or a condition changes. One that empties a message list looks like wording but is not: a field with no message is no error at all, so the user is sent back without an explanation. A test kills it without asserting any text (a session-error assertion on the field key, or a non-empty list on the exception).
 
@@ -68,9 +68,9 @@ Operating notes:
 
 - A run that reports 100 % within seconds is broken. The usual cause is a PHPUnit configuration passed through `--test-framework-options`, which PHPUnit rejects, so every mutant counts as killed.
 - A timed-out mutant counts as killed by default, so a busy machine can hide an escape behind a timeout; `--with-timeouts` counts it as escaped.
-- A test suite that uses the database must not run its workers against one shared database during the coverage and the Infection steps, otherwise their collisions count as killed mutants ([Stack specifics](#stack-specifics)).
+- A test suite that uses the database must not run its workers against one shared database during the coverage and the Infection steps, otherwise their collisions count as killed mutants ([Mutation testing per stack](#mutation-testing-per-stack)).
 
-### Stack specifics
+### Mutation testing per stack
 
 #### On Laravel
 
