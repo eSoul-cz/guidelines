@@ -1,11 +1,11 @@
 ---
 title: Tools
 order: 130
-summary: Versions, pnpm hardening, read-only checks, the Jenkins Checks stage and Playwright for an Astro project.
+summary: Versions, read-only checks, the Jenkins Checks stage and Playwright for an Astro project.
 ---
 # Project guidelines - Tools
 
-Company-wide standards are at https://dev.docs.esoul.cz; this file lists the tools the project uses and how to run them.
+This file lists the tools the project uses and how to run them.
 
 ## Versions
 
@@ -15,14 +15,14 @@ Company-wide standards are at https://dev.docs.esoul.cz; this file lists the too
 | Package manager | pnpm                                                          | 12 (latest release, `packageManager`)             |
 | Framework       | Astro                                                         | 7 (`package.json` is authoritative)               |
 | Styling         | Tailwind CSS 4 via `@tailwindcss/vite`                        | [frontend.md](frontend.md)                        |
-| Islands         | one UI framework (Vue or React), by decision                  | [architecture.md](architecture.md#islands)        |
+| Islands         | Vue (React only by an ADR)                                    | [architecture.md](architecture.md#islands)        |
 | Type checks     | `astro check`; plus `vue-tsc --noEmit` when the site has Vue islands | `tsconfig.json` (and the Vue tsconfig)     |
 | Lint            | ESLint flat config (Astro and TypeScript rules, Vue rules only with Vue islands; `@typescript-eslint/no-explicit-any` on) | `eslint.config.js` |
 | Format          | Prettier with the Astro plugin                                | `prettier.config.mjs`                             |
 | Browser tests   | Playwright                                                    | `playwright.config.ts`, `e2e/`                    |
-| Delivery        | Docker image or static release, Jenkins, Komodo               | [deployment.md](deployment.md)                    |
+| Delivery        | static (`deployStaticSite`) or a `FROM scratch` image via Komodo, Jenkins | [deployment.md](deployment.md#delivery-paths) |
 
-`package.json` and `pnpm-lock.yaml` are authoritative for versions. Use the Astro documentation for the installed major (the Astro Docs MCP when available) and check the installed source before concluding that a feature does not exist. Use the pinned pnpm from `packageManager` (Node 26 ships without corepack: `npm install --global pnpm@<version>`). pnpm reads only auth, registry, TLS (`ca`, `cafile`, `cert`, `key`), proxy and `local-address` settings from `.npmrc`; every other project setting lives in `pnpm-workspace.yaml`, and machine-level settings (such as `stateDir`) live in the global pnpm `config.yaml`.
+`package.json` and `pnpm-lock.yaml` are authoritative for versions. Use the Astro documentation for the installed major (the Astro Docs MCP when available) and check the installed source before concluding that a feature does not exist. Use the pinned pnpm from `packageManager`; where pnpm reads its settings is in [dependencies.md](dependencies.md#pnpm-repositories).
 
 `tsc --noEmit` alone does not type-check `.vue` files; that is why a site with Vue islands adds `vue-tsc --noEmit` to `pnpm check`.
 
@@ -36,19 +36,13 @@ Company-wide standards are at https://dev.docs.esoul.cz; this file lists the too
 
 ## pnpm hardening
 
-`pnpm-workspace.yaml` hardens installs; never remove these settings:
-
-- `minimumReleaseAge: 1440` (minutes): new versions install only once they are a day old, so a hijacked release is usually withdrawn before it reaches the project. Exempt a newer version only when it is needed (a security fix), in `minimumReleaseAgeExclude`, with a comment.
-- **Build scripts run only for allow-listed packages.** `allowBuilds` in `pnpm-workspace.yaml` lists them, together with `minimumReleaseAge: 1440`. A package missing from the list, such as `esbuild`, can have its build script skipped silently.
-- `pnpm audit` runs in CI ([Checks stage](#jenkins-checks-stage)). An advisory that cannot be fixed yet is ignored in `auditConfig.ignoreGhsas` of `pnpm-workspace.yaml`, one entry per advisory, with a comment that states the reason and the date it is reviewed again. An entry without both is not accepted in review.
-
-Adding a dependency needs the maintainer's approval. When a maintained library that works with Astro solves the problem, use it instead of writing our own.
+The install hardening (`minimumReleaseAge`, the `allowBuilds` allow-list, `pnpm audit` in CI with dated `auditConfig.ignoreGhsas`) holds for every pnpm repository and is stated in [dependencies.md](dependencies.md#install-hardening). `pnpm audit` runs in the [Checks stage](#jenkins-checks-stage). When a maintained library that works with Astro solves a problem, use it instead of writing our own; adding one needs approval ([workflow.md](workflow.md#pull-requests)).
 
 ## Read-only verification
 
 ```bash
 pnpm audit          # known advisories (ignores documented in pnpm-workspace.yaml)
-pnpm lint           # ESLint, read-only
+pnpm eslint         # ESLint, read-only
 pnpm format:check   # Prettier, read-only
 pnpm check          # astro check (+ vue-tsc --noEmit with Vue islands)
 pnpm build          # astro build
@@ -60,14 +54,14 @@ Run them before every push; Jenkins runs the same commands. They MUST NOT rewrit
 
 ## Formatting and lint autofixes
 
-`pnpm format` (Prettier `--write`) and `pnpm lint:fix` (ESLint `--fix`) rewrite files. Run them deliberately, review the diff, then rerun the read-only checks. CI uses the read-only commands only.
+`pnpm format` (Prettier `--write`) and `pnpm eslint:fix` (ESLint `--fix`) rewrite files. Run them deliberately, review the diff, then rerun the read-only checks. CI uses the read-only commands only.
 
 ## Jenkins `Checks` stage
 
 The `Jenkinsfile` has a **`Checks` stage that is mandatory** and runs before any image is built or any file is deployed. It fails the build when any step fails:
 
 1. `pnpm install --frozen-lockfile`, then `pnpm audit`;
-2. `pnpm lint` and `pnpm format:check`;
+2. `pnpm eslint` and `pnpm format:check`;
 3. `pnpm check`: `astro check`, plus `vue-tsc --noEmit` when the site has Vue islands;
 4. `pnpm build`, then **`pnpm verify`**: the output is checked after the build, because Astro and its integrations only log many errors and still finish. Verification covers at least a title and canonical URL on every page, a Content-Security-Policy without `unsafe-inline` or `unsafe-eval` scripts, no internal addresses or `TODO` placeholders in the output, `robots.txt`, and a sitemap that lists exactly the indexable pages (none while `PUBLIC_NOINDEX=true`). A headless site (archetype `C-headless`) adds the **build provenance check**: the build writes the content export it was made from next to the build, and `pnpm verify` compares `dist/` with it (every page and media file of the export exists, nothing else does) ([content.md](content.md#c-headless-edited-in-a-separate-backend));
 5. **Playwright smoke** against the built site (the template serves `dist/` with `e2e/serve.mjs`), at **1440x900 and 390x844**, failing on a console error, a failed request or a broken image;
