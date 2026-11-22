@@ -54,8 +54,8 @@ The suite has two directories: `tests/Unit/` and `tests/Feature/`. Feature tests
 
 ## Test doubles
 
-- Fake the Laravel facades the test touches (`Http::fake()`, `Queue::fake()`, `Mail::fake()`, `Event::fake()`) in the test itself; the base class keeps `Http::preventStrayRequests()` and the fake of derived data below.
-- **Derived data is faked in the base class.** `Tests\TestCase::setUp()` fakes the recomputation of read models, search indexing, projections, feeds and sitemaps, so a feature test pays only for the source data it asserts on. A test of that derivation uses the opt-in trait `Tests\Concerns\WithDerivedData`, which restores the real recomputation for that test class; no other test calls it to build a precondition.
+- Fake the Laravel facades the test touches (`Http::fake()`, `Queue::fake()`, `Mail::fake()`, `Event::fake()`) in the test itself; the base class keeps `Http::preventStrayRequests()` and, when the project has derived data, the fake of it below.
+- **When the project has derived data, it is faked in the base class.** `Tests\TestCase::setUp()` fakes the recomputation of read models, search indexing, projections, feeds and sitemaps, so a feature test pays only for the source data it asserts on. A test of that derivation uses the opt-in trait `Tests\Concerns\WithDerivedData`, which restores the real recomputation for that test class; no other test calls it to build a precondition. The template ships neither the fake nor the trait: the first derived data of a project adds them. A project without derived data has nothing to fake.
 - A test that writes files uses `Storage::fake()`, never a real disk.
 
 ## Database in tests
