@@ -1,7 +1,7 @@
 ---
 title: Frontend
 order: 70
-summary: Vue 3 + Inertia rules - component architecture, TypeScript, Inertia data flow, forms, performance and frontend tests.
+summary: Vue 3 + Inertia rules - project structure and locality, component architecture, TypeScript, Inertia data flow, forms, performance, design system, Tailwind usage, frontend commands and tests.
 ---
 # Project guidelines - Frontend
 
@@ -9,6 +9,48 @@ The frontend is Vue 3 (Composition API, `<script setup lang="ts">`), Inertia 3, 
 shadcn-vue and Vitest. React is not supported. Domain behaviour, validation and authorization stay
 on the server; the frontend owns presentation state, interaction state and client-side
 orchestration only. Code that contradicts these rules is a bug to fix, not a precedent to follow.
+
+Paths in this file are relative to the JavaScript asset root, written `<js-root>`. The framework's
+frontend section names it, and the `@` import alias points to it.
+
+## Project structure and locality
+
+```text
+<js-root>/
+├── pages/            # Inertia page entry points and their branch-local code
+├── design-system/    # domain-independent public UI (App* components)
+│   ├── ui/           # private shadcn-vue and vendor-like primitives
+│   └── index.ts      # curated public exports
+├── components/       # components reused by several page branches
+├── layouts/          # persistent and route-level layouts
+├── composables/      # globally reusable reactive behaviour
+├── utils/            # globally reusable pure functions
+├── model/            # globally reusable frontend model classes
+├── payload/types.ts  # globally shared backend transport contracts
+└── types.ts          # globally shared frontend-only types
+```
+
+- Code MUST start in the page branch that owns it. Its components, composables, utils, models,
+  payload contracts and types live directly below that branch.
+- Per-page directories such as `Index/components` MUST NOT be introduced; a branch-level
+  `components` directory is used even with one consumer.
+- Code moves to a global location only when it has consumers in **separate page branches**, and
+  only as far outward as needed. Moving code outward "because it might be reused" is prohibited;
+  brief duplication is fine until real consumers show the shared boundary.
+- Reuse alone does not make a component part of the design system (see
+  [Design system](#design-system)).
+- No `components/shared` and no generic `lib` directory. `utils` holds stateless functions only;
+  reactive or lifecycle-aware behaviour is a composable.
+- Global modules MUST NOT import from `pages`. Imports outside the current branch use `@/`.
+- Hand-maintained directories use kebab-case. Renaming or moving an Inertia page updates the page
+  name the controller passes to Inertia in the same change.
+
+```text
+pages/catalog/products/components/ProductSummary   one page branch
+          │ reused by another branch
+          ▼
+components/ProductSummary                          several branches
+```
 
 ## Component architecture
 
@@ -133,3 +175,60 @@ orchestration only. Code that contradicts these rules is a bug to fix, not a pre
   after each test ([testing.md](testing.md#writing-tests)).
 - Run the narrowest affected test first, then the project's frontend checks (lint, format check,
   type check, Vitest, build; commands are in [tools.md](tools.md)).
+
+## Design system
+
+- `<js-root>/design-system` is the domain-independent public UI module. Pages, layouts and
+  application components consume it only through the curated entry point `@/design-system`.
+- **Public design-system components use the `App` prefix** (`AppButton`, `AppTable`). Private
+  primitives in `design-system/ui` are imported only inside the design system, with the `Ui`
+  prefix (`Button as UiButton`). Application code MUST NOT import a `Ui` primitive.
+- An unchanged primitive MAY be exported with an `App` alias
+  (`export { Button as AppButton } from './ui/button'`). A dedicated `App` component is created
+  only when it narrows the API, sets application-wide variants or composes primitives; a component
+  that only forwards everything is not created.
+- The design system MUST NOT import pages, application components, models, payload contracts,
+  generated route modules or Inertia, and contains no domain names, rules, routes or copy.
+- **shadcn-vue** primitives (built on Reka UI) are added with its CLI into
+  `@/design-system/ui`; `components.json` aliases point there and `cn()` comes from
+  `@/utils/classes`. Private primitives change only for upstream sync, accessibility, security,
+  correctness or a deliberate design-system-wide change.
+- A new visual pattern starts in its page branch and is promoted once its domain-independent
+  contract is clear and real reuse justifies it.
+- Icons come from the project's icon package (`@lucide/vue`); how they are imported is in
+  [Single-file components](#single-file-components).
+
+### Accessibility ownership
+
+- The design system owns keyboard interaction, focus management, visible focus, ARIA relations
+  and the disabled, loading, invalid, empty, success and failure states of reusable controls.
+  Application code never rebuilds them.
+- The consuming page provides labels, descriptions, errors, headings and alternative content.
+- Colour is never the only carrier of a state. Buttons are for actions, links for navigation.
+  Decorative icons are hidden from assistive technology; icon-only controls have an accessible
+  name.
+
+## Tailwind CSS
+
+- A colour that carries domain meaning (a status, a category) is a named semantic token with light
+  and dark values, and one application component owns the mapping from the domain value to it.
+  Pages never apply raw palette classes or borrow an unrelated token.
+- Utility classes live primarily in design-system components. Outside them, utilities are for
+  route-level layout, responsive placement and genuinely local presentation; repeated class groups
+  are a signal of a missing component, variant or token.
+- Consumers never override a design-system component's internals with classes; add a variant,
+  size or slot to the public component, or place it with a surrounding layout element.
+- Use `cn()` from `@/utils/classes` for conditional classes. Prefer `gap` over sibling margins.
+
+## Frontend commands
+
+```bash
+pnpm eslint        # ESLint flat config, read-only
+pnpm format:check  # Prettier (printWidth 150, tabWidth 4), read-only
+pnpm tsc           # type check (vue-tsc --noEmit)
+pnpm test          # Vitest
+pnpm eslint:fix && pnpm format   # explicit autofix, review the diff
+```
+
+- The read-only commands are what CI runs; the autofix commands (`eslint:fix`, `format`) are
+  developer actions ([tools.md](tools.md#formatting-and-lint-autofixes)).
