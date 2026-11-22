@@ -89,7 +89,7 @@ assertion whenever you change the test or the code it covers.
 ## Every behaviour change carries a test
 
 A pull request that changes behaviour MUST contain a test that fails without the change, or one
-line in its description: `Bez testu: <reason>` (markup or copy only, configuration, a data task
+line in its description: `No test: <reason>` (markup or copy only, configuration, a data task
 verified by its own checks, behaviour no seam can reach). A reviewer reports a behaviour change
 with neither. Documentation-only and dependency-only pull requests need no line.
 
@@ -232,7 +232,7 @@ issue as above.
    documentation-only change runs no tests.
 4. Mutation testing on the changed lines is encouraged before pushing, where the stack provides
    it; work through the escaped mutants.
-5. List the checks you ran, with their results, in the pull request, or the `Bez testu:` line.
+5. List the checks you ran, with their results, in the pull request, or the `No test:` line.
 6. Push review fixes together, after they pass locally: every push is a full CI build. A red build
    is reproduced locally before its fix is pushed.
 
