@@ -5,7 +5,7 @@ summary: Jenkins delivery of a static Astro site (a FROM scratch image through K
 ---
 # Project guidelines - Deployment and runtime
 
-Astro runtime detail added to the deployment scheme. An Astro project has no `lsrPipeline`: its `Jenkinsfile` composes the shared libraries (`testing`, `dockerHelpers`, `deploy`) itself, with the `Checks` stage first ([tools.md](tools.md#jenkins-checks-stage)). A site is **static**: what is deployed is the built `dist/` directory and the host NGINX serves it. The shared pipeline steps that would shorten the `Jenkinsfile` are **planned** ([Planned steps](#planned-steps)).
+Astro runtime detail added to the deployment scheme. There is no one-call shared pipeline step for Astro yet ([Planned steps](#planned-steps)): the `Jenkinsfile` composes the shared libraries (`testing`, `dockerHelpers`, `deploy`) itself, with the `Checks` stage first ([tools.md](tools.md#jenkins-checks-stage)). A site is **static**: what is deployed is the built `dist/` directory and the host NGINX serves it.
 
 ## Delivery paths
 
