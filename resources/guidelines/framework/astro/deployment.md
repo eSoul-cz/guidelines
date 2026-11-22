@@ -28,6 +28,7 @@ push to a branch with a deploy rule, or Publish in the backend
 - `.dockerignore` keeps host `node_modules`, `.env`, runtime data, `docs/`, source photos and tests out of the build context. Native modules are installed inside the build, for the target platform.
 - The deploy hook of the stack creates (does not start) a container from the image, copies the assets into a new `releases/<id>/` directory, switches `current` atomically and prunes old releases. A new image therefore never leaves the old site behind, and a failed copy leaves the previous release live.
 - **Rollback is redeploying the previous image** (by digest or Git tag, [Environments and releases](#environments-and-releases)): the hook turns it into a new release and switches `current`.
+- **Hashed `_astro` files.** A page opened before the switch may request a lazy chunk from `/_astro/` that the new release no longer holds. The hook SHOULD share the hashed `_astro` files between releases as `deployStaticSite` does ([Site without a CMS](#site-without-a-cms-static-release)). **Target.** The hook does not share them until the one release script of [Planned steps](#planned-steps) exists; until then such a page gets a `404` for that chunk and works again after a reload.
 - The site holds no persistent state. The CMS media are the backend's bind-mounted public directory ([Reverse proxy and TLS](#reverse-proxy-and-tls)); the backend is a separate repository with its own pipeline, image and stack ([architecture.md](architecture.md#repository-layout)).
 
 ### Site without a CMS: static release
@@ -58,6 +59,7 @@ A push to a branch with a deploy rule starts the Jenkins job: install, the `Chec
 ### Publish flow (archetype `C-headless`)
 
 - The build agent fetches the export from the backend over its public URL, so **`CMS_API_ALLOWED_IPS` of the backend MUST contain the address of the build agent**. A changed agent address makes the export answer 403 and blocks every publish until the list is updated; record the address in `README.md`.
+- A publish is not a code change: the editor's publish action starts the site's Jenkins job on the already merged code and needs no pull request ([How an application reaches production](#how-an-application-reaches-production)).
 - The backend is reached on a subdomain (RECOMMENDED) or under a path such as `/admin`; the project records which in `CONTEXT.md` ([Reverse proxy and TLS](#reverse-proxy-and-tls)). The static build fetches the export server-side in both modes, and `CMS_API_ALLOWED_IPS` applies in both.
 - A publish that has no result after **`CMS_PUBLISH_TIMEOUT`** minutes (default 30) is marked failed in the backend, so the publish button cannot stay blocked. The Jenkins callback to the backend is best effort and never fails the build; a late callback is still recorded.
 - Concurrent builds are disabled: two publishes would overwrite each other's release.
@@ -81,7 +83,7 @@ A static build bakes public values in at build time, so they are passed as build
 
 Until launch, the deployed site is a protected preview, as [public-website.md](public-website.md#preview-gate) requires. The Astro implementation:
 
-- **HTTP basic auth** in the web server. The password is a secret: it is kept as a manifest secret (a Komodo variable) and in the NGINX site, never in the repository. It is a barrier against accidental visitors, but it is still a credential. `robots.txt` stays reachable without auth.
+- **HTTP basic auth** in the web server. The password is a secret: its home is a manifest secret, that is a Komodo variable ([Configuration and secrets](#configuration-and-secrets)), never the repository, the manifest or a rendered file; the NGINX site only enforces the authentication. It is a barrier against accidental visitors, but it is still a credential. `robots.txt` stays reachable without auth.
 - **`PUBLIC_NOINDEX=true`** is the one switch: it puts `noindex` on every page, makes `robots.txt` disallow everything and builds no sitemap.
 - The preview URL is recorded in `README.md`.
 
@@ -91,7 +93,7 @@ Switching protection off is the launch step in the project's launch checklist: r
 
 - TLS ends at the load balancer; the site is HTTPS-only with HSTS, and `www` and non-`www` redirect to the canonical host. A static site has no upstream: the host NGINX serves `current` itself. An SSR site on Node is one of the specific cases the host NGINX reaches over plain HTTP (the `node-http` shape).
 - **One NGINX site definition serves the frontend and the backend.** The backend is on a subdomain (**RECOMMENDED**, for example `admin.<domain>`) or under a path of the site's domain (such as `/admin`); the project decides per application and records it in `CONTEXT.md`. The backend is reached over FastCGI like every PHP application; on a path, only the backend's own paths are routed to it (`/admin`, `/cms-api`, `/livewire*`, `/up`) and everything else is the static site.
-- The backend's session cookie is host-only: it is never scoped to the parent domain, so the admin session is not sent to the public site.
+- The backend's session cookie is host-only: it is never scoped to the parent domain. On a **subdomain** that keeps the admin session away from the public site. Under a **path** of the site's domain a host-only cookie is still sent with every request to that host, so the cookie MUST be scoped to the backend's path (`Path=/admin`) or the backend moves to a subdomain.
 - The proxy sends `X-Forwarded-Host`, `X-Forwarded-Proto: https` and an `X-Forwarded-For` that it **replaces**, not appends; an SSR site trusts forwarded headers only for its own domains (`security.allowedDomains`). Rate limits depend on the client address being right.
 - The **Content-Security-Policy of a static site comes from Astro's `security.csp`** at build time (a `<meta>` tag per page; the build computes the hashes of inline scripts and styles, so no `unsafe-inline` is needed). `frame-ancestors` does not work in `<meta>`.
 - nginx sets the other response headers on every response, static files included: `X-Frame-Options` (or `frame-ancestors` in a header CSP), `X-Content-Type-Options: nosniff`, `Referrer-Policy` and HSTS. In nginx, a `location` with its own `add_header` repeats the shared header snippet, because nginx drops inherited headers. HTML is served `no-cache`; hashed assets (`/_astro/*` and the media path) get a long, immutable cache.
