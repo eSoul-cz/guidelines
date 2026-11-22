@@ -29,6 +29,19 @@ The following do **not** belong in the committed suite. Remove them when you fin
 
 Architecture and structure checks are a stack or project choice, not a default. A check that guards a boundary review alone does not hold MAY stay in the suite when the stack guidelines or an accepted ADR name it. Anything else of these kinds still does not belong.
 
+## How much to test
+
+How many tests a route, command or query gets depends on the damage a regression would do, not on the code existing. Each one is in one tier:
+
+| Tier | Flows | Tests |
+|---|---|---|
+| 1, critical | orders, payments, prices and tax, invoices and integrations of record, authentication and authorization, irreversible data changes | full scenarios: every success and failure path whose outcome a user, a caller or the record would notice |
+| 2, everything else | every other route, command and query | one success contract test (status or return value, payload, persisted state), its [authorization tests](#authorization-tests) and one validation-keys test (one request that breaks the rules, asserting the error keys) |
+
+- The project lists its tier-1 flows in an ADR (or the decision register of its plan) and references that list from its project guidelines, below the managed block. A flow nobody listed is tier 2; the pull request that adds a flow in one of the categories above adds it to the list.
+- **Rule variants are unit tests**, in both tiers: branches, boundaries, calculations, state transitions, validation rules. A rule that only a full flow can reach is a design problem: extract it into a unit that takes its inputs, and test that.
+- **A layer above a tested layer does not repeat its scenarios.** An endpoint, console command or page that wraps a tested command or query proves only its own contract: routing, input mapping, status, response shape, authorization.
+
 ## Temporary tests
 
 Migration, backfill, schema, seeder, data-import, performance and exploratory tests are welcome **while developing**, when they are the fastest way to validate something. They are scaffolding:
@@ -72,7 +85,7 @@ A pull request that changes behaviour MUST contain a test that fails without the
 
 - A **unit test** checks one behaviour. A **feature test** is a scenario: see [Keeping the integration run short](#keeping-the-integration-run-short). Every test is self-contained and does not depend on test order.
 - Test names describe the behaviour, consistently with similar tests nearby.
-- Prefer table-driven cases (data providers, `it.each`) for several variants of one behaviour, with a descriptive name per case.
+- Prefer table-driven cases (data providers, `it.each`) for the variants of one behaviour in **unit tests**, with a descriptive name per case. In a feature test a provider case per pair of inputs is a matrix, which is one test ([Keeping the integration run short](#keeping-the-integration-run-short)).
 - Tests are deterministic: fix the clock, fake the network and external systems, restore mocks. A test that reaches the network is a bug.
 - Build data through factories or builders that produce a valid minimal record. What a test cares about is set explicitly in that test.
 - Test data is invented. Real client names, addresses, amounts or credentials MUST NOT appear in tests or fixtures ([security-and-data.md](security-and-data.md)).
@@ -112,6 +125,10 @@ The cost of an integration (feature) test is starting the application and buildi
 - **A feature test is a scenario**: one realistic flow per test, asserting all its observable outcomes (status, persisted state, dispatched events, props). Unit tests stay one behaviour per test.
 - **Variants of one rule are unit tests**, never more feature tests. Each failure class and the success of a route or command are proven once at the integration layer. A data provider multiplies the fixture, because every data set pays the set-up again.
 - **A scenario creates only the data it asserts on.** Factories build minimal valid records; do not build a catalogue to test one product.
+- **Preconditions are built, not played through.** Factories, states and builders create the state a scenario starts from (a placed order, a paid invoice, a published product); only the behaviour under test uses its real entry point. A precondition played through real flows makes every test pay for those flows and fail when they break.
+- **A matrix is one test.** A check over a cross product (role × page, route × middleware, class × layer) loops over it, collects the violations and asserts that the list is empty, so one failure lists every violation. Never a data-provider case per pair: each case pays the set-up again.
+- **Derived data stays off unless it is under test.** The shared base test class fakes the recomputation of read models, search indexes, projections, feeds and sitemaps; a test of that derivation opts back in (the stack's testing guideline says how). Every other test asserts the source data.
+- **Concurrency is proven by design and review** (the locking rule of the stack's CQRS guideline), not by tests: on the test engine a multi-process test cannot show row locks, and it costs a process per worker. A multi-process test is written only for a named damaging invariant (a double-spent stock, a double-charged payment); it names the invariant in its docblock, carries `db-engine` and runs only in the scheduled job on the production engine ([Test groups](#test-groups)).
 - **Add to the suite of the area.** A new integration test goes into the existing suite of its area. A new suite is only for an area no suite covers, and the pull request says why. Name a suite after the area, never after an issue.
 - **A feature test that takes over 1 second** in a full local run is called out in review: make it cheaper or say in its docblock why it cannot be.
 
@@ -126,7 +143,7 @@ The default run (local and CI) excludes `sandbox` and `quarantine`; they run on 
 | `sandbox` | contract tests against a provider's test API or a recorded cassette refresh; they skip themselves when credentials are missing | on demand and on schedule |
 | `quarantine` | a flaky test whose cause is not fixed yet; a comment on its group attribute holds the URL of its issue | on schedule only, until fixed or deleted within that issue |
 
-`db-engine` is a project opt-in. A project that runs on a different database engine in production than in its tests MAY mark tests whose outcome depends on the production engine (collations and case-insensitive uniqueness, `NULL` ordering, JSON functions, raw SQL, locking, strict mode) with it. They stay in the default run on the test engine and run again on the production engine in a scheduled job, which the project MUST set up, otherwise the group proves nothing. A defect found on the production engine gets a regression test in `db-engine`, never a workaround that only satisfies the test engine.
+`db-engine` is a project opt-in. A project that runs on a different database engine in production than in its tests MAY mark tests whose outcome depends on the production engine (collations and case-insensitive uniqueness, `NULL` ordering, JSON functions, raw SQL, locking, strict mode) with it. They stay in the default run on the test engine and run again on the production engine in a scheduled job, which the project MUST set up, otherwise the group proves nothing. A `db-engine` test that shows nothing on the test engine (a multi-process concurrency test) skips itself there, so only the scheduled job runs it. A defect found on the production engine gets a regression test in `db-engine`, never a workaround that only satisfies the test engine.
 
 ## Flaky tests
 
