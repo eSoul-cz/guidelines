@@ -4,6 +4,18 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-23
+
+Follow-ups from the V2 review of the app templates.
+
+### Changed
+
+- Derived data: the rule that a shared base test class fakes the recomputation of read models, search indexes, projections, feeds and sitemaps applies only when the project has derived data; the Laravel template ships neither the fake nor the `WithDerivedData` trait.
+- LSR testing: the network guard is a DI HTTP client bound to a fake in tests plus a PHPUnit extension that fails http(s) stream requests to anything but localhost; raw sockets are covered by review.
+- LSR: the `boltdb` jobs queue file lives in `/app/temp/queue/` (replacing the open path), and cache cleaning (`cache:clean`, the generated-cache cleanup of `/prepare-runtime`) leaves it alone.
+- Astro: `B-admin` has the `astro-ssr` template (an ADR is still required; `D-static-api` has no template yet). The three templates are named (`laravel-cms`, `astro-cms-frontend` and the root `astro-cms`), a no-CMS site that needs forms starts its backend from `laravel-cms`, and the subdomain is the default of the CMS backend with a path as the documented exception.
+- README: `package/lunar` will be written from the first Lunar project.
+
 ## [0.2.0] - 2026-11-22
 
 The V1 review of every guideline layer: new layers and guidelines, tightened and corrected rules, and the installer decisions.
@@ -44,7 +56,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/eSoul-cz/guidelines/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/eSoul-cz/guidelines/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/eSoul-cz/guidelines/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/eSoul-cz/guidelines/releases/tag/v0.1.0
