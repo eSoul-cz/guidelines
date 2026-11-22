@@ -102,10 +102,10 @@ Read the issue and its acceptance criteria before reading the diff. Then check, 
    request ([testing.md](testing.md)). When mutation testing
    was run, escaped mutants on changed lines are killed or listed as accepted in the pull
    request.
-5. **Vocabulary.** Names follow the glossary; a new term is added in the same pull request
-   ([domain.md](domain.md)).
-6. **Documentation.** Text that the change makes stale is updated in the same pull request
-   ([documentation.md](documentation.md)).
+5. **Vocabulary.** Names follow the glossary; a new term is added to the glossary, preferably in the same pull
+   request ([domain.md](domain.md)).
+6. **Documentation.** Text that the change makes stale is updated, preferably in the same pull
+   request, otherwise in a stacked one ([documentation.md](documentation.md)).
 7. **Open questions.** A rule the client has not decided is not implemented anyway. Guessing an
    open question is `Major`; the fix is to split the slice and ask.
 

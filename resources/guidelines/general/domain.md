@@ -15,11 +15,12 @@ For domain work, read the sources in this order. A higher source wins over a low
 
 1. [GLOSSARY.md](../../GLOSSARY.md) - the mandatory domain vocabulary - and
    [CONTEXT.md](../../CONTEXT.md) - the project conventions, which hold no domain terms.
-2. `docs/adr/` - the decisions that touch the area, following every supersession link.
+2. `docs/adr/` - the decisions that touch the area, following every supersession link - and the
+   decision register of the plan (`docs/plan/`), which ranks with the ADRs as a recorded decision.
 3. [AGENTS.md](../../AGENTS.md) and these guidelines - the engineering rules, including where the
    code does not follow them yet.
 4. The design, where the project has one. It wins over design tokens and over any summary of it.
-5. The plan and the issue - scope and acceptance criteria.
+5. The plan's slices and schedule, and the issue - scope and acceptance criteria.
 6. Client source material and notes on the previous system - evidence of how the client works and
    how the old system behaved. Evidence, never requirement.
 
@@ -37,7 +38,7 @@ for it. A pull request that changes a status updates both.
 | Status | Authority |
 |---|---|
 | `accepted` | The target contract, even when the code differs. Record the difference as a gap; never weaken the ADR to match the code. Change it by a dated note or by supersession. |
-| `proposed` | A candidate. It MUST NOT be implemented as if it were decided; work that depends on it waits for the decision. |
+| `proposed` | A candidate. It MUST NOT be implemented as if it were decided; work that depends on it waits for the decision, unless the owner explicitly approves a pilot. The ADR then records the pilot under *Implementation status* and is accepted or amended after it. |
 | `superseded` | History only. Its status names the successor (`superseded by ADR-NNNN`); follow that link. |
 | `deprecated` | MUST NOT be introduced in new work. |
 
@@ -52,13 +53,16 @@ today.
 - Identifiers are English; the value a user sees keeps its original-language form from the
   glossary (a status, a type, a label).
 - A concept the glossary lacks is a signal. Reconsider whether it belongs to the project; if it
-  does, add the term in the same pull request that introduces it.
+  does, add the term to the glossary, preferably in the pull request that introduces it (a
+  stacked pull request is allowed, see
+  [documentation.md](documentation.md#documentation-rides-with-the-change)).
 
 ## Open points and conflicts
 
 - Text marked as open, working, deferred or awaiting confirmation is not a requirement and MUST
   NOT be guessed. An open point blocks only the dependent slice: split it out and ask through the
-  question register.
+  question register: the project's tracker, as an issue or task labelled `question`, never a file
+  ([documentation.md](documentation.md#where-a-piece-of-knowledge-belongs)).
 - A rule that is not written down is not settled. Decide it, and record it where it belongs,
   before implementing it; never guess a rule because the data seems to imply it.
 - If an issue, a guideline or a proposed change contradicts an `accepted` ADR, or two accepted
