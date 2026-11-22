@@ -100,7 +100,7 @@ in. The project lists its modules and what each owns in its `CONTEXT.md` or arch
 `Integration\<System>`.
 
 - A module MUST NOT read another module's Eloquent model. Cross-module reads execute the owning
-  module's query. Reaching into another module's model is `High` in review even when it works.
+  module's query. Reaching into another module's model is `Major` in review even when it works.
 - A module MUST NOT write another module's data. It dispatches that module's command.
 - Code shared by several modules (`App\Domain\ValueObjects`, contracts) depends on no module.
 

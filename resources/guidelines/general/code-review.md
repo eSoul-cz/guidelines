@@ -1,7 +1,7 @@
 ---
 title: Code review
 order: 10
-summary: Who reviews, finding severity and default blockers, what a reviewer checks, how findings are written and answered.
+summary: Who reviews, finding severity and default critical findings, what a reviewer checks, how findings are written and answered.
 ---
 # Project guidelines - Code review
 
@@ -29,20 +29,20 @@ standards are at https://dev.docs.esoul.cz.
 
 ## Severity
 
-- **Blocker** - the pull request must not merge until the finding is resolved.
-- **High** - materially wrong behaviour, lost authorised work, or a violation of an `accepted`
+- **Critical** - the pull request must not merge until the finding is resolved.
+- **Major** - materially wrong behaviour, lost authorised work, or a violation of an `accepted`
   ADR or of a MUST rule in `AGENTS.md` or these guidelines.
-- **Medium** - significant duplication, overengineering, a missing test for a non-critical path,
+- **Minor** - significant duplication, overengineering, a missing test for a non-critical path,
   or another maintainability risk.
-- **Low** - local cleanup that can be included with related remediation.
+- **Nitpick** - local cleanup that can be included with related remediation.
 
-`Blocker` and `High` prevent the merge. `Medium` and `Low` are either fixed in the same pull
+`Critical` and `Major` prevent the merge. `Minor` and `Nitpick` are either fixed in the same pull
 request or marked `Deferred`: the pull request merges with a linked follow-up issue, which is a
 new issue and task like any other work.
 
-### Default Blockers
+### Default Critical findings
 
-A finding is a `Blocker` by default when it can:
+A finding is `Critical` by default when it can:
 
 - produce a **wrong amount or figure**: a price, a total, a tax, a balance, an hour count, a
   computed number the client relies on. A wrong number has already been sent by the time a later
@@ -56,17 +56,17 @@ A finding is a `Blocker` by default when it can:
 - put a **credential or real client data** into code, tests, fixtures, issues or pull requests
   ([security-and-data.md](security-and-data.md)).
 
-These are the findings a later fix does not repair. A project MAY add its own default Blockers in
+These are the findings a later fix does not repair. A project MAY add its own default Critical findings in
 its project-specific guidelines.
 
 ## Keeping review short
 
-- At most three nitpicks per review. Style a formatter or linter can enforce goes into the tool,
+- At most three `Nitpick` findings per review. Style a formatter or linter can enforce goes into the tool,
   not into review comments.
 - Generated code, vendored assets and fixtures copied from a client export are not reviewed line
   by line; review the generator, its input and the rule that produced them.
 - A problem the pull request did not introduce is marked **Pre-existing**. It is reported only
-  when it is a `Blocker` or `High`, and it is fixed in this pull request only when the fix is
+  when it is `Critical` or `Major`, and it is fixed in this pull request only when the fix is
   small and in scope; otherwise it becomes a follow-up.
 - A pattern is reported once, with every instance, so it is fixed in one go.
 - A finding that keeps coming back in reviews becomes a rule: a lint or static analysis rule, a
@@ -94,7 +94,7 @@ Read the issue and its acceptance criteria before reading the diff. Then check, 
 6. **Documentation.** Text that the change makes stale is updated in the same pull request
    ([documentation.md](documentation.md)).
 7. **Open questions.** A rule the client has not decided is not implemented anyway. Guessing an
-   open question is `High`; the fix is to split the slice and ask.
+   open question is `Major`; the fix is to split the slice and ask.
 
 A green `Jenkins` check proves that the automated checks pass. It does not prove that the issue
 is solved, that the design is matched or that acceptance testing passes. Those stay the

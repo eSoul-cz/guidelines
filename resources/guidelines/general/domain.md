@@ -71,7 +71,7 @@ These principles hold in every project that stores or computes amounts:
 
 - **No floating point for money.** An amount is never stored, passed or computed as `float` or as
   a JavaScript `Number` used for arithmetic. A `float` on the path of a money value is a
-  `Blocker` ([code-review.md](code-review.md)).
+  `Critical` ([code-review.md](code-review.md)).
 - An amount is an **integer in minor units** together with its **currency**, held in a money value
   object or in fields whose name states the unit (for example a `_minor` suffix). A field never
   mixes units, and neither do a function's parameters. A rate, percentage or coefficient is an
