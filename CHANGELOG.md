@@ -4,6 +4,16 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Added
+
+- Layer `package/lunar` (detected from `lunarphp/lunar`): `architecture.md` (the Lunar exception to the framework-free core, versions and upgrades, extension points, process-wide state, calculation cost, money, tax, the admin panel, storefront and search), `testing.md` and `integrations.md` (payment gateway, carrier and ERP rules: ports and fakes, outbox and idempotency keys, scheduled reads, reconciliation, webhooks, stock sync).
+
+### Changed
+
+- Laravel architecture: a package layer MAY allow the types of the domain model its package provides in the framework-free core.
+- LSR: the `boltdb` queue and network guard `Target` notes are removed, because the template ships both.
+- README: `package/lunar` exists.
+
 ## [0.2.1] - 2026-11-23
 
 Follow-ups from the V2 review of the app templates.

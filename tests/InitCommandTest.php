@@ -6,10 +6,10 @@ namespace Esoul\Guidelines\Tests;
 
 final class InitCommandTest extends TestCase
 {
-    public function test_no_interaction_accepts_the_detected_stack_and_skips_missing_layers(): void {
+    public function test_no_interaction_accepts_the_detected_stack_and_skips_layers_without_a_source(): void {
         $this->seedLayers();
         $this->layer('package/inertia-vue', 'frontend.md', "# Project guidelines - Frontend\n");
-        file_put_contents($this->project . '/composer.json', '{"require":{"laravel/framework":"^13.0","lunarphp/lunar":"^1.0"}}');
+        file_put_contents($this->project . '/composer.json', '{"require":{"laravel/framework":"^13.0"},"require-dev":{"infection/infection":"^0.35"}}');
         file_put_contents($this->project . '/package.json', '{"dependencies":{"@inertiajs/vue3":"^3.0"}}');
 
         $tester = $this->run_('init');
@@ -19,7 +19,7 @@ final class InitCommandTest extends TestCase
             ['layers' => ['general', 'framework/laravel', 'package/inertia-vue']],
             json_decode($this->read('esoul-guidelines.json'), true),
         );
-        self::assertStringContainsString('package/lunar', $tester->getDisplay());
+        self::assertStringContainsString('package/mutation-testing', $tester->getDisplay());
     }
 
     public function test_detects_the_laravel_inertia_layer_only_with_both_packages(): void {
@@ -57,6 +57,20 @@ final class InitCommandTest extends TestCase
         self::assertSame(0, $tester->getStatusCode());
         self::assertSame(
             ['layers' => ['general', 'framework/laravel', 'package/filament']],
+            json_decode($this->read('esoul-guidelines.json'), true),
+        );
+    }
+
+    public function test_detects_the_lunar_layer(): void {
+        $this->seedLayers();
+        $this->layer('package/lunar', 'architecture.md', "# Project guidelines - Architecture\n");
+        file_put_contents($this->project . '/composer.json', '{"require":{"laravel/framework":"^13.0","lunarphp/lunar":"^1.5"}}');
+
+        $tester = $this->run_('init');
+
+        self::assertSame(0, $tester->getStatusCode());
+        self::assertSame(
+            ['layers' => ['general', 'framework/laravel', 'package/lunar']],
             json_decode($this->read('esoul-guidelines.json'), true),
         );
     }
