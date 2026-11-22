@@ -5,7 +5,7 @@ summary: LSR application structure - RoadRunner worker, Nette DI, routing, contr
 ---
 # Project guidelines - Architecture
 
-The application is a PHP 8.5 LSR Framework application served by RoadRunner workers. This file describes the structure that new code MUST fit into; the frontend layout is in [frontend.md](frontend.md). Optional LSR modules (for example `lsr/cqrs`) add their own rules through their own layers.
+The application is an LSR Framework application served by RoadRunner workers. This file describes the structure that new code MUST fit into; the frontend layout is in [frontend.md](frontend.md). Optional LSR modules (for example `lsr/cqrs`) add their own rules through their own layers.
 
 ## Runtime and entrypoints
 
@@ -102,6 +102,7 @@ RoadRunner workers do **not** reset memoized or static state between requests or
 ## Background work
 
 - Jobs run in the RoadRunner jobs pool; scheduled work runs in the scheduler service (`scheduler:run`). A task is a dispatcher class implementing `Lsr\Roadrunner\Tasks\TaskDispatcherInterface`, queued through `TaskProducer` with a payload implementing `TaskPayloadInterface`.
+- Jobs are durable by default: the jobs pool uses the RoadRunner `boltdb` driver, which needs no extra service and keeps its queue file in the stack's bind-mounted run directory ([deployment.md](deployment.md#stack-runtime)), so queued work survives a restart. The `memory` driver is used only for work that may be lost (a cache warm-up, a best-effort notification), and the decision is recorded. Another driver (`amqp` or any other broker) needs an ADR.
 - `getDiName()` of a dispatcher MUST equal the name of its DI service definition, because the jobs worker resolves the task by that name.
 - A payload carries identifiers, enums, timestamps and small DTO data only: never closures, streams, PDO/Dibi connections, DI services or loaded ORM graphs. The task loads fresh state from the identifiers.
 - A task MUST be idempotent or guard against double execution, because jobs can be retried. Guard the payload type at the start of `process()`.

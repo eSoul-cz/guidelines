@@ -58,7 +58,7 @@ The template `Jenkinsfile` loads the shared libraries `dockerHelpers`, `testing`
 ## Stack runtime
 
 - The database is the shared MariaDB of the host (`DB_HOST=host.docker.internal`, one login per database); it is not a service of the stack. A cache, when the project chose one ([architecture.md](architecture.md#caching)), is the stack's own Valkey service; the Redis-compatible `redis` alias resolves to it.
-- Persistent state (uploads, private data, logs, `temp/`) is bind-mounted from the stack's run directory (`./upload`, `./logs`, `./temp`, next to `.env`, `services.local.neon` and `.rr.yaml`); the container filesystem is disposable. The repository documentation lists the persistent paths; the infrastructure's backups cover the run directory.
+- Persistent state (uploads, private data, logs, `temp/` and the `boltdb` jobs queue file) is bind-mounted from the stack's run directory (`./upload`, `./logs`, `./temp`, next to `.env`, `services.local.neon` and `.rr.yaml`; the queue file has its own mounted path, see [Background work](architecture.md#background-work)); the container filesystem is disposable. The repository documentation lists the persistent paths; the infrastructure's backups cover the run directory.
 - Database installation and migrations (`php bin/console app:install`) run in the start script before the HTTP pool accepts traffic; a failure exits the container instead of serving errors.
 - A new release is verified after deployment by the container health state (`GET /up`); rolling back means deploying the previous image tag.
 
