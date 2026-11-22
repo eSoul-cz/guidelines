@@ -26,7 +26,7 @@ The package is published on [Packagist](https://packagist.org/packages/esoul-cz/
 
 | Command | Purpose |
 |---|---|
-| `init [--no-interaction]` | Asks whether the repository is a **client/application** repository (default) or an **internal** repository (guidelines, templates, libraries, packages, infrastructure); internal adds the `profile/internal` layer. The kind is never detected from the repository. `--no-interaction` keeps client, unless the existing config already has `profile/internal`. Then detects the stack from `composer.json` / `package.json` (`laravel/framework`, `lsr/core`, `lsr/cqrs`, `astro`, `filament/filament`, `lunarphp/lunar`, `@inertiajs/vue3`, `infection/infection`, `esoul-cz/phpunit-test-evidence`), asks you to confirm the layers (multiselect; entry `none` selects no stack layer, for example in an internal documentation repository) and writes `esoul-guidelines.json`. `--no-interaction` accepts the detection (or an existing config). Detected stacks without a layer yet are reported and skipped. |
+| `init [--no-interaction]` | Asks whether the repository is a **client/application** repository (default) or an **internal** repository (guidelines, templates, libraries, packages, infrastructure); internal adds the `profile/internal` layer. The kind is never detected from the repository. `--no-interaction` keeps client, unless the existing config already has `profile/internal`. Then detects the stack from `composer.json` / `package.json` (`laravel/framework`, `laravel/framework` together with `inertiajs/inertia-laravel`, `lsr/core`, `lsr/cqrs`, `astro`, `filament/filament`, `lunarphp/lunar`, `@inertiajs/vue3`, `infection/infection`, `esoul-cz/phpunit-test-evidence`), asks you to confirm the layers (multiselect; entry `none` selects no stack layer, for example in an internal documentation repository) and writes `esoul-guidelines.json`. `--no-interaction` accepts the detection (or an existing config). Detected stacks without a layer yet are reported and skipped. |
 | `sync [--dry-run] [--force]` | Renders and writes. Refuses to overwrite a managed block whose current hash differs from the lock (a local edit), listing the files, unless `--force`. `--dry-run` prints a summary (`-v` also lists unchanged files, `-vv` prints the changed lines) and writes nothing. |
 | `check` | For CI. Exit 1 on **drift** (a managed block differs from the lock, or is missing) or **outdated** content (the lock differs from a fresh render, or the config/layers changed). Exit 0 otherwise. |
 | `list` | Lists the available layers and their files (`*` = selected in the project). |
@@ -47,7 +47,7 @@ All commands accept `-d|--working-dir=<project root>` (default: current director
 
 ## Layer authoring rules
 
-Sources live in `resources/guidelines/<layer>/<name>.md`; a layer id is `general` or `<group>/<name>` (`profile/internal`, `framework/laravel`, `framework/lsr`, `framework/astro`, `package/inertia-vue`, `package/lsr-cqrs`, `package/mutation-testing`, `package/test-evidence`, ...). Files are flat inside a layer; `index.md` is reserved for the generated index.
+Sources live in `resources/guidelines/<layer>/<name>.md`; a layer id is `general` or `<group>/<name>` (`profile/internal`, `framework/laravel`, `framework/lsr`, `framework/astro`, `package/filament`, `package/inertia-vue`, `package/laravel-inertia`, `package/lsr-cqrs`, `package/mutation-testing`, `package/test-evidence`, ...). Files are flat inside a layer; `index.md` is reserved for the generated index.
 
 Optional YAML frontmatter:
 
@@ -129,7 +129,8 @@ build of `main` triggers the Satis mirror. The package supports PHP 8.4 and ever
 ## Draft assumptions
 
 - Layer content is first-draft quality, seeded from the esoul-project-lifecycle template folder and the reference projects' guideline files with project names removed. Expect a review pass per layer.
-- `package/filament` and `package/lunar` are **not written** (no source guide exists yet). `init` detects `filament/filament` and `lunarphp/lunar`, reports them and skips them until the layers exist.
+- `package/lunar` is **not written** (no source guide exists yet). `init` detects `lunarphp/lunar`, reports it and skips it until the layer exists. `package/filament` is started with what is decided (the admin panel rule and a theming note); full Filament guidelines come from a real project.
+- `package/laravel-inertia` (detected when Composer requires both `laravel/framework` and `inertiajs/inertia-laravel`) holds the Inertia-specific part of the Laravel frontend and tools guidelines (`resources/js` structure, Inertia server side, Wayfinder, design system, Vite chunking, the `pnpm` quality commands); `framework/laravel` keeps what holds for every Laravel user interface. Inertia and Vue rules shared with LSR stay in `package/inertia-vue`.
 - Frontmatter has one key beyond the brief: `summary` (one line for the index and the AGENTS.md block). `title` falls back to the H1.
 - The AGENTS.md block lists files flagged `agents: true` (currently `testing`, `security-and-data`, `workflow`) as links with their summary, not the rule text itself.
 - Layers are flat directories of `.md` files; there are no sub-folders inside a layer. Output file names equal source names.
