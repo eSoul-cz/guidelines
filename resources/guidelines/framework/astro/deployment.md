@@ -13,7 +13,7 @@ Two paths, chosen by whether the site has a CMS. Both end in the same server lay
 
 ### Site with a CMS: image to Komodo
 
-The default (`C-headless`): a static Astro site and a Laravel/Filament backend that publishes it.
+The default (`C-headless`): a static Astro site and a Laravel/Filament backend that publishes it. The two halves come from the templates `astro-cms-frontend` and `laravel-cms`, tied together by the root template `astro-cms` ([Repository layout](architecture.md#repository-layout)).
 
 ```text
 push to a branch with a deploy rule, or Publish in the backend
@@ -39,7 +39,7 @@ A push to a branch with a deploy rule starts the Jenkins job: install, the `Chec
 
 ### Exceptions: SSR and `D-static-api`
 
-`B-admin` (SSR on Node) and `D-static-api` have no template, and their ADR names how they are delivered. An SSR image follows the scheme like any application image:
+`B-admin` (SSR on Node) has the `astro-ssr` template and `D-static-api` has none; the ADR of either names how it is delivered. An SSR image follows the scheme like any application image, and the `astro-ssr` template implements it:
 
 - It is built with `dockerBuildMultiArch` and deployed with `deployKomodoStack`; the image holds only what runs, runs as an unprivileged user under an init process, has a healthcheck and stops gracefully on `SIGTERM`.
 - Where the host NGINX serves client files, the deploy hook copies them out of the image into the run directory (`./client`) on **every** deploy, so a new image never leaves the old site behind.
@@ -92,7 +92,7 @@ Switching protection off is the launch step in the project's launch checklist: r
 ## Reverse proxy and TLS
 
 - TLS ends at the load balancer; the site is HTTPS-only with HSTS, and `www` and non-`www` redirect to the canonical host. A static site has no upstream: the host NGINX serves `current` itself. An SSR site on Node is one of the specific cases the host NGINX reaches over plain HTTP (the `node-http` shape).
-- **One NGINX site definition serves the frontend and the backend.** The backend is on a subdomain (**RECOMMENDED**, for example `admin.<domain>`) or under a path of the site's domain (such as `/admin`); the project decides per application and records it in `CONTEXT.md`. The backend is reached over FastCGI like every PHP application; on a path, only the backend's own paths are routed to it (`/admin`, `/cms-api`, `/livewire*`, `/up`) and everything else is the static site.
+- **One NGINX site definition serves the frontend and the backend.** The backend is on a subdomain (**RECOMMENDED** and the default of the templates, for example `admin.<domain>`) or under a path of the site's domain (such as `/admin`, the documented exception); the project decides per application and records it in `CONTEXT.md`. The backend is reached over FastCGI like every PHP application; on a path, only the backend's own paths are routed to it (`/admin`, `/cms-api`, `/livewire*`, `/up`) and everything else is the static site.
 - The backend's session cookie is host-only: it is never scoped to the parent domain. On a **subdomain** that keeps the admin session away from the public site. Under a **path** of the site's domain a host-only cookie is still sent with every request to that host, so the cookie MUST be scoped to the backend's path (`Path=/admin`) or the backend moves to a subdomain.
 - The proxy sends `X-Forwarded-Host`, `X-Forwarded-Proto: https` and an `X-Forwarded-For` that it **replaces**, not appends; an SSR site trusts forwarded headers only for its own domains (`security.allowedDomains`). Rate limits depend on the client address being right.
 - The **Content-Security-Policy of a static site comes from Astro's `security.csp`** at build time (a `<meta>` tag per page; the build computes the hashes of inline scripts and styles, so no `unsafe-inline` is needed). `frame-ancestors` does not work in `<meta>`.
