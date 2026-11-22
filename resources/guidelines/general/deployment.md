@@ -77,9 +77,9 @@ The servers run a few shared services, each applied from the infrastructure repo
 ## Reverse proxy and TLS
 
 - Public traffic enters through the load balancer, which ends TLS and speaks HTTP to the host NGINX. NGINX runs only on the host; a deployed stack contains no web server container, and the application image contains no web server.
-- Every PHP application, RoadRunner included, is reached from NGINX through FastCGI only. Only specific cases proxy plain HTTP (some JavaScript-based projects, certain RoadRunner cases), and the manifest says so.
+- Every PHP application, RoadRunner included, is reached from NGINX through FastCGI. Plain HTTP is proxied only in specific cases (some JavaScript-based projects, certain RoadRunner cases), and the manifest says so.
 - Every public name of an application is listed in its manifest (`domains`, `redirects`) and resolves to the load balancer. The apply issues the certificates on the load balancer.
-- The application trusts forwarded headers only from the proxy's addresses, never from `*`. The proxy sets `Host` and the `X-Forwarded-*` headers itself and drops what a client sent.
+- The application trusts forwarded headers only from the proxy's addresses, never from `*`. The proxy sets the host, the scheme and the client address itself (as FastCGI parameters or `X-Forwarded-*` headers) and drops what a client sent.
 - Production sites redirect plain HTTP to HTTPS and send HSTS.
 - Service endpoints (health, metrics, status) are not routed publicly. Application admin interfaces are application routes behind authentication.
 
