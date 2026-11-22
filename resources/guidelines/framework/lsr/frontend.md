@@ -5,7 +5,7 @@ summary: LSR frontend specifics - asset root, Vite and Latte integration, Inerti
 ---
 # Project guidelines - Frontend
 
-In an LSR application the frontend is built with Vite, TypeScript and Tailwind CSS 4 and rendered into a Latte page shell by LSR controllers. `package.json` and its lockfile are authoritative for installed versions.
+In an LSR application the frontend is built with Vite, TypeScript and Tailwind CSS and rendered into a Latte page shell by LSR controllers. `package.json` and its lockfile are authoritative for installed versions ([tools.md](tools.md#versions)).
 
 ## Frontend layout
 
@@ -47,7 +47,7 @@ In an LSR application the frontend is built with Vite, TypeScript and Tailwind C
 
 ## Tailwind CSS
 
-- Tailwind CSS 4 runs through `@tailwindcss/vite`; there is no `tailwind.config.js`. Tokens (colours, radii, fonts, spacing) are CSS variables defined once in the Tailwind entry and mapped with `@theme`.
+- Tailwind CSS runs through `@tailwindcss/vite`; there is no `tailwind.config.js`. Tokens (colours, radii, fonts, spacing) are CSS variables defined once in the Tailwind entry and mapped with `@theme`.
 - Colours and spacing come from the tokens; no arbitrary hex values or magic sizes in templates.
 
 ## Frontend commands
