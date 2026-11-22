@@ -60,6 +60,19 @@ final class MergerTest extends TestCase
         self::assertStringContainsString("## A\n\n<!-- from: framework/laravel -->\nnew rule", $merged);
     }
 
+    public function test_a_replaced_section_still_receives_content_from_later_layers(): void {
+        $merged = new Merger()->merge([
+            $this->source('general', "# T\n\n## A\n\nold rule\n\n## B\n\nkept\n"),
+            $this->source('profile/internal', "## A\n\n<!-- replace -->\nrelaxed rule\n"),
+            $this->source('framework/laravel', "## A\n\nframework addition\n"),
+        ])->markdown;
+
+        self::assertSame(
+            "# T\n\n## A\n\n<!-- from: profile/internal -->\nrelaxed rule\n\n<!-- from: framework/laravel -->\nframework addition\n\n## B\n\nkept",
+            $merged,
+        );
+    }
+
     public function test_headings_inside_code_fences_are_not_sections(): void {
         $merged = new Merger()->merge([
             $this->source('general', "# T\n\n## A\n\n```md\n## Not a heading\n```\n"),

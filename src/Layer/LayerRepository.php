@@ -9,11 +9,13 @@ use Esoul\Guidelines\Markdown\Frontmatter;
 
 /**
  * Reads guideline layers from `<baseDir>/<layer>/*.md` where a layer id is `general`
- * or `<group>/<name>` (`framework/laravel`, `package/filament`, ...).
+ * or `<group>/<name>` (`profile/internal`, `framework/laravel`, `package/filament`, ...).
  */
 final class LayerRepository
 {
     public const string GENERAL = 'general';
+
+    public const string PROFILE_INTERNAL = 'profile/internal';
 
     public const string RESERVED_INDEX = 'index';
 
@@ -30,7 +32,7 @@ final class LayerRepository
     }
 
     /**
-     * @return list<string> `general` first, then `framework/*`, then `package/*`, then the rest.
+     * @return list<string> `general` first, then `profile/*`, `framework/*`, `package/*`, then the rest.
      */
     public function layers(): array {
         if ($this->layers !== null) {
@@ -51,9 +53,10 @@ final class LayerRepository
 
         $rank = static fn (string $layer): int => match (true) {
             $layer === self::GENERAL => 0,
-            str_starts_with($layer, 'framework/') => 1,
-            str_starts_with($layer, 'package/') => 2,
-            default => 3,
+            str_starts_with($layer, 'profile/') => 1,
+            str_starts_with($layer, 'framework/') => 2,
+            str_starts_with($layer, 'package/') => 3,
+            default => 4,
         };
         usort($layers, static fn (string $a, string $b): int => [$rank($a), $a] <=> [$rank($b), $b]);
 

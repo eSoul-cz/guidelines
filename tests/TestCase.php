@@ -53,6 +53,20 @@ abstract class TestCase extends BaseTestCase
         return (string) file_get_contents($this->project . '/' . $relative);
     }
 
+    /**
+     * Runs a command interactively with the given answers (one per question; an empty string accepts the default).
+     *
+     * @param list<string> $answers
+     */
+    protected function runInteractive(string $command, array $answers): CommandTester {
+        $app = new Application(new LayerRepository($this->layersDir), 'test');
+        $tester = new CommandTester($app->find($command));
+        $tester->setInputs($answers);
+        $tester->execute(['--working-dir' => $this->project], ['interactive' => true]);
+
+        return $tester;
+    }
+
     /** @param array<string, mixed> $input */
     protected function run_(string $command, array $input = []): CommandTester {
         $app = new Application(new LayerRepository($this->layersDir), 'test');
