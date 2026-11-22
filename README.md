@@ -106,12 +106,18 @@ Boost writes its own `<laravel-boost-guidelines>` block into `AGENTS.md` and thi
 ## Development
 
 ```bash
-composer install
-vendor/bin/phpunit
+composer update          # libraries do not commit composer.lock
+composer test            # PHPUnit
+composer phpstan         # PHPStan, level max with the phpunit, strict and deprecation rules
+composer cs              # PHP-CS-Fixer dry run with esoul-cz/coding-standard; `composer cs:fix` applies it
 bin/esoul-guidelines list
 ```
 
 Tests cover the risky logic only: H2 merge, managed block replacement, drift refusal and `--force`, `check` (outdated vs drift), layer removal.
+
+CI is the `Jenkinsfile`: one call to `phpPackagePipeline` from the eSoul Jenkins libraries. It runs composer validate, PHPStan, the code style
+check and composer audit, then PHPUnit on PHP 8.5, and PHPUnit on 8.4 and 8.6 after Composer re-resolved the dependencies on that version. A
+build of `main` triggers the Satis mirror. The package supports PHP 8.4 and every later 8.x release (`^8.4`).
 
 ## Draft assumptions
 
