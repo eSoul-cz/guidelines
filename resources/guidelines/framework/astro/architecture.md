@@ -71,7 +71,7 @@ Forms post to the backend's form endpoint, whose URL is set at build time; the b
 
 Forms and interactive features (login, cart, account) call the backend's API on the **same origin** from islands, so no CORS setup is needed. The pages are still static HTML:
 
-- The backend paths (for example `/api`) are listed once in `astro.config.mjs`, where they feed the dev server proxy and `connect-src` of the CSP; the production proxy routes the same paths ([deployment.md](deployment.md#reverse-proxy-and-headers)).
+- The backend paths (for example `/api`) are listed once in `astro.config.mjs`, where they feed the dev server proxy and `connect-src` of the CSP; the production proxy routes the same paths ([deployment.md](deployment.md#reverse-proxy-and-tls)).
 - Islands reach the API only through one client module; no component calls `fetch` for the backend itself.
 - Everything an indexable page shows is in the build output; the API supplies only per-visitor data. Pages that exist for a signed-in visitor or a transaction (account, cart, checkout and the like) are `noindex` ([seo.md](seo.md#meta)).
 - A transactional feature that cannot work without JavaScript (login, cart) is the one exception to the no-script form rule; its page still renders all of its content without scripts.
