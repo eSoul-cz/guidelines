@@ -42,6 +42,10 @@ How many tests a route, command or query gets depends on the damage a regression
 - **Rule variants are unit tests**, in both tiers: branches, boundaries, calculations, state transitions, validation rules. A rule that only a full flow can reach is a design problem: extract it into a unit that takes its inputs, and test that.
 - **A layer above a tested layer does not repeat its scenarios.** An endpoint, console command or page that wraps a tested command or query proves only its own contract: routing, input mapping, status, response shape, authorization.
 
+## More tests are not more safety
+
+A test earns its place by its tier ([How much to test](#how-much-to-test)) or as the regression test of a bug fix. A review finding, an escaped mutant or a follow-up issue is a reason to look at the behaviour, not by itself a reason to add a test. Every test costs every push of every project, so a change that makes a test redundant deletes it in the same pull request, duplicates included.
+
 ## Temporary tests
 
 Migration, backfill, schema, seeder, data-import, performance and exploratory tests are welcome **while developing**, when they are the fastest way to validate something. They are scaffolding:
@@ -134,6 +138,13 @@ The cost of an integration (feature) test is starting the application and buildi
 
 Suites that break these rules are merged or moved to a cheaper layer in their own issue, not in passing.
 
+## Suite time budget
+
+- The CI test stage has a wall-time budget of **10 minutes**. A project MAY set its own and states it in its project guidelines, below the managed block.
+- The test stage SHOULD publish JUnit results with per-test times, so the slowest tests and the growth per pull request are read from the build, not guessed.
+- A test stage over budget is an issue that trims the suite (a cheaper layer, a matrix as one test, preconditions from factories, duplicates deleted), and it comes before new feature tests.
+- A pull request that adds more than **30 seconds** of summed test time (the sum of the per-test times of a full run, before and after) says why in its description.
+
 ## Test groups
 
 The default run (local and CI) excludes `sandbox` and `quarantine`; they run on a schedule or on demand (the stack's testing rules say how). A test joins a group only for the reason named here.
@@ -161,7 +172,7 @@ A test that fails and passes on the same code is a defect. Do not rerun the buil
 2. Delete temporary tests and anything else that does not belong in the suite. Do this first, so the next steps measure the tests that will be merged.
 3. Run the whole suite and the stack's static analysis (the stack's tools guideline, `tools.md`) once, on the code that will be pushed; formatters run before every commit instead ([workflow.md](workflow.md#commits)). Skip what the change cannot affect: a documentation-only change runs no tests.
 4. Mutation testing on the changed lines is encouraged before pushing, where the stack provides it; work through the escaped mutants.
-5. List the checks you ran, with their results, in the pull request, or the `No test:` line.
+5. List the checks you ran, with their results, in the pull request, or the `No test:` line; add the reason when the pull request adds more than 30 seconds of test time ([Suite time budget](#suite-time-budget)).
 6. Push review fixes together, after they pass locally: every push is a full CI build. A red build is reproduced locally before its fix is pushed.
 
 Do steps 2 to 5 before opening a pull request and before reporting a slice as finished.
