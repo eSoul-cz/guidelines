@@ -5,7 +5,7 @@ summary: pnpm repositories - where settings live, the install hardening in pnpm-
 ---
 # Project guidelines - Dependencies
 
-How a project's packages are installed and kept safe. New dependencies need a maintainer's approval ([workflow.md](workflow.md#pull-requests)); when a maintained library that fits the framework solves the problem, use it instead of writing our own. MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
+How a project's packages are installed and kept safe. New dependencies need a maintainer's approval ([workflow.md](workflow.md#repository-rules)); when a maintained library that fits the framework solves the problem, use it instead of writing our own. MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
 
 ## pnpm repositories
 
