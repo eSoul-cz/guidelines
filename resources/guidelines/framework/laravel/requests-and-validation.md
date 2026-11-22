@@ -83,7 +83,7 @@ A form request MUST NOT write: no create, update or delete, no queued job, expor
 `prepareForValidation()`, `rules()`, `withValidator()` and `passedValidation()` may query to
 validate; they may not persist. Creating a missing related record "because the user typed a new
 one" is a write and belongs to the command handler, inside its transaction, where it can also
-record who did it. A mutating request is a `Blocker` in review: a rejected request would be
+record who did it. A mutating request is `Critical` in review: a rejected request would be
 half-applied, and a rule that mutates cannot be tested in isolation.
 
 ## Mapping to commands and queries

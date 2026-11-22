@@ -178,7 +178,7 @@ final class ListProductsQuery implements QueryInterface
 - All commands and queries are called through the buses. Controllers MAY use the facades;
   handlers, services and jobs inject `CommandBusInterface` and `QueryBusInterface`.
 - A console command, listener or job that changes state dispatches a command. A state change
-  outside a command is `High` in review.
+  outside a command is `Major` in review.
 
 ```php
 final readonly class SomeService
