@@ -18,6 +18,8 @@ The template `Jenkinsfile` loads the shared libraries `dockerHelpers`, `testing`
 - the production-target image build from `docker/Dockerfile`;
 - deployment of the image to the project's Komodo stack by the project's deploy rules (`main` and `master` in the template; see [Environments and releases](#environments-and-releases)).
 
+**Target.** The template's checks stop short of the read-only set in [tools.md](tools.md#read-only-verification): `composer cs`, `pnpm tsc` and `pnpm test` are not run yet. The template adds them (V2 template item).
+
 `lsrPipeline` is **planned**: the shared `pipelines` library has `laravelPipeline` only, so the template `Jenkinsfile` does not run until `lsrPipeline` exists. Its parameters mirror `laravelPipeline` and the `smoke` key is a proposal. Until then a project composes the same steps from the shared `testing`, `dockerHelpers` and `deploy` libraries.
 
 - The `Jenkinsfile` stays a small, readable pipeline: check, build, publish and deploy only. Release certification, evidence capture and other orchestration do not belong in it.
@@ -33,7 +35,7 @@ The template `Jenkinsfile` loads the shared libraries `dockerHelpers`, `testing`
 - The runtime image is based on `rg.fr-par.scw.cloud/esoul-starters/php-cli-roadrunner:8.5`; the application runs as a RoadRunner process, not behind php-fpm.
 - The `Dockerfile` is multi-stage: Composer dependencies (`composer install --no-dev --optimize-autoloader`), a Node stage (pnpm from `packageManager` installed with npm, `pnpm install --frozen-lockfile`, `pnpm run build`), a `development` target and a `production` target (the last stage, so the default build target).
 - The production image holds only what runs: `bin`, `config`, `include`, `routes`, `src`, `templates`, `.rr.yaml`, `psr-worker.php`, `vendor` (without dev dependencies) and the built `build/`. Tests, frontend sources, `node_modules` and tooling configuration are not in it.
-- Only the compiled `build/assets` directory is public; the Vite manifest and the application tree stay private. In a deployed stack the deploy hook copies `/app/build` out of the image into the run directory's `build/`, which the host NGINX serves under `/build/`; nothing else of the run directory is reachable.
+- Only the compiled `build/assets` directory is public; the Vite manifest and the application tree stay private. In a deployed stack the deploy hook copies `/app/build/assets` out of the image into the run directory's `build/assets/`, which the host NGINX serves under `/build/assets/`; nothing else of the run directory is reachable.
 - `.dockerignore` keeps host `node_modules`, `vendor`, `temp`, `logs`, `.env` and private configuration out of the build context.
 - Development and production use the same entrypoint structure: a start script runs `/prepare-runtime` (writable `temp/`, `logs/` and upload directories, generated-cache cleanup, ORM, Latte and route caches, database installation) and then `rr serve -c .rr.yaml`. Production does not run `composer install` or `pnpm install` at start.
 
@@ -58,11 +60,11 @@ The template `Jenkinsfile` loads the shared libraries `dockerHelpers`, `testing`
 ## Stack runtime
 
 - The database is the shared MariaDB of the host (`DB_HOST=host.docker.internal`, one login per database); it is not a service of the stack. A cache, when the project chose one ([architecture.md](architecture.md#caching)), is the stack's own Valkey service; the Redis-compatible `redis` alias resolves to it.
-- Persistent state (uploads, private data, logs, `temp/` and the `boltdb` jobs queue file) is bind-mounted from the stack's run directory (`./upload`, `./logs`, `./temp`, next to `.env`, `services.local.neon` and `.rr.yaml`; the queue file has its own mounted path, see [Background work](architecture.md#background-work)); the container filesystem is disposable. The repository documentation lists the persistent paths; the infrastructure's backups cover the run directory.
+- Persistent state (uploads, private data, logs, `temp/` and the `boltdb` jobs queue file) is bind-mounted from the stack's run directory (`./upload`, `./logs`, `./temp`, next to `.env`, `services.local.neon` and `.rr.yaml`); the container filesystem is disposable. The queue file's path in the run directory is **TBD**: the V2 template item that switches the jobs driver to `boltdb` fixes it ([Background work](architecture.md#background-work)). The repository documentation lists the persistent paths; the infrastructure's backups cover the run directory.
 - Database installation and migrations (`php bin/console app:install`) run in the start script before the HTTP pool accepts traffic; a failure exits the container instead of serving errors.
-- A new release is verified after deployment by the container health state (`GET /up`); rolling back means deploying the previous image tag.
+- A new release is verified after deployment by the container health state (`GET /up`); rolling back means redeploying an earlier image by its digest or Git tag ([Environments and releases](#environments-and-releases)).
 
 ## Reverse proxy and TLS
 
-- The host NGINX passes every path except `/build/` to the application over FastCGI, with the client address, scheme, host and port that NGINX determined. The application trusts these values only because the connection comes from the proxy (the browser CSRF middleware relies on them). Plain HTTP on port 8001 reaches the application only in the specific cases the manifest names.
+- The host NGINX passes every path except `/build/assets/` to the application over FastCGI, with the client address, scheme, host and port that NGINX determined. The application trusts these values only because the connection comes from the proxy (the browser CSRF middleware relies on them). Plain HTTP on port 8001 reaches the application only in the specific cases the manifest names.
 - Security headers (CSP, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `frame-ancestors`) are set on every response, static files included.

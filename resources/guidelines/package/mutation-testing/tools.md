@@ -3,6 +3,18 @@ title: Tools
 ---
 # Project guidelines - Tools
 
+## Versions
+
+Mutation testing adds this row:
+
+| Area | Tool | Source |
+|---|---|---|
+| Mutation testing | Infection (local, optional) | `infection.json5` |
+
+## Tool caches
+
+On LSR, Infection's cache is `temp/tools/infection`, next to the other tool caches.
+
 ## Mutation testing (local, optional)
 
 ```bash
