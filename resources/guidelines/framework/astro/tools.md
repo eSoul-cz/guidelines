@@ -36,7 +36,7 @@ This file lists the tools the project uses and how to run them.
 
 ## pnpm hardening
 
-The install hardening (`minimumReleaseAge`, the `allowBuilds` allow-list, `pnpm audit` in CI with dated `auditConfig.ignoreGhsas`) holds for every pnpm repository and is stated in [dependencies.md](dependencies.md#install-hardening). `pnpm audit` runs in the [Checks stage](#jenkins-checks-stage). When a maintained library that works with Astro solves a problem, use it instead of writing our own; adding one needs approval ([workflow.md](workflow.md#pull-requests)).
+The install hardening (`minimumReleaseAge`, the `allowBuilds` allow-list, `pnpm audit` in CI with dated `auditConfig.ignoreGhsas`) holds for every pnpm repository and is stated in [dependencies.md](dependencies.md#install-hardening). `pnpm audit` runs in the [Checks stage](#jenkins-checks-stage). Adding a dependency needs approval ([workflow.md](workflow.md#repository-rules)).
 
 ## Read-only verification
 
