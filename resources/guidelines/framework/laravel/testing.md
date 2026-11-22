@@ -13,6 +13,8 @@ On this stack tests are PHPUnit 13 classes in `tests/` under the `Tests` namespa
 
 ## Error and validation messages
 
+- Domain exceptions are asserted by type and properties first (the exception class and the facts
+  it carries).
 - Form request or controller validation: `assertSessionHasErrors(['field'])` (web) or
   `assertJsonValidationErrors(['field'])` (JSON) with the field keys only, together with the
   status or redirect (`assertStatus(422)`, `assertRedirect()`).
@@ -22,11 +24,14 @@ On this stack tests are PHPUnit 13 classes in `tests/` under the `Tests` namespa
   without an explanation.
 - An error flashed from a caught exception: `assertRedirect()` and `assertSessionHas('error')`
   without a value.
-- These are banned when they carry error text: `expectExceptionMessage()`,
-  `expectExceptionMessageMatches()`, `getMessage()` compared with a literal,
-  `assertSessionHasErrors(['field' => '...'])`, `assertJsonValidationErrors(['field' => '...'])`,
-  `assertJsonPath('errors.field.0', '...')`, `assertSessionHas('error', '...')` and `assertSee()`
-  on an error text.
+- These are banned when they carry **user-facing** text (validation error text, flashed messages,
+  translated strings, error bodies): `assertSessionHasErrors(['field' => '...'])`,
+  `assertJsonValidationErrors(['field' => '...'])`, `assertJsonPath('errors.field.0', '...')`,
+  `assertSessionHas('error', '...')`, `assertSee()` on an error text, and `getMessage()` or
+  `expectExceptionMessage()` on an exception whose message reaches a user.
+- `expectExceptionMessage()`, `expectExceptionMessageMatches()` and `getMessage()` are allowed for
+  *internal*, developer-facing exceptions (a guard, a configuration or programming error that no
+  user reads); see the general rule above.
 
 ## Writing tests
 

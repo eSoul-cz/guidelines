@@ -10,7 +10,8 @@ CQRS (Command Query Responsibility Segregation) separates the operations that ch
 [architecture.md](architecture.md).
 
 - **Commands are the only way business state changes.** A handler owns one business operation,
-  its transaction and its outbox write.
+  its transaction and, where the operation notifies an external system, its outbox write (the
+  project's outbox ADR).
 - **Queries are the read side.** They hand callers a complete, ready-to-use result as DTOs, so
   controllers, exporters, console commands and other handlers never query models or reshape data
   themselves. Many small, specialised queries are preferred over one query with many modes, and
@@ -25,8 +26,8 @@ CQRS (Command Query Responsibility Segregation) separates the operations that ch
 The project uses the shared packages
 [`esoul-cz/laravel-cqrs`](https://github.com/eSoul-cz/laravel-cqrs) (Laravel integration) and
 `esoul-cz/cqrs` (buses, contracts, attributes). Every Laravel template ships them, installed from
-eSoul's Composer repository `https://packages.esoul.cz`. Do not add an application-local copy of
-the buses or contracts.
+Packagist (`packages.esoul.cz` mirrors them). Do not add an application-local copy of the buses or
+contracts.
 
 - `Esoul\Cqrs\Contracts\CommandInterface` / `QueryInterface`: a command or a query.
 - `Esoul\Cqrs\Contracts\CommandHandlerInterface` / `QueryHandlerInterface`: their handlers.
@@ -81,7 +82,7 @@ final readonly class CloseOrderCommandHandler implements CommandHandlerInterface
     public function handle(CommandInterface $command): bool
     {
         return $this->db->transaction(function () use ($command): bool {
-            // lock, check the business rule, write, record history, write outbox
+            // lock, check the business rule, write, record history, write outbox where it applies
             return true;
         });
     }
@@ -123,9 +124,10 @@ php artisan make:cqrs-query Catalog/GetProductDetail --handler --return=ProductD
   Never read, compute in PHP and write back unlocked. Prove such handlers with a concurrency test
   on the production engine (the `db-engine` group, where the project has opted in,
   [testing.md](testing.md#test-groups)).
-- **External writes go through the outbox.** Every write to an external system is an outbox
-  message written by the same handler, in the same transaction as the state change. A handler
-  never calls an external system directly.
+- **External writes go through a contract.** A handler reaches an external system only through a
+  contract in `App\Application\Contract`. Where the project's outbox ADR applies (writes that must
+  not be lost or duplicated: payments, invoices, ERP), the write is an outbox message in the same
+  transaction instead.
 - **Changes are traceable.** An operation that must be recorded writes its history entry in the
   same transaction, with the acting user the command carries.
 - Scope that differs per tenant, sales channel or legal entity is an explicit command property,
@@ -134,7 +136,8 @@ php artisan make:cqrs-query Catalog/GetProductDetail --handler --return=ProductD
   ([requests-and-validation.md](requests-and-validation.md)). The handler enforces the business
   rules and reports a violation with a typed exception in `App\Domain\Exception` that carries the
   facts as properties. A value that can never be valid raises `InvalidArgumentException`. Callers
-  and tests react to the type and properties, never to the message.
+  react to the type and properties, never to the message. Tests MAY also check the internal
+  message ([testing.md](testing.md#error-and-validation-messages)).
 - A handler MAY dispatch other commands and execute queries through buses injected in its
   constructor, not through facades. It reaches another module's data only that way, never through
   that module's models ([architecture.md](architecture.md#modules)).

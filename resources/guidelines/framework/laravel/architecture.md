@@ -5,14 +5,15 @@ summary: Laravel layers (Domain, Application, Infrastructure), dependency direct
 ---
 # Project guidelines - Architecture
 
-The application is a Laravel 13 monolith on PHP 8.5: business operations are commands and queries
-(`esoul-cz/laravel-cqrs`), the user interface is Inertia 3 with Vue 3, and there is one database.
-The project's ADRs record every decision that deviates from this file; company-wide standards are
-at `https://dev.docs.esoul.cz`.
+The application is a Laravel monolith: business operations are commands and queries
+(`esoul-cz/laravel-cqrs`) and there is one database. The user interface is the project's variant:
+Inertia with Vue pages, a Filament admin panel, or both. The versions are named only in
+[tools.md](tools.md#versions). The project's ADRs record every decision that deviates from this
+file; company-wide standards are at `https://dev.docs.esoul.cz`.
 
 | Part | Technology | Where | Details |
 |---|---|---|---|
-| User interface | Inertia 3, Vue 3, TypeScript, Tailwind CSS 4, shadcn-vue | `resources/js`, `App\Infrastructure\Http` | [frontend.md](frontend.md) |
+| User interface | The project's variant: Inertia and Vue pages and/or a Filament admin panel | `App\Infrastructure\Http`, plus the variant's own directories | [frontend.md](frontend.md) |
 | Business operations | Commands and queries via `esoul-cz/laravel-cqrs` | `App\Domain\CQRS` | [cqrs.md](cqrs.md) |
 | Business rules and calculations | Framework-free value objects, enums, domain services | `App\Domain\<Module>` | this file |
 | Database | The engine the project's ADR chooses in production, SQLite `:memory:` in tests | `database/` | [testing.md](testing.md#database-in-tests) |
@@ -33,9 +34,8 @@ at `https://dev.docs.esoul.cz`.
 
 ### `App\Domain\Providers` - service providers
 
-- Service providers live in `App\Domain\Providers` (`AppServiceProvider` and the Filament panel
-  provider `App\Domain\Providers\Filament\AdminPanelProvider`) and are listed in
-  `bootstrap/providers.php`.
+- Service providers live in `App\Domain\Providers` (`AppServiceProvider` and the provider of an
+  admin panel, when the project has one) and are listed in `bootstrap/providers.php`.
 - A provider binds contracts to implementations, so it uses the container, facades and
   `App\Infrastructure`. **It is the one place in `App\Domain` that may**, and the layer
   architecture test exempts exactly this namespace
@@ -95,8 +95,8 @@ test that is a named exception in [testing.md](testing.md#architecture-tests).
 
 Module boundaries are namespaces inside the layers, not separate packages. Each module owns its
 data and exposes behaviour through its commands and queries; other modules ask, they do not reach
-in. The project lists its modules and what each owns in its `CONTEXT.md` or architecture ADR
-([CONTEXT.md](../../CONTEXT.md)). Each external system is one namespace,
+in. The project lists its modules and what each owns in its architecture ADR (or its plan), not
+in `CONTEXT.md`. Each external system is one namespace,
 `Integration\<System>`.
 
 - A module MUST NOT read another module's Eloquent model. Cross-module reads execute the owning
@@ -120,9 +120,11 @@ reimplementing it. Its panel provider is `App\Domain\Providers\Filament\AdminPan
   explicitly. A query that can return another scope's data is a bug, not a filter to add later.
 - A yes/no fact SHOULD be stored as a nullable timestamp of when it became true (`archived_at`,
   not `is_archived`). A plain boolean remains fine where the moment carries no meaning.
-- A column with more than two values SHOULD be a database-native enum mapped to a PHP backed enum
-  through a cast. Values the client manages as data (types, tags, categories) are tables, not
-  enums.
+- A column with more than two values SHOULD be a native `ENUM` where the engine supports it
+  (MariaDB, MySQL, PostgreSQL), mapped to a PHP backed enum through a cast. The SQLite test
+  database emulates it (Laravel's `enum()` becomes a `CHECK` constraint), so "database-native" is
+  not literally true there. Values the client manages as data (types, tags, categories) are
+  tables, not enums.
 - Generated index and foreign key names MUST stay within 64 characters; give long ones an
   explicit short name. The suite checks this ([testing.md](testing.md#database-in-tests)).
 - Money columns hold integer minor units (`BIGINT`); exact decimals are `DECIMAL` with the scale
@@ -138,9 +140,11 @@ The principles are in [domain.md](domain.md#money). On this stack:
   currency, arithmetic only within one currency), mapped to a `BIGINT` column by a cast.
 - Exact decimals (rates, coefficients, percentages) are `BcMath\Number` or decimal strings
   computed with bcmath.
-- **One rounding mode for the whole application: half away from zero**
-  (`RoundingMode::HalfAwayFromZero`). It is applied at one place per calculation chain, inside the
-  framework-free core, and is never chosen at a call site. PHP `round()` is never used on money.
+- **One rounding mode for the whole application, half away from zero by default**
+  (`RoundingMode::HalfAwayFromZero`). A project that needs another mode (for example half-even for
+  a tax rule) records it in its money ADR; one mode per application either way. It is applied at
+  one place per calculation chain, inside the framework-free core, and is never chosen at a call
+  site. PHP `round()` is never used on money.
 - **A float never carries money, not even for display.** `float()` is never called on money input,
   and the formatter does not hand an amount to ICU as a float (`NumberFormatter::formatCurrency()`
   takes one): it builds the string from the integer or decimal-string parts.
