@@ -15,7 +15,7 @@ Acceptance criteria are tested and reported with `esoul-cz/phpunit-test-evidence
 
 - Each evidence test carries two groups: `#[Group('evidence')]` and a group naming the task or acceptance criterion it proves, `<ticket-prefix><task id>`. The prefix, the ticket URL and the report path are the project's defaults under `extra.test-evidence` in `composer.json` (`ticket-prefix`, `ticket-url`, `output`, `rerun`, `copy`, `php-ini`). If the task id is not known, ask for it before tagging. One test MAY carry several task groups.
 - Use the tracker the client or the project reports against. Never put an internal tracker id into a group, a TestDox sentence or a report when the reader cannot open it.
-- One test per scenario or criterion, in an acceptance test file of the project's feature tests, named `<Feature>AcceptanceTest` ([Stack specifics](#stack-specifics)). Name the method `test_<criterion id>_<observable behaviour>`; variants use a data provider with a descriptive key per row, passed into the TestDox sentence so that every row is its own line in the report. Scenarios that depend on each other stay separate tests: rebuild the earlier state instead of sharing it.
+- One test per scenario or criterion, in an acceptance test file of the project's feature tests, named `<Feature>AcceptanceTest` ([Test evidence per stack](#test-evidence-per-stack)). Name the method `test_<criterion id>_<observable behaviour>`; variants use a data provider with a descriptive key per row, passed into the TestDox sentence so that every row is its own line in the report. Scenarios that depend on each other stay separate tests: rebuild the earlier state instead of sharing it.
 - Every test has a `#[TestDox('<criterion id> - <condition>: <expected result>')]` sentence in the specification's own terms, describing observable behaviour, not classes or methods. `$parameter` placeholders are filled from the data set.
 - A bug gets its regression test first, and you watch it fail against the current code.
 
@@ -49,12 +49,12 @@ composer test:evidence -- <group> --baseline="$(git merge-base HEAD origin/<base
 }
 ```
 
-   `<test command>` is the project's way of running one test; [Stack specifics](#stack-specifics) gives it per stack.
+   `<test command>` is the project's way of running one test; [Test evidence per stack](#test-evidence-per-stack) gives it per stack.
 4. Read the report before handing it over. Every test passes on the evaluated commit. The tests that prove the change fail at the baseline, and the reason column shows the reported symptom. A test that fails there for an unrelated reason (a helper class added with the change) is not evidence: keep the doubles in the test file or pass `--copy`.
 5. The report is written to the configured `output` path and committed in the task branch; the pull request mentions it. Exit code 0 means every test passed, 1 that a test did not (the report is still written), 2 that no report was produced (no tests in the group).
 6. Add a short human-written summary above a report that goes to a ticket: what the tests simulate (faked HTTP, in-memory services) and what they do not prove (environment configuration, deployment). The report proves behaviour under the tested conditions; it does not replace checking the target environment.
 
-### Stack specifics
+### Test evidence per stack
 
 #### On Laravel
 
@@ -63,4 +63,4 @@ composer test:evidence -- <group> --baseline="$(git merge-base HEAD origin/<base
 
 #### On LSR
 
-- The `rerun` template is `XDEBUG_MODE=off vendor/bin/phpunit --exclude-group=sandbox,quarantine --filter {filter}`; the project's feature-test directory is named in its `phpunit.xml`.
+- Acceptance tests live in `tests/Acceptance/<Feature>AcceptanceTest.php`: the LSR test layout has no unit/feature split, so acceptance tests get their own directory, created with the first one. The `rerun` template is `XDEBUG_MODE=off vendor/bin/phpunit --exclude-group=sandbox,quarantine --filter {filter}`.
