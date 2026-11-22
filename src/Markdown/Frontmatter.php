@@ -51,7 +51,12 @@ final class Frontmatter
         self::assertType($data, 'order', 'is_int', 'an integer', $origin);
         self::assertType($data, 'agents', 'is_bool', 'a boolean', $origin);
 
-        return [$data, $body];
+        $frontmatter = [];
+        foreach ($data as $key => $value) {
+            $frontmatter[(string) $key] = $value;
+        }
+
+        return [$frontmatter, $body];
     }
 
     /**

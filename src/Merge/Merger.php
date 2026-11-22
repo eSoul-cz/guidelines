@@ -58,9 +58,19 @@ final class Merger
         $summary = null;
         $agents = false;
         foreach ($sources as $source) {
-            $title ??= $source->frontmatter['title'] ?? null;
-            $order ??= $source->frontmatter['order'] ?? null;
-            $summary ??= $source->frontmatter['summary'] ?? null;
+            // Frontmatter::parse() already rejected values of any other type.
+            $sourceTitle = $source->frontmatter['title'] ?? null;
+            $sourceOrder = $source->frontmatter['order'] ?? null;
+            $sourceSummary = $source->frontmatter['summary'] ?? null;
+            if ($title === null && is_string($sourceTitle)) {
+                $title = $sourceTitle;
+            }
+            if ($order === null && is_int($sourceOrder)) {
+                $order = $sourceOrder;
+            }
+            if ($summary === null && is_string($sourceSummary)) {
+                $summary = $sourceSummary;
+            }
             $agents = $agents || ($source->frontmatter['agents'] ?? false) === true;
         }
         $title ??= $this->titleFromH1($docs[0]->h1) ?? $primary->name;
@@ -81,9 +91,9 @@ final class Merger
 
         return new MergedGuideline(
             name: $primary->name,
-            title: (string) $title,
-            order: (int) ($order ?? self::DEFAULT_ORDER),
-            summary: (string) ($summary ?? ''),
+            title: $title,
+            order: $order ?? self::DEFAULT_ORDER,
+            summary: $summary ?? '',
             agents: $agents,
             layers: array_values(array_unique(array_map(static fn (SourceFile $s): string => $s->layer, $sources))),
             sources: array_column(array_map(static fn (SourceFile $s): array => [$s->relativePath, $s->hash], $sources), 1, 0),
@@ -121,6 +131,8 @@ final class Merger
             return null;
         }
 
-        return preg_replace('/^Project guidelines\s*[-–—:]\s*/i', '', $h1) ?: $h1;
+        $title = preg_replace('/^Project guidelines\s*[-–—:]\s*/i', '', $h1);
+
+        return $title === null || $title === '' ? $h1 : $title;
     }
 }
