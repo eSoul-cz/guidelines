@@ -12,6 +12,7 @@ use PHPUnit\Framework\TestCase;
 
 final class MergerTest extends TestCase
 {
+    /** @param array<string, mixed> $frontmatter */
     private function source(string $layer, string $body, array $frontmatter = []): SourceFile
     {
         return new SourceFile($layer, 'testing', $layer . '/testing.md', $frontmatter, $body, hash('sha256', $body));
@@ -75,6 +76,10 @@ final class MergerTest extends TestCase
         self::assertStringContainsString("```md\n## Not a heading\n```", $merged);
     }
 
+    /**
+     * @param array<string, mixed> $first
+     * @param array<string, mixed> $second
+     */
     #[DataProvider('metadata')]
     public function testFrontmatterIsMerged(array $first, array $second, string $title, int $order, bool $agents): void
     {

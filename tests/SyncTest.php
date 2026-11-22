@@ -152,7 +152,9 @@ final class SyncTest extends TestCase
         self::assertStringContainsString('General rule.', $merged);
         self::assertStringContainsString('My own testing notes.', $merged);
         self::assertFileDoesNotExist($tools, 'orphaned file without local content is deleted');
-        self::assertArrayNotHasKey('docs/project_guidelines/tools.md', Lock::load($this->project)->files);
+        $lock = Lock::load($this->project);
+        self::assertNotNull($lock);
+        self::assertArrayNotHasKey('docs/project_guidelines/tools.md', $lock->files);
         self::assertSame(0, $this->run_('check')->getStatusCode());
     }
 
