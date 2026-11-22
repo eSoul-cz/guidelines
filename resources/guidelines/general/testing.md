@@ -76,8 +76,9 @@ A pull request that changes behaviour MUST contain a test that fails without the
 - Tests are deterministic: fix the clock, fake the network and external systems, restore mocks. A test that reaches the network is a bug.
 - Build data through factories or builders that produce a valid minimal record. What a test cares about is set explicitly in that test.
 - Test data is invented. Real client names, addresses, amounts or credentials MUST NOT appear in tests or fixtures ([security-and-data.md](security-and-data.md)).
-- A test of date or time logic fixes the clock and includes an instant just after midnight in the business time zone, which is still the previous day in UTC. The date rules are in [domain.md](domain.md#time-and-dates).
-- A test of rendered HTML (templates, e-mail) asserts the encoded markup (`&lt;script&gt;`) and rejects raw executable tags.
+- A test of date or time logic fixes the clock and includes an instant at which the date in the business time zone differs from the date in UTC: just after local midnight for a zone east of UTC, just before it for a zone west of UTC. A project whose business time zone is UTC has no such instant. The date rules are in [domain.md](domain.md#time-and-dates).
+- A test of rendered HTML (templates, e-mail) rejects raw executable tags.
+- A test that renders untrusted or user input also asserts its encoded markup (`&lt;script&gt;`).
 
 ## Authorization tests
 
@@ -94,7 +95,7 @@ The rules are in [security-and-data.md](security-and-data.md#authorization). In 
 Doubles (mocks, stubs, fakes) isolate the code under test from external systems, and from the database only when the behaviour under test does not need it.
 
 - Behaviour-specific fakes stay in the individual test. Suite-wide safety guards MAY live in the shared base test class.
-- **Network guard.** The suite is guarded so that a connection to anything but localhost fails the test, and integration keys are empty in the test environment. A test that needs an external system fakes it; a request nobody faked is a bug, never a silent real call. The stack's testing guideline names the mechanism.
+- **Network guard.** The suite is guarded so that a connection to anything but localhost fails the test, and integration keys are empty in the test environment. A test that needs an external system fakes it; a request nobody faked is a bug, never a silent real call. The stack's testing guideline names the mechanism. The one exception is the `sandbox` group ([Test groups](#test-groups)), which is meant to reach a provider's test API: the guard is lifted for it alone, and its credentials come from the environment of the job that runs the group (a test without them skips itself).
 - Do not install blanket exception or sleep fakes only to make the suite faster.
 - Do not mock the collaborator whose result is the behaviour under test (a calculator in a test of its caller). A small real collaborator beats a mock that echoes the implementation.
 
