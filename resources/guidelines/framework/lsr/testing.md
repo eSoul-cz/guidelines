@@ -30,7 +30,7 @@ Tests sit in the directory that mirrors the layer of `src/` they cover (`tests/H
 ## Test doubles
 
 - The network guard of the general rules lives in `tests/Support` (a base test class or a PHPUnit extension) and makes a connection to anything but localhost fail the test. The integration keys (the variables of external services) are empty when `APP_ENV=test`, which `phpunit.xml` sets.
-- **Target.** The LSR template has neither the guard nor an external-HTTP fake yet. Until it does, a test that would call an external system injects a fake of that service through the container instead, and a project that adds an HTTP client adds the guard with it (V2 template item).
+- **Target.** The LSR template has neither the guard nor an external-HTTP fake yet. Until it does, a test that would call an external system injects a fake of that service through the container instead. The guard does not depend on an HTTP client: it applies to every connection outside localhost, whichever library or socket opens it (V2 template item).
 
 ## Test groups
 

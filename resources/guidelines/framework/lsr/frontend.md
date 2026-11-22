@@ -16,7 +16,7 @@ In an LSR application the frontend is built with Vite, TypeScript and Tailwind C
 | `assets/css/tailwind.css`  | Tailwind entry and design tokens                                              |
 | `components.json`          | shadcn-vue configuration (style, aliases, icon library)                       |
 
-- `<js-root>` is `assets/js`. The Vue structure rules ([Project structure and locality](#project-structure-and-locality)) apply under it, and the template ships only the entrypoint, `pages` and `design-system/ui`; the other folders are created when first needed.
+- `<js-root>` is `assets/js`. The Vue structure rules ([Project structure and locality](#project-structure-and-locality)) come from the `package/inertia-vue` layer, which the installer adds whenever `@inertiajs/vue3` is in `package.json`, as it is in every LSR frontend of this layout; they apply under `<js-root>`. The template ships only the entrypoint, `pages` and `design-system/ui`; the other folders are created when first needed.
 - The path alias `@` points to `<js-root>`; use it instead of long relative imports.
 - A page name used by a controller MUST exist in `assets/js/pages` with exactly the same case and path.
 - Tests are colocated with the code they cover as `*.test.ts`.
@@ -57,5 +57,5 @@ pnpm dev            # Vite dev server
 pnpm build          # production build
 ```
 
-- The quality commands follow in the shared Vue list; CI runs the read-only ones ([deployment.md](deployment.md#delivery-path)).
+- The quality commands follow in the shared Vue list. **Target.** The pipeline runs only `eslint` and `format:check` today ([Delivery path](deployment.md#delivery-path)); `tsc` and `test` are read-only commands too and join it with the V2 template item, so the CI state described here is the target, not the present one.
 - ESLint uses the flat config (`eslint.config.js`) with `@typescript-eslint/no-explicit-any` enabled; do not switch it off. Prettier uses printWidth 150 and tabWidth 4 with the organise-imports and Tailwind class-sorting plugins and covers `assets/`.

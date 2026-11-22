@@ -27,6 +27,7 @@ Paths under `<js-root>/` are written relative to the JavaScript asset root; any 
 ```
 
 - Code MUST start in the page branch that owns it. Its components, composables, utils, models, payload contracts and types live directly below that branch.
+- The exception is the Inertia entry point (`createInertiaApp` and its setup): it belongs to no page, so it lives directly in `<js-root>`.
 - Per-page directories such as `Index/components` MUST NOT be introduced; a branch-level `components` directory is used even with one consumer.
 - Code moves to a global location only when it has consumers in **separate page branches**, and only as far outward as needed. Moving code outward "because it might be reused" is prohibited; brief duplication is fine until real consumers show the shared boundary.
 - Reuse alone does not make a component part of the design system (see [Design system](#design-system)).
