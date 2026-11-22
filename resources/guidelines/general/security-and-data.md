@@ -38,7 +38,7 @@ Every eSoul project handles somebody else's data. This file states the rules tha
 
 ## Production access
 
-- Production systems are **read-only by default**. No command, script, test, seed or agent writes to a production database or to an external system's production environment (payments, banks, accounting, shipping, ERP, e-mail providers). Use test-mode keys, or no key at all so the integration stays switched off.
+- Production systems are **read-only by default**. No manual or unapproved command, script, test, seed or agent writes to a production database or to an external system's production environment (payments, banks, accounting, shipping, ERP, e-mail providers); the reviewed migrations and commands of the data-correction rule below are the approved writes. Use test-mode keys, or no key at all so the integration stays switched off.
 - Tests never reach a real external system and hold no production keys; the guards are in [testing.md](testing.md#test-doubles).
 - Agents MAY trigger Jenkins jobs (builds, image builds, Satis rebuilds) when the owner asks. Agents never deploy outside Jenkins, never push images or artifacts themselves and never change CI credentials. Production deployments run only from Jenkins after a merged pull request.
 - A data correction in a real environment ships as a reviewed migration or as a command that goes through the application's normal write path, never as manual SQL. Only what goes through that path reaches the change history.
