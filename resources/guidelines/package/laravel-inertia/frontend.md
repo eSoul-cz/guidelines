@@ -5,69 +5,33 @@ title: Frontend
 
 ## Stack
 
-The pages are Inertia with Vue 3 and TypeScript, with Laravel Wayfinder for routes, shadcn-vue for
-the design system's primitives and Vitest for frontend tests, on top of the Vite and Tailwind CSS
-setup above. `<js-root>` is `resources/js`. The structure, design system, component, TypeScript,
-Inertia data flow, forms and frontend test rules are the Vue sections of this file; this layer adds
-the Laravel server side, Wayfinder and bundling.
+The pages are Inertia with Vue 3 and TypeScript, with Laravel Wayfinder for routes, shadcn-vue for the design system's primitives and Vitest for frontend tests, on top of the Vite and Tailwind CSS setup above. `<js-root>` is `resources/js`. The structure, design system, component, TypeScript, Inertia data flow, forms and frontend test rules are the Vue sections of this file; this layer adds the Laravel server side, Wayfinder and bundling.
 
 ## Inertia server side
 
-- A controller returns `Inertia::render('<branch>/<Page>', [...])`. The component name is the
-  page's path under `resources/js/pages`, with the same casing.
-- Page props come from the DTOs queries return ([cqrs.md](cqrs.md#writing-queries)), mapped by a
-  JSON resource or the DTO itself. An Eloquent model is never passed as a prop.
-- Props are minimal and serializable and carry only what the acting user may see. Hiding data in
-  the browser is not authorization: sensitive attributes never reach the response. Abilities the
-  page needs (can edit, can delete) are sent as booleans computed by the policy.
-- Numbers, amounts and dates are formatted on the server ([domain.md](domain.md#money)); the
-  frontend renders the string it receives.
-- Shared data (`HandleInertiaRequests`) holds only what every page needs: the acting user's
-  public fields, abilities, flash messages and locale. It never holds a large or per-page
-  collection.
-- Expensive secondary data uses deferred props (`Inertia::defer()`); large datasets are filtered
-  and paginated on the server, never shipped whole.
-- Mutations validate in a form request and redirect afterwards (`back()` or `to_route()`);
-  validation errors and flash messages reach the page through Inertia's shared errors and flash
-  data, never as a hand-built JSON error. Page props, errors and flash keys are a contract tested
-  by Laravel feature tests with `assertInertia()` ([testing.md](testing.md#controller-testing)).
-- An inline script in a Blade view carries `nonce="{{ Vite::cspNonce() }}"`. A third-party script
-  or a request to another origin adds its origin to the Content Security Policy in the same
-  change.
-- Page behaviour on the client (forms, navigation, loading states) is in the Vue sections of this
-  file.
+- A controller returns `Inertia::render('<branch>/<Page>', [...])`. The component name is the page's path under `resources/js/pages`, with the same casing.
+- Page props come from the DTOs queries return ([cqrs.md](cqrs.md#writing-queries)), mapped by a JSON resource or the DTO itself. An Eloquent model is never passed as a prop.
+- Props are minimal and serializable and carry only what the acting user may see. Hiding data in the browser is not authorization: sensitive attributes never reach the response. Abilities the page needs (can edit, can delete) are sent as booleans computed by the policy.
+- Numbers, amounts and dates are formatted on the server ([domain.md](domain.md#money)); the frontend renders the string it receives.
+- Shared data (`HandleInertiaRequests`) holds only what every page needs: the acting user's public fields, abilities, flash messages and locale. It never holds a large or per-page collection.
+- Expensive secondary data uses deferred props (`Inertia::defer()`); large datasets are filtered and paginated on the server, never shipped whole.
+- Mutations validate in a form request and redirect afterwards (`back()` or `to_route()`); validation errors and flash messages reach the page through Inertia's shared errors and flash data, never as a hand-built JSON error. Page props, errors and flash keys are a contract tested by Laravel feature tests with `assertInertia()` ([testing.md](testing.md#controller-testing)).
+- An inline script in a Blade view carries `nonce="{{ Vite::cspNonce() }}"`. A third-party script or a request to another origin adds its origin to the Content Security Policy in the same change.
+- Page behaviour on the client (forms, navigation, loading states) is in the Vue sections of this file.
 
 ## Routes and Wayfinder
 
-- Every Laravel route or controller action the frontend calls goes through generated Wayfinder
-  functions, imported by name from `@/actions` or `@/routes`. Application URLs are never
-  hardcoded.
-- Pass a Wayfinder route object directly where Inertia accepts it; use `.form()` for form
-  components and `.url()` only when a string URL is required. Route-model-binding parameters use
-  their typed Wayfinder form instead of interpolating ids into paths.
-- `resources/js/actions`, `resources/js/routes` and `resources/js/wayfinder` are generated by the
-  Vite plugin during `pnpm dev` and `pnpm build`, and are never edited. After a backend route
-  change with the plugin unavailable, run `php artisan wayfinder:generate --with-form`, which also
-  generates the `.form()` variants. The generated directories keep the names the generator
-  produces, and the design system never imports them.
+- Every Laravel route or controller action the frontend calls goes through generated Wayfinder functions, imported by name from `@/actions` or `@/routes`. Application URLs are never hardcoded.
+- Pass a Wayfinder route object directly where Inertia accepts it; use `.form()` for form components and `.url()` only when a string URL is required. Route-model-binding parameters use their typed Wayfinder form instead of interpolating ids into paths.
+- `resources/js/actions`, `resources/js/routes` and `resources/js/wayfinder` are generated by the Vite plugin during `pnpm dev` and `pnpm build`, and are never edited. After a backend route change with the plugin unavailable, run `php artisan wayfinder:generate --with-form`, which also generates the `.form()` variants. The generated directories keep the names the generator produces, and the design system never imports them.
 
 ## Vite and bundling
 
 - The Wayfinder plugin runs next to the Laravel plugin in Vite.
-- Every module a page imports statically is preloaded, and Laravel repeats it in the `Link`
-  response header. Large pages can exceed a proxy's header limit (a load balancer may accept only
-  about 15 kB) and fail with a 502, so keep each page's static module graph small and cap the
-  number of preloaded assets in `bootstrap/app.php` as a safety net, not a budget. The proxy's
-  buffers are in [deployment.md](deployment.md#reverse-proxy-and-tls).
-- Code MUST NOT pull a whole library into a shared chunk through a namespace import, a re-exported
-  map or a lookup by name; import specific exports so tree-shaking works.
-- Chunk grouping lives in `build.rolldownOptions.output.codeSplitting.groups` in `vite.config.ts`.
-  Do not add groups without measuring the number of preloaded assets and the gzipped size of
-  typical pages. After changing imports in a page or shared module, check the entries in
-  `public/build/manifest.json` reachable through `imports`; a sharp increase points to a static
-  import that should be lazy or more specific.
+- Every module a page imports statically is preloaded, and Laravel repeats it in the `Link` response header. Large pages can exceed a proxy's header limit (a load balancer may accept only about 15 kB) and fail with a 502, so keep each page's static module graph small and cap the number of preloaded assets in `bootstrap/app.php` as a safety net, not a budget. The proxy's buffers are in [deployment.md](deployment.md#reverse-proxy-and-tls).
+- Code MUST NOT pull a whole library into a shared chunk through a namespace import, a re-exported map or a lookup by name; import specific exports so tree-shaking works.
+- Chunk grouping lives in `build.rolldownOptions.output.codeSplitting.groups` in `vite.config.ts`. Do not add groups without measuring the number of preloaded assets and the gzipped size of typical pages. After changing imports in a page or shared module, check the entries in `public/build/manifest.json` reachable through `imports`; a sharp increase points to a static import that should be lazy or more specific.
 
 ## Frontend commands
 
-- `pnpm dev` and `pnpm build` generate the Wayfinder modules. CI runs the read-only commands of
-  the Vue sections ([deployment.md](deployment.md#pipeline)).
+- `pnpm dev` and `pnpm build` generate the Wayfinder modules. CI runs the read-only commands of the Vue sections ([deployment.md](deployment.md#pipeline)).
