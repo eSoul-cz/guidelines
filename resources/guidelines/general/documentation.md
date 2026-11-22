@@ -29,9 +29,8 @@ Guidelines are code and work rules, not project-domain rules. A project MAY add 
 within the same categories (for example its own default Critical findings or architecture rules)
 as project files next to the managed block, never by editing the managed block.
 
-Company-wide standards live at https://dev.docs.esoul.cz, which is private and cannot be read by
-agents. Link them; a rule an agent must follow is stated in these guidelines with a link to its
-source, and no more than the rule is copied. Client source material and notes on the previous
+A rule an agent must follow is stated in these guidelines, with a link to its source where there is
+one and no more than the rule copied. Client source material and notes on the previous
 system are evidence of how things are or were, kept where the project stores them and never
 edited.
 
@@ -76,8 +75,8 @@ guess is a defect that review cannot see.
 - Verify every path, command, script name and version you write against the repository. Leave out
   numbers that drift (test counts, module counts).
 - Link to the authoritative source instead of repeating a rule. A rule an agent must follow is
-  still stated here, with the link to its source and no more than the rule, because
-  https://dev.docs.esoul.cz is private (401) and agents cannot read it.
+  still stated here, with the link to its source and no more than the rule, because an agent
+  cannot be expected to read a private or external source.
 - Keep file names stable. A rename updates every inbound link in the same pull request.
 - Never include credentials, `.env` values, personal data, production exports or internal
   hostnames. Use reserved example domains (`example.com`) in examples.
