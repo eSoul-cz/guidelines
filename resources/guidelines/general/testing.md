@@ -171,7 +171,7 @@ A test that fails and passes on the same code is a defect. Do not rerun the buil
 1. Write or adjust the behavioural tests for the change, test-first where practical, and run them narrowly.
 2. Delete temporary tests and anything else that does not belong in the suite. Do this first, so the next steps measure the tests that will be merged.
 3. Run the whole suite and the stack's static analysis (the stack's tools guideline, `tools.md`) once, on the code that will be pushed; formatters run before every commit instead ([workflow.md](workflow.md#commits)). Skip what the change cannot affect: a documentation-only change runs no tests.
-4. Mutation testing on the changed lines is encouraged before pushing, where the stack provides it; work through the escaped mutants.
+4. Optional: where the stack provides mutation testing, run it when the change has logic with boundaries or branching, and use the results as the stack's mutation-testing section says. It is a diagnostic, not a gate, and nothing from it goes into the pull request.
 5. List the checks you ran, with their results, in the pull request, or the `No test:` line; add the reason when the pull request adds more than 30 seconds of test time ([Suite time budget](#suite-time-budget)).
 6. Push review fixes together, after they pass locally: every push is a full CI build. A red build is reproduced locally before its fix is pushed.
 
