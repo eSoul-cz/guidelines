@@ -4,15 +4,20 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-23
+
+The Lunar layer, written from the first Lunar project, and the installer's Lunar detection.
+
 ### Added
 
-- Layer `package/lunar` (detected from `lunarphp/lunar`): `architecture.md` (the Lunar exception to the framework-free core, versions and upgrades, extension points, process-wide state, calculation cost, money, tax, the admin panel, storefront and search), `testing.md` and `integrations.md` (payment gateway, carrier and ERP rules: ports and fakes, outbox and idempotency keys, scheduled reads, reconciliation, webhooks, stock sync).
+- Layer `package/lunar` (detected from `lunarphp/lunar`): `architecture.md` (the Lunar exception to the framework-free core, versions and upgrades, extension points, process-wide state, calculation cost, money, tax, the admin panel, storefront and search), `testing.md` and `integrations.md`. `integrations.md` holds the rules for a shop's integrations: ports and fakes, idempotency keys, scheduled reads and reconciliation, jobs, payment gateways and webhooks. The outbox, carrier and ERP sections apply only where the project has such a system or ADR.
 
 ### Changed
 
+- Installer: `init` adds `package/filament` whenever it detects `lunarphp/lunar`, because Lunar's admin is a Filament panel although a Lunar project never requires Filament directly.
 - Laravel architecture: a package layer MAY allow the types of the domain model its package provides in the framework-free core.
 - LSR: the `boltdb` queue and network guard `Target` notes are removed, because the template ships both.
-- README: `package/lunar` exists.
+- README: `package/lunar` exists and `init` detects it.
 
 ## [0.2.1] - 2026-11-23
 
