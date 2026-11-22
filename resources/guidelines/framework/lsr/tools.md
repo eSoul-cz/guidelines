@@ -1,7 +1,7 @@
 ---
 title: Tools
 order: 130
-summary: Versions, composer and pnpm scripts, tool caches, read-only checks, mutation testing and autofix commands for an LSR project.
+summary: Versions, composer and pnpm scripts, tool caches, read-only checks and autofix commands for an LSR project.
 ---
 # Project guidelines - Tools
 
@@ -70,14 +70,6 @@ pnpm tsc
 pnpm test
 pnpm build
 ```
-
-## Mutation testing (local, optional)
-
-```bash
-composer mutation
-```
-
-`composer mutation` runs Infection on your machine before you push. It is optional, never a CI gate and sets no score threshold; Infection's cache is `temp/tools/infection`. How to read the output and handle escaped mutants is described in the mutation testing section of [testing.md](testing.md#mutation-testing).
 
 ## Formatting and lint autofixes
 

@@ -56,4 +56,4 @@ For this stack the steps above use these commands:
 
 - Narrow run: `XDEBUG_MODE=off ./vendor/bin/phpunit <path>`; full suite: `composer test` ([Running tests](#running-tests)).
 - Format with `composer cs:fix` before each commit; `composer cs` is the read-only check ([tools.md](tools.md#formatting-and-lint-autofixes)).
-- Run `composer phpstan` once on the code that will be pushed. `composer mutation` is local and optional ([tools.md](tools.md#mutation-testing-local-optional)).
+- Run `composer phpstan` once on the code that will be pushed.
