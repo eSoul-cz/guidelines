@@ -50,15 +50,56 @@ final readonly class Lock
             if (!is_array($entry) || !is_string($entry['block'] ?? null) || !is_string($entry['sha256'] ?? null)) {
                 throw new GuidelinesException(sprintf('%s: invalid entry for "%s".', self::FILE, $path));
             }
-            $files[(string) $path] = new LockEntry($entry['block'], $entry['sha256'], (array) ($entry['sources'] ?? []));
+            $files[(string) $path] = new LockEntry($entry['block'], $entry['sha256'], self::stringMap($entry['sources'] ?? [], sprintf('sources of "%s"', $path)));
+        }
+
+        $packageVersion = $data['package_version'] ?? 'dev';
+        if (!is_string($packageVersion)) {
+            throw new GuidelinesException(sprintf('%s: "package_version" must be a string.', self::FILE));
         }
 
         return new self(
-            (string) ($data['package_version'] ?? 'dev'),
-            array_values((array) ($data['layers'] ?? [])),
-            array_values((array) ($data['exclude'] ?? [])),
+            $packageVersion,
+            self::stringList($data['layers'] ?? [], 'layers'),
+            self::stringList($data['exclude'] ?? [], 'exclude'),
             $files,
         );
+    }
+
+    /** @return list<string> */
+    private static function stringList(mixed $value, string $what): array
+    {
+        if (!is_array($value)) {
+            throw new GuidelinesException(sprintf('%s: "%s" must be a list of strings.', self::FILE, $what));
+        }
+
+        $list = [];
+        foreach ($value as $item) {
+            if (!is_string($item)) {
+                throw new GuidelinesException(sprintf('%s: "%s" must be a list of strings.', self::FILE, $what));
+            }
+            $list[] = $item;
+        }
+
+        return $list;
+    }
+
+    /** @return array<string, string> */
+    private static function stringMap(mixed $value, string $what): array
+    {
+        if (!is_array($value)) {
+            throw new GuidelinesException(sprintf('%s: %s must be a map of strings.', self::FILE, $what));
+        }
+
+        $map = [];
+        foreach ($value as $key => $item) {
+            if (!is_string($item)) {
+                throw new GuidelinesException(sprintf('%s: %s must be a map of strings.', self::FILE, $what));
+            }
+            $map[(string) $key] = $item;
+        }
+
+        return $map;
     }
 
     public function toJson(): string
