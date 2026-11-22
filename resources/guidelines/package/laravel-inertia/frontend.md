@@ -5,7 +5,7 @@ title: Frontend
 
 ## Stack
 
-The pages are Inertia with Vue 3 and TypeScript, with Laravel Wayfinder for routes, shadcn-vue for the design system's primitives and Vitest for frontend tests, on top of the Vite and Tailwind CSS setup above. `<js-root>` is `resources/js`. The structure, design system, component, TypeScript, Inertia data flow, forms and frontend test rules are the Vue sections of this file; this layer adds the Laravel server side, Wayfinder and bundling.
+The pages are Inertia with Vue and TypeScript, with Laravel Wayfinder for routes, shadcn-vue for the design system's primitives and Vitest for frontend tests, on top of the Vite and Tailwind CSS setup above. `<js-root>` is `resources/js`. The structure, design system, component, TypeScript, Inertia data flow, forms and frontend test rules are the Vue sections of this file; this layer adds the Laravel server side, Wayfinder and bundling.
 
 ## Inertia server side
 

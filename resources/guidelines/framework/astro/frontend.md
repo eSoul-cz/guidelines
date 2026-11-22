@@ -1,7 +1,7 @@
 ---
 title: Frontend
 order: 150
-summary: Design tokens, Tailwind 4, design-to-component map, fonts, images, scoped styles, motion, accessibility.
+summary: Design tokens, Tailwind, design-to-component map, fonts, images, scoped styles, motion, accessibility.
 ---
 # Project guidelines - Frontend
 
@@ -10,7 +10,7 @@ The project's design file (Pencil; its location is named in [CONTEXT.md](../../C
 ## Design tokens
 
 - Tokens come from the design and are defined once, in `src/styles/global.css`, in a plain **`@theme`** block under **the same names as the design variables**. They live only there: no `@theme inline`, no `:root` layer of raw values and no `--color-*: initial` resets of Tailwind's defaults. When a design variable changes, the token changes in the same pull request.
-- Tailwind 4 runs through the `@tailwindcss/vite` plugin; there is no `tailwind.config.js` and no legacy `@astrojs/tailwind` integration.
+- Tailwind runs through the `@tailwindcss/vite` plugin; there is no `tailwind.config.js` and no legacy `@astrojs/tailwind` integration.
 - **No arbitrary values** for anything a token expresses (`text-[15px]`, `bg-[#1E5B48]`, `rounded-[12px]`). Tailwind cannot block them, so review does. If the design needs a value without a token, add the token.
 - Sizes are in **rem**, never px. Type sizes MAY be fluid (`clamp()`) between the design's mobile (390 px) and desktop (1440 px) values, so they need no breakpoint variants.
 - Markup repeated many times per page (rows, list items, icons) uses component classes in `@layer components` instead of long utility strings, to keep the HTML small.
