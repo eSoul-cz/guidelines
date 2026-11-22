@@ -14,7 +14,7 @@ Company-wide standards are at https://dev.docs.esoul.cz; this file lists the too
 | PHP                  | 8.5                                                                                              |
 | Framework            | LSR packages (`lsr/*`) at the versions locked in `composer.lock`                                 |
 | Runtime              | RoadRunner (`rr`), PSR-7 worker                                                                  |
-| Static analysis      | PHPStan level 8 (`phpstan.neon`); the level MUST NOT be lowered                                  |
+| Static analysis      | PHPStan level 10 (`phpstan.neon`); the level MUST NOT be lowered                                 |
 | Code style           | PHP-CS-Fixer (`.php-cs-fixer.php` is the PHP formatting contract)                                |
 | PHP tests            | PHPUnit 13, paratest                                                                             |
 | Mutation testing     | Infection (local, optional)                                                                      |
@@ -24,13 +24,14 @@ Company-wide standards are at https://dev.docs.esoul.cz; this file lists the too
 | Frontend checks      | ESLint (flat config), Prettier (printWidth 150, tabWidth 4), `vue-tsc`, Vitest                   |
 
 - `composer.json`, `composer.lock`, `package.json` and `pnpm-lock.yaml` are authoritative for installed versions.
+- New LSR applications start at PHPStan level 10. An existing application below it raises the level when it can, fixing findings in code; a baseline is not a way to get there.
 - Use API documentation and installed source that match the locked `lsr/*` versions and the PHPUnit major/minor, even when linked documentation is newer. Read the installed `vendor/lsr/*` source before concluding that a feature is unavailable.
 - When chaining a method on a newly instantiated class, write `new Foo()->bar()`; only the constructor call's parentheses are needed.
 
 ## Where tools run
 
 - Run tools through the `composer` and `pnpm` scripts, never through globally installed binaries, so local runs and CI use the same versions and configuration.
-- PHP tools run in the project's PHP container or a matching local PHP 8.5; prefix PHPUnit with `XDEBUG_MODE=off` unless you need the debugger or coverage.
+- PHP tools run in the project's PHP container or a matching local PHP; prefix PHPUnit with `XDEBUG_MODE=off` unless you need the debugger or coverage.
 - RoadRunner runs the application in development and production (`rr serve -c .rr.yaml`); the container start scripts prepare the runtime and start it ([deployment.md](deployment.md)).
 
 ## Tool caches
@@ -93,11 +94,11 @@ composer cs:fix
 ### Frontend
 
 ```bash
-pnpm lint
+pnpm eslint:fix
 pnpm format
 ```
 
-`pnpm lint` (ESLint `--fix`) and `pnpm format` (Prettier `--write`) rewrite files. Formatting is required before committing: `composer cs:fix` for PHP and `pnpm format` for the frontend.
+`pnpm eslint:fix` (ESLint `--fix`) and `pnpm format` (Prettier `--write`) rewrite files. Formatting is required before committing: `composer cs:fix` for PHP and `pnpm format` for the frontend.
 
 ## Runtime commands
 
