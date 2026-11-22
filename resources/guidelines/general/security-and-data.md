@@ -35,6 +35,11 @@ the application has roles or accounts, the project records its roles and permiss
   non-anonymised database exports MUST NOT be committed or copied into code, seeders, factories,
   fixtures, tests, issues, pull requests, commit messages or published documents. Use invented
   data and reserved example domains.
+- Non-public client data (real amounts, rates, prices, documents and any other figure the client
+  has not published) stays in the client's source material. It MUST NOT be copied into issues,
+  pull requests, commit messages or published documents, and it appears in code, seeders,
+  factories, fixtures and tests only anonymised, unless the project records an exception
+  (`CONTEXT.md` or an ADR).
 - Client source material that holds no personal data (documents, exports without personal data)
   MAY live in the repository's Git LFS `assets/`, kept as evidence and never edited. A fixture
   derived from it is anonymised.

@@ -79,7 +79,8 @@ them. The tasking and commit conventions chosen for this project are recorded in
 - **No secrets or personal data.** Never commit credentials, `.env` files, personal data of the
   client's customers, non-anonymised database exports or generated PDFs. Client source material
   that is not personal data (documents, exports without personal data) MAY live in the
-  repository's Git LFS ([security-and-data.md](security-and-data.md#personal-and-client-data)).
+  repository's Git LFS. The exceptions for public data and recorded approvals are in
+  [security-and-data.md](security-and-data.md#personal-and-client-data).
 - **No passing edits to shared sources.** `CONTEXT.md`, ADRs and guidelines are not changed in
   passing inside a feature pull request; a guideline change is its own pull request. The one
   exception is recording a missing convention or cache in `CONTEXT.md` (commit convention,
