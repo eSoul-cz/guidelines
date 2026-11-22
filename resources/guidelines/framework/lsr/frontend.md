@@ -57,5 +57,5 @@ pnpm dev            # Vite dev server
 pnpm build          # production build
 ```
 
-- The quality commands (`eslint`, `format:check`, `tsc`, `test` and the autofix pair) are listed in the Vue sections of this file. CI runs the read-only ones ([deployment.md](deployment.md#delivery-path)).
+- The quality commands follow in the shared Vue list; CI runs the read-only ones ([deployment.md](deployment.md#delivery-path)).
 - ESLint uses the flat config (`eslint.config.js`) with `@typescript-eslint/no-explicit-any` enabled; do not switch it off. Prettier uses printWidth 150 and tabWidth 4 with the organise-imports and Tailwind class-sorting plugins and covers `assets/`.
