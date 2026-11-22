@@ -31,16 +31,21 @@ Architecture and structure checks are a stack or project choice, not a default. 
 
 ## How much to test
 
-How many tests a route, command or query gets depends on the damage a regression would do, not on the code existing. Each one is in one tier:
+How many tests a behaviour gets depends on the damage a regression would do, not on the code existing. Decide in this order:
 
-| Tier | Flows | Tests |
+1. **Unit tests first.** When unit tests cover the whole behaviour, a separate feature test SHOULD NOT be written for it.
+2. **Fold, do not add.** A feature test is for what only the real framework or database shows: wiring of route, request, bus and handler, authorization, persistence, events across parts. Before adding one, extend the scenario of the feature test that already builds most of the same set-up, usually the endpoint test of the route that triggers the behaviour. A handler feature test plus an endpoint test of the same flow is a duplicate.
+3. **Size what remains by tier.** Each route, console command or page (a **surface**) is in one tier:
+
+| Tier | Flows | Feature tests of the surface |
 |---|---|---|
 | 1, critical | orders, payments, prices and tax, invoices and integrations of record, authentication and authorization, irreversible data changes | full scenarios: every success and failure path whose outcome a user, a caller or the record would notice |
-| 2, everything else | every other route, command and query | one success contract test (status or return value, payload, persisted state), its [authorization tests](#authorization-tests) and one validation-keys test (one request that breaks the rules, asserting the error keys) |
+| 2, everything else | every other surface | one success contract test (status or return value, payload, persisted state), its [authorization tests](#authorization-tests) and one validation-keys test (one request that breaks the rules, asserting the error keys) |
 
 - The project lists its tier-1 flows in an ADR (or the decision register of its plan) and references that list from its project guidelines, below the managed block. A flow nobody listed is tier 2; the pull request that adds a flow in one of the categories above adds it to the list.
 - **Rule variants are unit tests**, in both tiers: branches, boundaries, calculations, state transitions, validation rules. A rule that only a full flow can reach is a design problem: extract it into a unit that takes its inputs, and test that.
-- **A layer above a tested layer does not repeat its scenarios.** An endpoint, console command or page that wraps a tested command or query proves only its own contract: routing, input mapping, status, response shape, authorization.
+- **A layer above a tested layer does not repeat its scenarios.** A surface that wraps a tested command or query proves only its own contract: routing, input mapping, status, response shape, authorization.
+- **The floor is per surface.** The success, authorization and validation-keys tests of tier 2 are the surface's feature tests; a command or query reached only through one surface is covered by that surface's tests, not by its own feature test. One reached through several surfaces, or through none (a job, a bus-only call), is a surface of its own.
 
 ## More tests are not more safety
 
