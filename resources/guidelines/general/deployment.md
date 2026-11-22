@@ -30,9 +30,9 @@ People and agents working on a project do not control deployment. This file is a
 - A project starts with only the `main` branch, which is deployed during development to a **staging** environment. After the release `main` becomes **production**. A `staging` branch, deployed to the staging stack, MAY be added afterwards; it is project-specific and depends on the client's requirements (some clients do not pay for two deployments). The same lifecycle is in [workflow.md](workflow.md#branches).
 - Every environment has its own stack, database, Komodo variables, buckets and secrets. Staging that holds real data is protected like production. A development stack MAY exist; it is not a release environment and holds no production data.
 - The pipeline's deploy rules say which branch goes where, for example `main` to the staging stack before the release and to the production stack after it, and `staging` to the staging stack.
-- Production SHOULD run an immutable release tag instead of `latest`, so that a rollback deploys the previous tag (or the previous static release).
+- Production runs the image built from `main`: tagged `latest`, or with a per-branch tag the deploy rule names. A rollback redeploys an earlier image by its digest or Git tag (or re-points a static site to the previous release). No release-tag step is required.
 - Migrations run once per deployment, forward-only, and are safe while the previous release still serves requests. Only one container per stack runs them.
-- **Target.** Production stacks currently run `latest` (the manifest default), and some stacks are redeployed by Komodo on every new `latest` image. Both are to be replaced by deploys from the pipeline with pinned tags.
+- **Target.** Some stacks are still redeployed by Komodo on every new `latest` image (auto-update); the pipeline deploys them instead once their stacks are managed.
 
 ## Local development
 
@@ -81,11 +81,11 @@ The servers run a few shared services, each applied from the infrastructure repo
 - Every public name of an application is listed in its manifest (`domains`, `redirects`) and resolves to the load balancer. The apply issues the certificates on the load balancer.
 - The application trusts forwarded headers only from the proxy's addresses, never from `*`. The proxy sets the host, the scheme and the client address itself (as FastCGI parameters or `X-Forwarded-*` headers) and drops what a client sent.
 - Production sites redirect plain HTTP to HTTPS and send HSTS.
-- Service endpoints (health, metrics, status) are not routed publicly. Application admin interfaces are application routes behind authentication.
+- Metrics and status ports (RoadRunner's `2112` and `2114`, and the like) are never routed. Application admin interfaces are application routes behind authentication. The application's health endpoint ([Health endpoint](#health-endpoint)) is the one service endpoint that MAY be public.
 
 ## Health endpoint
 
-- An application served from a container exposes `GET /up`: `200` when it is ready and `503` when it is not. It does not depend on the session or on CSRF protection.
+- An application served from a container exposes `GET /up`: `200` when it is ready and `503` when it is not. It does not depend on the session or on CSRF protection. The endpoint reveals only whether the application is up, so it MAY be public; the external check uses it.
 - The image has a Docker `HEALTHCHECK` that requests it from inside the container. A crashed process is restarted by the container's supervisor; the healthcheck reports one that stays down.
 
 ## Configuration and secrets
