@@ -7,8 +7,7 @@ summary: Who reviews, finding severity and default critical findings, what a rev
 
 Reviews happen in pull request threads. This document defines the shared vocabulary for findings,
 what a reviewer checks a pull request against, and how CodeRabbit and the human review fit
-together. Branches, commits and pull request rules are in [workflow.md](workflow.md); company-wide
-standards are at https://dev.docs.esoul.cz.
+together. Branches, commits and pull request rules are in [workflow.md](workflow.md).
 
 ## Who reviews
 
