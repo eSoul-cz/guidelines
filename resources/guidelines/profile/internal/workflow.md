@@ -73,7 +73,7 @@
 
 <!-- replace -->
 1. Read the issue, plan slice or owner's request, its acceptance criteria and the guidelines of the area you touch.
-2. Create the branch from an up-to-date default branch.
+2. Create the branch from an up-to-date default branch; a stacked pull request branches from its parent pull request's branch instead.
 3. Implement in small steps with behavioural tests ([testing.md](testing.md)).
 4. Format before each commit; run tests and static analysis once on the code that will be pushed (the stack's tools guideline, `tools.md`).
 5. Commit by intention with the `gitmoji-commit` skill and push.
