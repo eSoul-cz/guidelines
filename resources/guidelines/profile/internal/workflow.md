@@ -1,0 +1,66 @@
+# Project guidelines - Workflow
+
+## Tasking
+
+<!-- replace -->
+- Every change starts from a request with a clear outcome and **acceptance criteria**. No issue is
+  required: a plan slice (`docs/plan`) or the owner's request is enough, and the pull request
+  description links it. A prepared issue (or task) is still welcome. An agent does not start from
+  a vague request.
+- One request is one independently deliverable result. When separate work emerges during a task,
+  record it separately instead of widening the current one.
+- The title names the result: a context followed by an action. When an issue or task exists, it
+  and the pull request carry the same title; the pull request title wraps it in the commit format
+  ([Pull requests](#pull-requests)).
+- Titles carry **no prefix** such as `[BE]` or `[FE]`, and never a slice or phase identifier. The
+  work category is a label on the issue (GitHub) and on the task (Freelo).
+- Work blocked by an open dependency, an open question or a `proposed` ADR is not ready to start
+  ([domain.md](domain.md#open-points-and-conflicts)).
+- Use the `esoul-tasking` skill when an issue or task is created; it previews the result and asks
+  for approval before writing.
+
+## Branches
+
+<!-- replace -->
+- Direct pushes to the default branch are allowed in infrastructure and documentation
+  repositories, for the owner and for an agent that has the owner's explicit approval. Every other
+  change goes through a pull request.
+- Name a branch `<prefix>/<issue-number>-<english-kebab-case>` without diacritics, derived from the
+  title, for example `feature/142-cart-shipping-recalculation`. When no issue exists, name it
+  `<prefix>/<english-kebab-case>`.
+- Prefix by work type: `feature/`, `fix/`, `chore/`, `data/`, `docs/`, `design/`, `ci/`,
+  `release/`, `refactor/` or `test/`.
+- One branch equals one request.
+
+## Pull requests
+
+<!-- replace -->
+- Open the pull request when the work meets the Definition of Done; keep work in progress as a
+  draft.
+- Keep pull requests **small and focused**: one request, no unrelated refactoring mixed with
+  a feature. A pull request changing more than roughly 30 files is split (mechanical changes in
+  their own commit, such as formatter output, generated files and lock files, do not count);
+  when that is impossible, its description says how to review it in parts. Review findings are
+  never tracked in a repository file instead
+  ([code-review.md](code-review.md#findings-stay-in-the-pull-request)).
+- The pull request title follows the commit format (`:emoji: [optional-context] Message`) because
+  it becomes the squash commit; the message part is the title shared with the issue and the task.
+- Set a reviewer when one is available; otherwise the owner's explicit go-ahead is enough. Set
+  every contributor as **Assignee**.
+- Fill in the repository's pull request template. It links the issue (`Closes #<issue>`) when
+  there is one, otherwise the plan slice or the owner's request. It lists every check you ran with
+  its result ([testing.md](testing.md#testing-workflow)), names accepted mutants and the
+  `No test:` line where they apply, and lists decisions you made on your own so the reviewer can
+  confirm them.
+- A pull request SHOULD include the documentation, changelog and glossary updates its change
+  requires; a separate pull request, preferably stacked on the change, is allowed. A change to
+  the architecture or to an external contract comes with its ADR in the same pull request
+  ([documentation.md](documentation.md#documentation-rides-with-the-change)).
+- Reviews follow [code-review.md](code-review.md): CodeRabbit and the owner's go-ahead, every
+  finding answered, and the `final-pr-review` skill to finish the pull request.
+- A green `Jenkins` check is required before merge.
+- **The author merges**, as a human, after the owner's go-ahead (or a reviewer's approval) and a
+  green build, with a **squash merge** whose message is the pull request title. Agents MUST NOT
+  merge, approve or use a ruleset bypass unless the human owner explicitly authorises it for that
+  pull request or batch; the authorisation is recorded in the pull request description
+  ([code-review.md](code-review.md#who-reviews)).
