@@ -9,7 +9,7 @@ The application is a Laravel monolith: business operations are commands and quer
 (`esoul-cz/laravel-cqrs`) and there is one database. The user interface is the project's variant:
 Inertia with Vue pages, a Filament admin panel, or both. The versions are named only in
 [tools.md](tools.md#versions). The project's ADRs record every decision that deviates from this
-file; company-wide standards are at `https://dev.docs.esoul.cz`.
+file.
 
 | Part | Technology | Where | Details |
 |---|---|---|---|
