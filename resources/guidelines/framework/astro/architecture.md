@@ -56,7 +56,7 @@ Forms always post to a backend; a static page never sends mail itself. With a CM
 
 1. **honeypot**: a hidden field; when filled, the robot gets a fake success and nothing is sent;
 2. **rate limit**: per client address, state stored outside the webroot;
-3. **reCAPTCHA v3**: verified on the server with a score threshold; without a secret (local development only) verification is skipped with a logged warning;
+3. **reCAPTCHA v3**: verified on the server with a score threshold when the request carries a token; without a secret (local development only) verification is skipped with a logged warning. A submission without a token (the form was posted without JavaScript, which is what generates it) is not rejected for that reason alone: it skips the score check, MUST pass the honeypot and the rate limit, and is stored flagged as unverified;
 4. **delivery**: e-mail over SMTP **and** a database record as a backup;
 5. **last resort**: when both fail, the submission is appended to a file outside the webroot.
 
