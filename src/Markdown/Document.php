@@ -25,9 +25,11 @@ final readonly class Document
         $h1 = null;
         /** @var list<string> $introLines */
         $introLines = [];
-        /** @var list<array{0: string, 1: list<string>}> $sections */
-        $sections = [];
-        $current = null; // index into $sections
+        /** @var list<string> $headings */
+        $headings = [];
+        /** @var list<list<string>> $sectionLines section body lines, parallel to $headings */
+        $sectionLines = [];
+        $current = null; // index into $headings / $sectionLines
         $fence = null;   // [char, length] while inside a fenced block
 
         foreach ($lines as $line) {
@@ -38,8 +40,9 @@ final readonly class Document
             } elseif (preg_match('/^\s{0,3}(`{3,}|~{3,})/', $line, $m) === 1) {
                 $fence = [$m[1][0], strlen($m[1])];
             } elseif (preg_match('/^## +(.+?)(?: +#+)?\s*$/', $line, $m) === 1) {
-                $sections[] = [trim($m[1]), []];
-                $current = array_key_last($sections);
+                $headings[] = trim($m[1]);
+                $sectionLines[] = [];
+                $current = array_key_last($headings);
                 continue;
             } elseif ($h1 === null && $current === null && trim(implode('', $introLines)) === '' && preg_match('/^# +(.+?)\s*$/', $line, $m) === 1) {
                 $h1 = $m[1];
@@ -49,13 +52,13 @@ final readonly class Document
             if ($current === null) {
                 $introLines[] = $line;
             } else {
-                $sections[$current][1][] = $line;
+                $sectionLines[$current][] = $line;
             }
         }
 
         $built = [];
-        foreach ($sections as [$heading, $sectionLines]) {
-            $built[] = new Section($heading, Section::normaliseKey($heading), self::trimBlank(implode("\n", $sectionLines)));
+        foreach ($headings as $i => $heading) {
+            $built[] = new Section($heading, Section::normaliseKey($heading), self::trimBlank(implode("\n", $sectionLines[$i])));
         }
 
         return new self($h1, self::trimBlank(implode("\n", $introLines)), $built);
