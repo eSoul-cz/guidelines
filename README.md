@@ -176,7 +176,7 @@ build of `main` triggers the Satis mirror. The package supports PHP 8.4 and ever
 ## Design notes
 
 - Layer content was seeded from the esoul-project-lifecycle template folder and the reference projects' guideline files, with project names removed.
-- `package/lunar` is **not written** (no source guide exists yet). `init` detects `lunarphp/lunar`, reports it and skips it until the layer exists. `package/filament` holds what is decided so far: the admin panel rule and a theming note; it grows when a real project needs more.
+- `package/lunar` is **not written** (no source guide exists yet). `init` detects `lunarphp/lunar`, reports it and skips it until the layer exists. It will be written from the first Lunar project (Indcom), not in advance. The `laravel-lunar` template ships without a Lunar guideline layer meanwhile. `package/filament` holds what is decided so far: the admin panel rule and a theming note; it grows when a real project needs more.
 - `package/laravel-inertia` (detected when Composer requires both `laravel/framework` and `inertiajs/inertia-laravel`) holds the Inertia-specific part of the Laravel frontend and tools guidelines (`resources/js` structure, Inertia server side, Wayfinder, design system, Vite chunking, the `pnpm` quality commands); `framework/laravel` keeps what holds for every Laravel user interface. Inertia and Vue rules shared with LSR stay in `package/inertia-vue`.
 - Frontmatter has one key beyond the brief: `summary` (one line for the index and the AGENTS.md block). `title` falls back to the H1.
 - The AGENTS.md block lists files flagged `agents: true` (currently `testing`, `security-and-data`, `workflow`) as links with their summary, not the rule text itself.
