@@ -15,21 +15,18 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /** Shared base: `--working-dir` and error handling for user-facing failures. */
 abstract class ProjectCommand extends Command
 {
-    public function __construct(protected readonly LayerRepository $layers)
-    {
+    public function __construct(protected readonly LayerRepository $layers) {
         parent::__construct();
     }
 
-    protected function configure(): void
-    {
+    protected function configure(): void {
         $this->addOption('working-dir', 'd', InputOption::VALUE_REQUIRED, 'Project root (default: current directory)');
     }
 
-    final protected function execute(InputInterface $input, OutputInterface $output): int
-    {
+    final protected function execute(InputInterface $input, OutputInterface $output): int {
         $io = new SymfonyStyle($input, $output);
         $root = $input->getOption('working-dir') ?? getcwd();
-        if (!is_string($root) || !is_dir($root)) {
+        if ( ! is_string($root) || ! is_dir($root)) {
             $io->error('Project root does not exist.');
 
             return self::FAILURE;

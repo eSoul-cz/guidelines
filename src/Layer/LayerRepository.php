@@ -22,20 +22,17 @@ final class LayerRepository
     /** @var list<string>|null */
     private ?array $layers = null;
 
-    public function __construct(private readonly string $baseDir)
-    {
+    public function __construct(private readonly string $baseDir) {
     }
 
-    public static function bundled(): self
-    {
+    public static function bundled(): self {
         return new self(dirname(__DIR__, 2) . '/resources/guidelines');
     }
 
     /**
      * @return list<string> `general` first, then `framework/*`, then `package/*`, then the rest.
      */
-    public function layers(): array
-    {
+    public function layers(): array {
         if ($this->layers !== null) {
             return $this->layers;
         }
@@ -63,17 +60,15 @@ final class LayerRepository
         return $this->layers = $layers;
     }
 
-    public function has(string $layer): bool
-    {
+    public function has(string $layer): bool {
         return in_array($layer, $this->layers(), true);
     }
 
     /**
      * @return list<SourceFile> ordered by file name
      */
-    public function files(string $layer): array
-    {
-        if (preg_match(self::LAYER_PATTERN, $layer) !== 1 || !$this->has($layer)) {
+    public function files(string $layer): array {
+        if (preg_match(self::LAYER_PATTERN, $layer) !== 1 || ! $this->has($layer)) {
             throw new GuidelinesException(sprintf('Unknown guideline layer "%s". Available: %s.', $layer, implode(', ', $this->layers())));
         }
 
@@ -103,17 +98,15 @@ final class LayerRepository
     }
 
     /** @return list<string> */
-    private static function entries(string $dir): array
-    {
+    private static function entries(string $dir): array {
         $entries = scandir($dir);
 
         return $entries === false ? [] : $entries;
     }
 
     /** @return list<string> */
-    private function childDirs(string $dir): array
-    {
-        if (!is_dir($dir)) {
+    private function childDirs(string $dir): array {
+        if ( ! is_dir($dir)) {
             return [];
         }
         $dirs = [];
@@ -126,8 +119,7 @@ final class LayerRepository
         return $dirs;
     }
 
-    private function hasMarkdown(string $dir): bool
-    {
+    private function hasMarkdown(string $dir): bool {
         return glob($dir . '/*.md') !== [] && glob($dir . '/*.md') !== false;
     }
 }

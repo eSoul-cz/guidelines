@@ -5,21 +5,21 @@ declare(strict_types=1);
 namespace Esoul\Guidelines;
 
 use Composer\InstalledVersions;
+use OutOfBoundsException;
 
 /** Resolves the installed package version from Composer metadata; falls back to `dev`. */
 final class PackageVersion
 {
     public const string PACKAGE = 'esoul-cz/guidelines';
 
-    public static function detect(): string
-    {
-        if (!class_exists(InstalledVersions::class)) {
+    public static function detect(): string {
+        if ( ! class_exists(InstalledVersions::class)) {
             return 'dev';
         }
 
         try {
             $version = InstalledVersions::getPrettyVersion(self::PACKAGE);
-        } catch (\OutOfBoundsException) {
+        } catch (OutOfBoundsException) {
             return 'dev';
         }
 

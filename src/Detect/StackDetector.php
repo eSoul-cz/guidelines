@@ -27,8 +27,7 @@ final class StackDetector
     /**
      * @return list<string> detected layers (without `general`), frameworks first
      */
-    public function detect(string $root): array
-    {
+    public function detect(string $root): array {
         $found = [];
         foreach ($this->dependencies($root . '/composer.json', ['require', 'require-dev']) as $package) {
             if (isset(self::COMPOSER[$package])) {
@@ -51,13 +50,12 @@ final class StackDetector
      * @param list<string> $sections
      * @return list<string>
      */
-    private function dependencies(string $file, array $sections): array
-    {
-        if (!is_file($file)) {
+    private function dependencies(string $file, array $sections): array {
+        if ( ! is_file($file)) {
             return [];
         }
         $data = json_decode((string) file_get_contents($file), true);
-        if (!is_array($data)) {
+        if ( ! is_array($data)) {
             return [];
         }
 

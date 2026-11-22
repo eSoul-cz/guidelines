@@ -16,8 +16,7 @@ final readonly class CheckResult
     ) {
     }
 
-    public function ok(): bool
-    {
+    public function ok(): bool {
         return $this->drift === [] && $this->outdated === [];
     }
 }

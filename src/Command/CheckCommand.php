@@ -15,11 +15,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand(name: 'check', description: 'CI check: fail on drift (local edits in managed blocks) or outdated guidelines')]
 final class CheckCommand extends ProjectCommand
 {
-    protected function handle(string $root, InputInterface $input, SymfonyStyle $io): int
-    {
+    protected function handle(string $root, InputInterface $input, SymfonyStyle $io): int {
         $config = ProjectConfig::load($root);
-        $targets = (new Renderer($this->layers))->render($config);
-        $result = (new Checker($root))->check($config, $targets, Lock::load($root));
+        $targets = new Renderer($this->layers)->render($config);
+        $result = new Checker($root)->check($config, $targets, Lock::load($root));
 
         if ($result->ok()) {
             $io->success('Guidelines are in sync with ' . Lock::FILE . ' and the selected layers.');

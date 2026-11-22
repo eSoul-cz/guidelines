@@ -13,13 +13,11 @@ use PHPUnit\Framework\TestCase;
 final class MergerTest extends TestCase
 {
     /** @param array<string, mixed> $frontmatter */
-    private function source(string $layer, string $body, array $frontmatter = []): SourceFile
-    {
+    private function source(string $layer, string $body, array $frontmatter = []): SourceFile {
         return new SourceFile($layer, 'testing', $layer . '/testing.md', $frontmatter, $body, hash('sha256', $body));
     }
 
-    public function testLaterLayerContentIsAppendedInsideTheSameSectionWithAttribution(): void
-    {
+    public function test_later_layer_content_is_appended_inside_the_same_section_with_attribution(): void {
         $merged = new Merger()->merge([
             $this->source('general', "# Project guidelines - Testing\n\n## Writing tests\n\nGeneral rule.\n\n## Flaky tests\n\nFix them.\n"),
             $this->source('framework/laravel', "# Ignored\n\n## `Writing tests`\n\nLaravel rule.\n"),
@@ -31,8 +29,7 @@ final class MergerTest extends TestCase
         );
     }
 
-    public function testNewSectionsAreAppendedAtTheEndAndFirstLayerDefinesOrder(): void
-    {
+    public function test_new_sections_are_appended_at_the_end_and_first_layer_defines_order(): void {
         $merged = new Merger()->merge([
             $this->source('general', "# Project guidelines - Testing\n\n## B\n\nb\n\n## A\n\na\n"),
             $this->source('package/x', "## New\n\nnew\n\n## B\n\nmore b\n"),
@@ -42,8 +39,7 @@ final class MergerTest extends TestCase
         self::assertStringContainsString("## New\n\n<!-- from: package/x -->\nnew", $merged);
     }
 
-    public function testIntroIsConcatenatedAndH1ComesFromTheFirstLayer(): void
-    {
+    public function test_intro_is_concatenated_and_h1_comes_from_the_first_layer(): void {
         $merged = new Merger()->merge([
             $this->source('general', "# Project guidelines - Testing\n\nGeneral intro.\n\n## A\n\na\n"),
             $this->source('framework/laravel', "# Project guidelines - Other\n\nLaravel intro.\n"),
@@ -53,8 +49,7 @@ final class MergerTest extends TestCase
         self::assertStringNotContainsString('Other', $merged);
     }
 
-    public function testReplaceMarkerReplacesEarlierContent(): void
-    {
+    public function test_replace_marker_replaces_earlier_content(): void {
         $merged = new Merger()->merge([
             $this->source('general', "# T\n\n## A\n\nold rule\n"),
             $this->source('framework/laravel', "## A\n\n<!-- replace -->\nnew rule\n"),
@@ -65,8 +60,7 @@ final class MergerTest extends TestCase
         self::assertStringContainsString("## A\n\n<!-- from: framework/laravel -->\nnew rule", $merged);
     }
 
-    public function testHeadingsInsideCodeFencesAreNotSections(): void
-    {
+    public function test_headings_inside_code_fences_are_not_sections(): void {
         $merged = new Merger()->merge([
             $this->source('general', "# T\n\n## A\n\n```md\n## Not a heading\n```\n"),
             $this->source('framework/laravel', "## Not a heading\n\nreal section\n"),
@@ -81,8 +75,7 @@ final class MergerTest extends TestCase
      * @param array<string, mixed> $second
      */
     #[DataProvider('metadata')]
-    public function testFrontmatterIsMerged(array $first, array $second, string $title, int $order, bool $agents): void
-    {
+    public function test_frontmatter_is_merged(array $first, array $second, string $title, int $order, bool $agents): void {
         $merged = new Merger()->merge([$this->source('general', "# T\n", $first), $this->source('framework/laravel', "# T\n", $second)]);
 
         self::assertSame($title, $merged->title);
@@ -91,15 +84,13 @@ final class MergerTest extends TestCase
     }
 
     /** @return iterable<string, array{array<string, mixed>, array<string, mixed>, string, int, bool}> */
-    public static function metadata(): iterable
-    {
+    public static function metadata(): iterable {
         yield 'first layer wins title and order' => [['title' => 'A', 'order' => 5], ['title' => 'B', 'order' => 1], 'A', 5, false];
         yield 'agents is OR-ed' => [['title' => 'A'], ['agents' => true], 'A', 1000, true];
     }
 
     /** @return list<string> */
-    private function headings(string $markdown): array
-    {
+    private function headings(string $markdown): array {
         return array_map(static fn ($s): string => $s->heading, Document::parse($markdown)->sections);
     }
 }

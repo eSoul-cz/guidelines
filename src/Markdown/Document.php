@@ -18,8 +18,7 @@ final readonly class Document
     }
 
     /** Fence-aware split. `##` inside fenced code blocks is not a heading. */
-    public static function parse(string $body): self
-    {
+    public static function parse(string $body): self {
         $lines = explode("\n", str_replace("\r\n", "\n", $body));
 
         $h1 = null;
@@ -64,8 +63,7 @@ final readonly class Document
         return new self($h1, self::trimBlank(implode("\n", $introLines)), $built);
     }
 
-    private static function trimBlank(string $text): string
-    {
+    private static function trimBlank(string $text): string {
         return rtrim(ltrim($text, "\n"));
     }
 }

@@ -20,23 +20,20 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand(name: 'sync', description: 'Render the selected layers into docs/project_guidelines, AGENTS.md and the lock file')]
 final class SyncCommand extends ProjectCommand
 {
-    public function __construct(LayerRepository $layers, private readonly string $packageVersion)
-    {
+    public function __construct(LayerRepository $layers, private readonly string $packageVersion) {
         parent::__construct($layers);
     }
 
-    protected function configure(): void
-    {
+    protected function configure(): void {
         parent::configure();
         $this
             ->addOption('force', 'f', InputOption::VALUE_NONE, 'Overwrite managed blocks that were edited locally')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Print what would change without writing anything');
     }
 
-    protected function handle(string $root, InputInterface $input, SymfonyStyle $io): int
-    {
+    protected function handle(string $root, InputInterface $input, SymfonyStyle $io): int {
         $config = ProjectConfig::load($root);
-        $targets = (new Renderer($this->layers))->render($config);
+        $targets = new Renderer($this->layers)->render($config);
         $sync = new Synchronizer($root, $this->packageVersion);
         $plan = $sync->plan($targets, Lock::load($root));
 
@@ -48,7 +45,7 @@ final class SyncCommand extends ProjectCommand
             $io->title('Dry run');
         }
         foreach ($plan->changes as $change) {
-            if ($change->status === Status::Current && !$verbose) {
+            if ($change->status === Status::Current && ! $verbose) {
                 continue;
             }
             $io->writeln($this->describe($change));
@@ -65,7 +62,7 @@ final class SyncCommand extends ProjectCommand
         }
 
         $blocked = $plan->blocked();
-        if ($blocked !== [] && !$force) {
+        if ($blocked !== [] && ! $force) {
             $io->error(array_merge(
                 ['Refusing to overwrite managed blocks with local edits:'],
                 array_map(static fn (Change $c): string => sprintf(' - %s [%s]: %s', $c->path, $c->block, $c->note), $blocked),
@@ -75,9 +72,9 @@ final class SyncCommand extends ProjectCommand
             return self::FAILURE;
         }
 
-        if (!$plan->hasChanges()) {
+        if ( ! $plan->hasChanges()) {
             $io->success('Guidelines are up to date.');
-            if (!$dryRun) {
+            if ( ! $dryRun) {
                 $sync->apply($plan, $targets, $config); // refresh the lock (e.g. package version)
             }
 
@@ -96,8 +93,7 @@ final class SyncCommand extends ProjectCommand
         return self::SUCCESS;
     }
 
-    private function describe(Change $change): string
-    {
+    private function describe(Change $change): string {
         $stats = $change->lineStats();
         $detail = match ($change->status) {
             Status::Create => sprintf('+%d', $stats['added']),

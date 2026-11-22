@@ -13,8 +13,7 @@ use Symfony\Component\Console\Application as ConsoleApplication;
 
 final class Application extends ConsoleApplication
 {
-    public function __construct(?LayerRepository $layers = null, ?string $version = null)
-    {
+    public function __construct(?LayerRepository $layers = null, ?string $version = null) {
         $version ??= PackageVersion::detect();
         $layers ??= LayerRepository::bundled();
 

@@ -20,8 +20,7 @@ enum Status: string
     /** Lock entry whose block is already gone and no longer produced. */
     case Forget = 'forget';
 
-    public function isBlocking(): bool
-    {
+    public function isBlocking(): bool {
         return $this === self::Drifted || $this === self::RemoveDrifted;
     }
 }

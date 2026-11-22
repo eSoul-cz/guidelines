@@ -16,12 +16,11 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 #[AsCommand(name: 'init', description: 'Detect the project stack and write esoul-guidelines.json')]
 final class InitCommand extends ProjectCommand
 {
-    protected function handle(string $root, InputInterface $input, SymfonyStyle $io): int
-    {
+    protected function handle(string $root, InputInterface $input, SymfonyStyle $io): int {
         $existing = ProjectConfig::exists($root) ? ProjectConfig::load($root) : null;
-        $detected = (new StackDetector())->detect($root);
+        $detected = new StackDetector()->detect($root);
 
-        $unavailable = array_values(array_filter($detected, fn (string $l): bool => !$this->layers->has($l)));
+        $unavailable = array_values(array_filter($detected, fn (string $l): bool => ! $this->layers->has($l)));
         $detected = array_values(array_filter($detected, fn (string $l): bool => $this->layers->has($l)));
         if ($unavailable !== []) {
             $io->note('Detected, but no guideline layer exists yet: ' . implode(', ', $unavailable));
@@ -42,7 +41,7 @@ final class InitCommand extends ProjectCommand
             );
             $question->setMultiselect(true);
             /** @var list<string> $selected */
-            $selected = (new QuestionHelper())->ask($input, $io, $question);
+            $selected = new QuestionHelper()->ask($input, $io, $question);
             // Keep the order of the available layers, not the order in which numbers were typed.
             $selected = array_values(array_filter($choices, static fn (string $l): bool => in_array($l, $selected, true)));
         }
