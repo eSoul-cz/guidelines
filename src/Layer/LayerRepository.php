@@ -79,7 +79,7 @@ final class LayerRepository
 
         $dir = $this->baseDir . '/' . $layer;
         $names = [];
-        foreach (scandir($dir) ?: [] as $entry) {
+        foreach (self::entries($dir) as $entry) {
             if (str_ends_with($entry, '.md') && is_file($dir . '/' . $entry)) {
                 $names[] = substr($entry, 0, -3);
             }
@@ -103,13 +103,21 @@ final class LayerRepository
     }
 
     /** @return list<string> */
+    private static function entries(string $dir): array
+    {
+        $entries = scandir($dir);
+
+        return $entries === false ? [] : $entries;
+    }
+
+    /** @return list<string> */
     private function childDirs(string $dir): array
     {
         if (!is_dir($dir)) {
             return [];
         }
         $dirs = [];
-        foreach (scandir($dir) ?: [] as $entry) {
+        foreach (self::entries($dir) as $entry) {
             if ($entry[0] !== '.' && is_dir($dir . '/' . $entry)) {
                 $dirs[] = $entry;
             }

@@ -52,7 +52,7 @@ final class Synchronizer
             }
         }
 
-        foreach ($lock?->files ?? [] as $path => $entry) {
+        foreach ($lock->files ?? [] as $path => $entry) {
             if (isset($produced[$path])) {
                 continue;
             }
