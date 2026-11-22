@@ -104,13 +104,6 @@ in `CONTEXT.md`. Each external system is one namespace,
 - A module MUST NOT write another module's data. It dispatches that module's command.
 - Code shared by several modules (`App\Domain\ValueObjects`, contracts) depends on no module.
 
-## Admin panels
-
-An admin panel built on a package (for example Filament) is a separate user interface: the
-frontend rules do not apply to it. It MAY use the package's own resources for plain CRUD; its
-custom actions that perform a business operation dispatch the corresponding command instead of
-reimplementing it. Its panel provider is `App\Domain\Providers\Filament\AdminPanelProvider`.
-
 ## Persistence
 
 - Migrations are forward-only. A deployed migration is never edited; a mistake is corrected by a
