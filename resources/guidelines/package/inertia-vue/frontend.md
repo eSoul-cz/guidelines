@@ -7,7 +7,7 @@ summary: Vue + Inertia rules - project structure and locality, component archite
 
 The frontend is Vue (Composition API, `<script setup lang="ts">`), Inertia, TypeScript, shadcn-vue and Vitest. React is not supported. Domain behaviour, validation and authorization stay on the server; the frontend owns presentation state, interaction state and client-side orchestration only. Code that contradicts these rules is a bug to fix, not a precedent to follow.
 
-Paths in this file are relative to the JavaScript asset root, written `<js-root>`. The framework's frontend section names it, and the `@` import alias points to it.
+Paths under `<js-root>/` are written relative to the JavaScript asset root; any other path is a repository path. The framework's frontend section names `<js-root>`, and the `@` import alias points to it.
 
 ## Project structure and locality
 
@@ -129,7 +129,7 @@ components/ProductSummary                          several branches
 - The consuming page provides labels, descriptions, errors, headings and alternative content.
 - Colour is never the only carrier of a state. Buttons are for actions, links for navigation. Decorative icons are hidden from assistive technology; icon-only controls have an accessible name.
 
-## Tailwind CSS
+### Utility classes and tokens
 
 - A colour that carries domain meaning (a status, a category) is a named semantic token with light and dark values, and one application component owns the mapping from the domain value to it. Pages never apply raw palette classes or borrow an unrelated token.
 - Utility classes live primarily in design-system components. Outside them, utilities are for route-level layout, responsive placement and genuinely local presentation; repeated class groups are a signal of a missing component, variant or token.
@@ -146,4 +146,4 @@ pnpm test          # Vitest
 pnpm eslint:fix && pnpm format   # explicit autofix, review the diff
 ```
 
-- The read-only commands are what CI runs; the autofix commands (`eslint:fix`, `format`) are developer actions ([tools.md](tools.md#formatting-and-lint-autofixes)).
+- CI runs the read-only commands that the stack's pipeline lists ([deployment.md](deployment.md)); the autofix commands (`eslint:fix`, `format`) are developer actions ([tools.md](tools.md#formatting-and-lint-autofixes)).
