@@ -50,25 +50,26 @@ final readonly class Lock
             if ( ! is_array($entry) || ! is_string($entry['block'] ?? null) || ! is_string($entry['sha256'] ?? null)) {
                 throw new GuidelinesException(sprintf('%s: invalid entry for "%s".', self::FILE, $path));
             }
-            $files[(string) $path] = new LockEntry($entry['block'], $entry['sha256'], self::stringMap($entry['sources'] ?? [], sprintf('sources of "%s"', $path)));
+            $files[(string) $path] = new LockEntry($entry['block'], $entry['sha256'], self::stringMap(array_key_exists('sources', $entry) ? $entry['sources'] : [], sprintf('sources of "%s"', $path)));
         }
 
-        $packageVersion = $data['package_version'] ?? 'dev';
+        // Defaults only for a missing key: an explicit null is invalid and goes to the type checks.
+        $packageVersion = array_key_exists('package_version', $data) ? $data['package_version'] : 'dev';
         if ( ! is_string($packageVersion)) {
             throw new GuidelinesException(sprintf('%s: "package_version" must be a string.', self::FILE));
         }
 
         return new self(
             $packageVersion,
-            self::stringList($data['layers'] ?? [], 'layers'),
-            self::stringList($data['exclude'] ?? [], 'exclude'),
+            self::stringList(array_key_exists('layers', $data) ? $data['layers'] : [], 'layers'),
+            self::stringList(array_key_exists('exclude', $data) ? $data['exclude'] : [], 'exclude'),
             $files,
         );
     }
 
     /** @return list<string> */
     private static function stringList(mixed $value, string $what): array {
-        if ( ! is_array($value)) {
+        if ( ! is_array($value) || ! array_is_list($value)) {
             throw new GuidelinesException(sprintf('%s: "%s" must be a list of strings.', self::FILE, $what));
         }
 
