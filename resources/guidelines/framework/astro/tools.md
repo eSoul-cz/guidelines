@@ -22,7 +22,7 @@ Company-wide standards are at https://dev.docs.esoul.cz; this file lists the too
 | Browser tests   | Playwright                                                    | `playwright.config.ts`, `e2e/`                    |
 | Delivery        | Docker or static rsync, Jenkins, Komodo                       | [deployment.md](deployment.md)                    |
 
-`package.json` and `pnpm-lock.yaml` are authoritative for versions. Use the Astro documentation for the installed major (the Astro Docs MCP when available) and check the installed source before concluding that a feature does not exist. Use the pinned pnpm from `packageManager` (Node 26 ships without corepack: `npm install --global pnpm@<version>`). pnpm reads only auth settings from `.npmrc`; every other pnpm setting lives in `pnpm-workspace.yaml`.
+`package.json` and `pnpm-lock.yaml` are authoritative for versions. Use the Astro documentation for the installed major (the Astro Docs MCP when available) and check the installed source before concluding that a feature does not exist. Use the pinned pnpm from `packageManager` (Node 26 ships without corepack: `npm install --global pnpm@<version>`). pnpm reads only auth, registry, TLS (`ca`, `cafile`, `cert`, `key`), proxy and `local-address` settings from `.npmrc`; every other project setting lives in `pnpm-workspace.yaml`, and machine-level settings (such as `stateDir`) live in the global pnpm `config.yaml`.
 
 `tsc --noEmit` alone does not type-check `.vue` files; that is why a site with Vue islands adds `vue-tsc --noEmit` to `pnpm check`.
 
