@@ -11,6 +11,11 @@
         "symfony/yaml": "^7.4 || ^8.0"
     },
     "require-dev": {
+        "phpstan/extension-installer": "^1",
+        "phpstan/phpstan": "^2",
+        "phpstan/phpstan-deprecation-rules": "^2",
+        "phpstan/phpstan-phpunit": "^2",
+        "phpstan/phpstan-strict-rules": "^2",
         "phpunit/phpunit": "^12.0 || ^13.0"
     },
     "autoload": {
@@ -24,11 +29,15 @@
         }
     },
     "scripts": {
-        "test": "phpunit"
+        "test": "phpunit",
+        "phpstan": "phpstan analyse --memory-limit=1G --no-progress"
     },
     "config": {
         "sort-packages": true,
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
     },
     "minimum-stability": "stable",
     "prefer-stable": true
