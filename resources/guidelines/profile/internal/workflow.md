@@ -61,7 +61,7 @@
   the architecture or to an external contract comes with its ADR in the same pull request
   ([documentation.md](documentation.md#documentation-rides-with-the-change)).
 - Reviews follow [code-review.md](code-review.md): CodeRabbit and the owner's go-ahead, every
-  finding answered, and the `final-pr-review` skill to finish the pull request.
+  finding answered, and the `esoul-review` skill to finish the pull request.
 - A green `Jenkins` check is required before merge.
 - **The author merges**, as a human, after the owner's go-ahead (or a reviewer's approval) and a
   green build, with a **squash merge** whose message is the pull request title. Agents MUST NOT

@@ -4,6 +4,10 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Changed
+
+- Code review and workflow (general and `profile/internal`): the skill that finishes a pull request and posts the CodeRabbit fallback review is `esoul-review`; `final-pr-review` and `pre-pr-review` are merged into it.
+
 ## [0.3.3] - 2026-11-23
 
 Issue-first with a named exception, a local folder for non-anonymised client material, a decision register under another name and a release checklist.

@@ -8,10 +8,10 @@
   Every pull request is also reviewed by **CodeRabbit**. CodeRabbit review is configured at the
   platform level; the repository's `.coderabbit.yaml` only excludes generated paths. A CodeRabbit
   approval never replaces the owner's go-ahead.
-- The author finishes the pull request with the `final-pr-review` skill: green `Jenkins` check,
+- The author finishes the pull request with the `esoul-review` skill: green `Jenkins` check,
   every CodeRabbit finding answered, local review run where the skill asks for it.
 - When CodeRabbit hits its rate limit or runs out of credits, nobody waits for it: the
-  `pre-pr-review` skill posts a fallback review of the same revision into the pull request, and
+  `esoul-review` skill posts a fallback review of the same revision into the pull request, and
   its findings are answered the same way. Once they are resolved, its review (a `COMMENT`, not a
   GitHub approval) stands in for CodeRabbit's. It does not replace the owner's go-ahead.
 - The author merges under the rules in [workflow.md](workflow.md#pull-requests): the owner's
