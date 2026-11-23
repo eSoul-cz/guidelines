@@ -2,7 +2,7 @@
 
 Layered, mergeable engineering guidelines for eSoul projects (Laravel, LSR, Astro), installed as plain Markdown into the project and protected against silent overwrites.
 
-A standalone Symfony Console app (`bin/esoul-guidelines`). It has **no Laravel/Artisan dependency** and is **not a Composer plugin**, so it works in Laravel and LSR repositories and, through `composer global`, in Astro and other repositories without PHP ([Repositories without PHP](#repositories-without-php); a Docker image and a PHAR are planned).
+A standalone Symfony Console app (`bin/esoul-guidelines`). It has **no Laravel/Artisan dependency** and is **not a Composer plugin**, so it works in Laravel and LSR repositories and, through `composer global`, a PHAR or a Docker image, in Astro and other repositories without PHP ([Repositories without PHP](#repositories-without-php)).
 
 What it does:
 
@@ -51,17 +51,38 @@ A project that requires the package syncs on every `composer update`, so the gen
 
 ### Repositories without PHP
 
-A repository without Composer (a fully static Astro site, for example) needs no monorepo and no PHP project around it. The tool is installed globally, once per machine and in the CI image:
+A repository without Composer (a fully static Astro site, for example) needs no monorepo and no PHP project around it, and `init`, `sync`, `check` and `list` never read or require a `composer.json` or `vendor/` (only `package.json` and `composer.json` are looked at to detect the stack, and either may be missing). Pick one of three ways to get the `esoul-guidelines` command; they run the same code and write the same files.
+
+**1. Composer global** (a machine or CI image that has PHP 8.4+ and Composer):
 
 ```bash
 composer global require esoul-cz/guidelines   # installs the esoul-guidelines binary
+export PATH="$(composer global config bin-dir --absolute):$PATH"   # once, e.g. in ~/.zshrc or ~/.bashrc
 esoul-guidelines init                         # in the repository root, as above
 esoul-guidelines sync
 ```
 
-- The binary is `esoul-guidelines` (the `bin` entry of `composer.json`); Composer's global `bin` directory (`composer global config bin-dir --absolute`) must be on the `PATH`.
 - Update with `composer global update esoul-cz/guidelines`, then `sync` in each repository. CI runs `esoul-guidelines check` the same way.
-- **Planned** (plan item G6): a Docker image and a PHAR build, both published by CI, for machines and pipelines that have no PHP. Until they exist, the global Composer install is the supported route.
+
+**2. PHAR** (a machine that has PHP 8.4+ but no Composer): one self-contained file, attached to every [GitHub release](https://github.com/eSoul-cz/guidelines/releases) together with its checksum:
+
+```bash
+VERSION=0.3.1   # the release without the leading "v"
+BASE="https://github.com/eSoul-cz/guidelines/releases/download/v${VERSION}"
+curl -fsSL -O "$BASE/esoul-guidelines.phar" -O "$BASE/esoul-guidelines.phar.sha256"
+sha256sum -c esoul-guidelines.phar.sha256     # macOS: shasum -a 256 -c esoul-guidelines.phar.sha256
+chmod +x esoul-guidelines.phar
+sudo mv esoul-guidelines.phar /usr/local/bin/esoul-guidelines   # or any directory on the PATH
+esoul-guidelines init                         # in the repository root
+esoul-guidelines sync
+```
+
+- Without installing it: `php esoul-guidelines.phar sync`.
+- The guideline layers are bundled in the PHAR, and the lock records the release as `package_version` (`v0.3.1`), the same as the Composer install.
+- Update by downloading the newer release, then `sync` in each repository.
+- Build it yourself with `composer build:phar` from a checkout (needs PHP 8.4+, Composer, `git` and `curl`): it downloads a pinned, checksum-verified [Box](https://github.com/box-project/box), installs the committed files with `--no-dev` in a temporary directory and writes `build/esoul-guidelines.phar` and `build/esoul-guidelines.phar.sha256`. A checkout at a release tag reports that tag as the version, any other commit `git describe`.
+
+**3. Docker** (a machine or pipeline with Docker and no PHP): the image of the same release, built by [eSoul-cz/ci-images](https://github.com/eSoul-cz/ci-images) from that release's PHAR. It is **planned and not published yet**; until it is, use the PHAR or Composer.
 
 ### Releases and updates
 
@@ -186,12 +207,12 @@ build of `main` triggers the Satis mirror. The package supports PHP 8.4 and ever
 - Detection is limited to the packages listed under Commands; monorepos (backend in a sub-folder) are not scanned.
 - Optional LSR modules get their own `package/lsr-<module>` layer, detected from the module's Composer package (`lsr/cqrs` now; `lsr/auth`, `lsr/otel` and others later). The `framework/lsr` layer never describes an optional module.
 - `list` replaces Symfony's built-in `list` (command overview); use `--help` for commands.
-- The package version in the lock is the one reported by Composer for `esoul-cz/guidelines`; a development checkout reports `dev`.
+- The package version in the lock is the one reported by Composer for `esoul-cz/guidelines`, or the release tag a PHAR was built from (`v0.3.1`); a development checkout reports `dev`.
 - The note "local additions go below" lives inside the managed block (visible, regenerated), not outside it.
 - `No test: <reason>` is the PR-description line for a behaviour change without a test (`general/testing.md`, `general/workflow.md`); it is English like the rest of the guidelines.
 - The Jenkins delivery wording in `framework/lsr/deployment.md` follows the template `Jenkinsfile`, which calls the shared `lsrPipeline`; that pipeline does not exist yet in the shared libraries (`laravelPipeline` only) and `astroCmsPipeline` is likewise planned.
 - `general/deployment.md` is the deployment scheme shared by every stack, written as a reference for project people and agents (only devops deploy and change stacks). The framework `deployment.md` files add runtime detail and reuse its H2 texts (`Environments and releases`, `Local development`, `Reverse proxy and TLS`, `Health endpoint`, `Configuration and secrets`) so the rendered file reads as one; they do not repeat the scheme.
 - `general/public-website.md` states the crawling, sitemap, `llms.txt`, Markdown and preview-gate rules for any application with public pages; `framework/astro/seo.md` keeps only the Astro implementation and links to it. `general/dependencies.md` holds the pnpm install hardening for every repository with a `package.json`; `framework/astro/tools.md` links to it.
 - Stack versions (PHP, Laravel, Inertia and Vue, Node, pnpm, Vite and the like) are stated in the `Versions` table of each framework's `tools.md`, the one place to change them.
-- The package is not a Composer plugin and ships no hook of its own: a project's `post-update-cmd` calls `sync` ([Sync on `composer update`](#sync-on-composer-update)). A Docker image and a PHAR are planned ([Repositories without PHP](#repositories-without-php)).
+- The package is not a Composer plugin and ships no hook of its own: a project's `post-update-cmd` calls `sync` ([Sync on `composer update`](#sync-on-composer-update)). A repository without PHP installs the command as a PHAR, a Docker image or with `composer global` ([Repositories without PHP](#repositories-without-php)).
 - The guidelines and the generated files are English only; there is no Czech variant of the blocks, the index or the layers.
