@@ -4,6 +4,21 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-23
+
+The installer for repositories without PHP: a PHAR on every release, and the fixes a repository without Composer needed.
+
+### Added
+
+- PHAR build: `composer build:phar` (`scripts/build-phar`, `box.json`) writes `build/esoul-guidelines.phar` and its `.sha256` with a pinned, checksum-verified humbug/box from a clean `--no-dev` install of the committed files. The PHAR bundles the installer and the guideline layers and reports the `git describe` of the checkout as its version (the release tag), which `sync` records in the lock as `package_version`. Each release attaches `esoul-guidelines.phar` and `esoul-guidelines.phar.sha256`.
+- README: the three ways to install the command in a repository without PHP (`composer global`, the PHAR from the release, Docker).
+
+### Fixed
+
+- The bundled layers are found inside a PHAR: the layer scan used `glob()`, which does not support the `phar://` stream wrapper.
+- The `AGENTS.md` block told every project to run `vendor/bin/esoul-guidelines sync`, which does not exist in a repository without Composer. It names `esoul-guidelines sync` and keeps the vendor path for Composer projects. Run `sync` after updating: until then `check` reports the block as outdated.
+- `init`, `sync`, `check` and `list` are covered by a test in a project that has only a `package.json`.
+
 ## [0.3.0] - 2026-11-23
 
 The Lunar layer, written from the first Lunar project, and the installer's Lunar detection.
@@ -71,7 +86,9 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/eSoul-cz/guidelines/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/eSoul-cz/guidelines/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/eSoul-cz/guidelines/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/eSoul-cz/guidelines/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/eSoul-cz/guidelines/compare/v0.1.0...v0.1.1
