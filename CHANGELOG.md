@@ -4,6 +4,12 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-11-23
+
+Issue-first with a named exception, a local folder for non-anonymised client material, a decision register under another name and a release checklist.
+
+Skills affected: `esoul-workflow` and `esoul-tasking` (issue-first), `esoul-project-lifecycle` and `esoul-project-data` (`_reference/`, decision register of light projects).
+
 ### Changed
 
 - Workflow: the exception to "every change starts from an issue or task" is small administrative work (dependency updates, a `Jenkinsfile` change and similar), only when the user decides so; an agent never assumes it and asks unless an issue or task exists. `profile/internal` keeps its relaxed tasking rule.
@@ -105,7 +111,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/eSoul-cz/guidelines/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/eSoul-cz/guidelines/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/eSoul-cz/guidelines/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/eSoul-cz/guidelines/compare/v0.2.1...v0.3.0
