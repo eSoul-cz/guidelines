@@ -4,6 +4,10 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Changed
+
+- README: the Docker way of installing the command in a repository without PHP names the `esoul-guidelines` image that eSoul-cz/ci-images#12 publishes.
+
 ## [0.3.1] - 2026-11-23
 
 The installer for repositories without PHP: a PHAR on every release, and the fixes a repository without Composer needed.

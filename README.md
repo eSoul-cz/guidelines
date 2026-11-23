@@ -82,7 +82,17 @@ esoul-guidelines sync
 - Update by downloading the newer release, then `sync` in each repository.
 - Build it yourself with `composer build:phar` from a checkout (needs PHP 8.4+, Composer, `git` and `curl`): it downloads a pinned, checksum-verified [Box](https://github.com/box-project/box), installs the committed files with `--no-dev` in a temporary directory and writes `build/esoul-guidelines.phar` and `build/esoul-guidelines.phar.sha256`. A checkout at a release tag reports that tag as the version, any other commit `git describe`.
 
-**3. Docker** (a machine or pipeline with Docker and no PHP): the image of the same release, built by [eSoul-cz/ci-images](https://github.com/eSoul-cz/ci-images) from that release's PHAR. It is **planned and not published yet**; until it is, use the PHAR or Composer.
+**3. Docker** (a machine or pipeline with Docker and no PHP): an image of the same release, built by [eSoul-cz/ci-images](https://github.com/eSoul-cz/ci-images) from that release's PHAR (checked against its `.sha256`). **After [eSoul-cz/ci-images#12](https://github.com/eSoul-cz/ci-images/pull/12) merges** and the next nightly build ran, it is published as `rg.fr-par.scw.cloud/testing-images/esoul-guidelines` (log in with `docker login rg.fr-par.scw.cloud`) with the tags `0.3.1` (the release), `0.3` and `latest`; until then use the PHAR or Composer.
+
+```bash
+# in the repository root; arguments are those of esoul-guidelines (init, sync, check, list)
+docker run --rm -v "$PWD:/app" -w /app rg.fr-par.scw.cloud/testing-images/esoul-guidelines:0.3.1 init
+docker run --rm -v "$PWD:/app" -w /app rg.fr-par.scw.cloud/testing-images/esoul-guidelines:0.3.1 sync
+```
+
+- `init` asks questions, so add `-it` to the first command (or use `init --no-interaction`).
+- The image runs as uid 1000. Add `--user "$(id -u):$(id -g)"` so the written files belong to you (Linux hosts whose uid is not 1000, CI agents).
+- Pin the tag: an image carries exactly one release, so a newer tag is the update (then `sync`).
 
 ### Releases and updates
 
