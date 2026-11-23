@@ -4,6 +4,12 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-11-23
+
+The skills `final-pr-review` and `pre-pr-review` are one skill, `esoul-review`, and the title rule covers Czech projects.
+
+Skills affected: `esoul-review` (new name), `esoul-workflow`, `esoul-tasking` and `esoul-freelo-task-authoring` (title language).
+
 ### Changed
 
 - Code review and workflow (general and `profile/internal`): the skill that finishes a pull request and posts the CodeRabbit fallback review is `esoul-review`; `final-pr-review` and `pre-pr-review` are merged into it.
@@ -116,7 +122,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.3.4...HEAD
+[0.3.4]: https://github.com/eSoul-cz/guidelines/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/eSoul-cz/guidelines/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/eSoul-cz/guidelines/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/eSoul-cz/guidelines/compare/v0.3.0...v0.3.1
