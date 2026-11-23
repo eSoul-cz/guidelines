@@ -7,6 +7,7 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 ### Changed
 
 - Code review and workflow (general and `profile/internal`): the skill that finishes a pull request and posts the CodeRabbit fallback review is `esoul-review`; `final-pr-review` and `pre-pr-review` are merged into it.
+- Workflow (general and `profile/internal`): the shared title of an issue, its tracker task and its pull request is English in a new project; a project with Czech tracker titles keeps them, and its pull request title is an English commit-style title of the same result that links the issue.
 
 ## [0.3.3] - 2026-11-23
 
