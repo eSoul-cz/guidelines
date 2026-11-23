@@ -113,7 +113,7 @@ final class Renderer
             '',
             'Before changing code, read [docs/project_guidelines/index.md](' . self::OUTPUT_DIR . '/index.md) and the guidelines that cover what you touch. '
             . 'They take precedence over generic framework documentation and generated advice. '
-            . 'This block is managed by `esoul-guidelines`; do not edit it, run `vendor/bin/esoul-guidelines sync` instead.',
+            . 'This block is managed by `esoul-guidelines`; do not edit it, run `esoul-guidelines sync` (`vendor/bin/esoul-guidelines sync` where the package is a Composer dependency of the project) instead.',
         ];
 
         $always = array_filter($guidelines, static fn (MergedGuideline $g): bool => $g->agents);
