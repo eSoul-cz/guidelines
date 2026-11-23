@@ -4,6 +4,10 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Changed
+
+- Workflow: the exception to "every change starts from an issue or task" is small administrative work (dependency updates, a `Jenkinsfile` change and similar), only when the user decides so; an agent never assumes it and asks unless an issue or task exists. `profile/internal` keeps its relaxed tasking rule.
+
 ## [0.3.2] - 2026-11-23
 
 Rules the owner settled while reviewing the skills: anonymised samples of faulty data, exports of public data, what an agent may write by environment, the legacy severity names and the removal of committed PDFs.

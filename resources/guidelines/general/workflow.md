@@ -11,6 +11,7 @@ How a change travels from a prepared issue to a merged pull request. The tasking
 ## Tasking
 
 - Every change starts from a prepared issue (or task) with a clear outcome and **acceptance criteria**. Work without one is first turned into one; an agent does not start from a vague request.
+- The exception is small administrative work (dependency updates, a `Jenkinsfile` change and similar), which MAY go without an issue or task, but only when the user decides so. An agent never assumes the exception: it asks the user unless an issue or task already exists. Internal repositories relax the whole rule in their profile.
 - One issue is one independently deliverable result. When separate work emerges during a task, open another issue instead of widening the current one.
 - The title names the result: a context followed by an action. The issue, its tracker task and its pull request carry the same title; the pull request title wraps it in the commit format ([Pull requests](#pull-requests)).
 - Titles carry **no prefix** such as `[BE]` or `[FE]`, and never a slice or phase identifier. The work category is a label on the issue (GitHub) and on the task (Freelo).
