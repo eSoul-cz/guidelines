@@ -8,6 +8,7 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 - Workflow: the exception to "every change starts from an issue or task" is small administrative work (dependency updates, a `Jenkinsfile` change and similar), only when the user decides so; an agent never assumes it and asks unless an issue or task exists. `profile/internal` keeps its relaxed tasking rule.
 - Security and data: a gitignored local folder (by convention `_reference/`) MAY hold non-anonymised client material for the work on the project, never committed and never shared; the sentence about anonymised dumps kept in gitignored folders is worded so that both rules agree.
+- Domain and documentation: a project MAY name another file (for example `docs/rozhodnuti.md`) as its decision register in `CONTEXT.md`, sources of truth, and it ranks like the plan's register.
 
 ## [0.3.2] - 2026-11-23
 
