@@ -4,6 +4,10 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-23
+
+Rules the owner settled while reviewing the skills: anonymised samples of faulty data, exports of public data, what an agent may write by environment, the legacy severity names and the removal of committed PDFs.
+
 ### Changed
 
 - Security and data: an anonymised sample of faulty records MAY go into an issue or task when needed to describe a problem, the original data never; the public data exception also covers exports of that public data, which need no anonymisation.
@@ -94,7 +98,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/eSoul-cz/guidelines/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/eSoul-cz/guidelines/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/eSoul-cz/guidelines/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/eSoul-cz/guidelines/compare/v0.2.0...v0.2.1
