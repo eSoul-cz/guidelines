@@ -123,6 +123,13 @@ final class LayerRepository
     }
 
     private function hasMarkdown(string $dir): bool {
-        return glob($dir . '/*.md') !== [] && glob($dir . '/*.md') !== false;
+        // Not glob(): it does not support the phar:// stream wrapper, where the bundled layers live in the PHAR.
+        foreach (self::entries($dir) as $entry) {
+            if (str_ends_with($entry, '.md') && is_file($dir . '/' . $entry)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
