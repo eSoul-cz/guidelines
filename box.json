@@ -1,9 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/box-project/box/master/res/schema.json",
-    "main": "bin/esoul-guidelines",
     "output": "build/esoul-guidelines.phar",
     "directories": ["src", "resources"],
-    "files": ["composer.json"],
-    "compression": "NONE",
-    "check-requirements": true
+    "files": ["composer.json"]
 }
