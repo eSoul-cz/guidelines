@@ -33,7 +33,8 @@
         "test": "phpunit",
         "phpstan": "phpstan analyse --memory-limit=1G --no-progress",
         "cs": "php-cs-fixer fix --dry-run --diff",
-        "cs:fix": "php-cs-fixer fix"
+        "cs:fix": "php-cs-fixer fix",
+        "build:phar": "scripts/build-phar"
     },
     "config": {
         "sort-packages": true,

@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Builds build/esoul-guidelines.phar (+ .sha256) with a pinned humbug/box, from a clean production install of the
+# committed files (HEAD), so dev dependencies and uncommitted changes never end up in the PHAR. The PHAR reports
+# `git describe --tags` as its version: build from a release tag for a clean one.
+set -euo pipefail
+
+BOX_VERSION="4.7.1"
+BOX_SHA256="aedabb38bad96a90868603f118956c3faa662b545c06be66df1b145aba703c0a"
+
+root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$root"
+mkdir -p build
+
+sha256() {
+    if command -v sha256sum >/dev/null 2>&1; then sha256sum "$@"; else shasum -a 256 "$@"; fi
+}
+
+box="build/box-${BOX_VERSION}.phar"
+if [ ! -f "$box" ] || [ "$(sha256 "$box" | cut -d' ' -f1)" != "$BOX_SHA256" ]; then
+    curl -fsSL -o "$box" "https://github.com/box-project/box/releases/download/${BOX_VERSION}/box.phar"
+    if [ "$(sha256 "$box" | cut -d' ' -f1)" != "$BOX_SHA256" ]; then
+        rm -f "$box"
+        echo "box.phar ${BOX_VERSION} does not match the pinned sha256." >&2
+        exit 1
+    fi
+fi
+
+version="$(git describe --tags --always)"
+stage="$(mktemp -d)"
+trap 'rm -rf "$stage"' EXIT
+
+git archive HEAD | tar -x -C "$stage"
+if [ -f composer.lock ]; then cp composer.lock "$stage/"; fi
+printf '%s' "$version" > "$stage/resources/VERSION"
+
+(
+    cd "$stage"
+    if [ -f composer.lock ]; then
+        composer install --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+    else
+        composer update --no-dev --prefer-dist --no-interaction --no-progress --optimize-autoloader
+    fi
+    COMPOSER_ROOT_VERSION="1.0.0" php "$root/$box" compile --no-interaction
+)
+
+cp "$stage/build/esoul-guidelines.phar" build/esoul-guidelines.phar
+(cd build && sha256 esoul-guidelines.phar > esoul-guidelines.phar.sha256 && cat esoul-guidelines.phar.sha256)
