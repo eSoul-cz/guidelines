@@ -97,6 +97,7 @@ docker run --rm -v "$PWD:/app" -w /app rg.fr-par.scw.cloud/testing-images/esoul-
 ### Releases and updates
 
 - The package is released with **SemVer tags**. A release is a pull request that changes only the changelog, merged and then tagged; there is no tag per guideline change and no rolling `main` for projects.
+- **Release checklist.** (1) The changelog entry names the layers it changes and carries a `Skills affected:` line: `none`, or the skills of [eSoul-cz/skills](https://github.com/eSoul-cz/skills) whose text restates or points at a changed rule. (2) The tag is annotated (`v<version>`). (3) The GitHub release attaches the PHAR from `composer build:phar` and its `.sha256`. (4) A listed skill is reviewed in the skills repository after the release.
 - A project updates with `composer update esoul-cz/guidelines` and `sync` (the `post-update-cmd` above runs it), and commits the result.
 - The repository has no `CODEOWNERS`; review follows [workflow.md](resources/guidelines/general/workflow.md) like any other change.
 
