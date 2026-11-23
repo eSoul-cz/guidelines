@@ -24,6 +24,8 @@ The names are CodeRabbit's, so human, CodeRabbit and agent findings share one sc
 - **Minor** - significant duplication, overengineering, a missing test for a non-critical path, or another maintainability risk.
 - **Nitpick** - local cleanup that can be included with related remediation.
 
+A project or template that still uses the older names maps them: Blocker is Critical, High is Major, Medium is Minor, Low is Nitpick.
+
 `Critical` and `Major` findings on the changes of the pull request prevent the merge (a **Pre-existing** problem is the exception, see [Keeping review short](#keeping-review-short)). `Minor` and `Nitpick` are either fixed in the same pull request or marked `Deferred`: the pull request merges with a linked follow-up issue, which is a new issue and task like any other work.
 
 ### Default Critical findings
@@ -34,7 +36,7 @@ A finding is `Critical` by default when it can:
 - cause a **duplicate write to an external system**: a second invoice, payment, shipment, e-mail or ERP record. A non-idempotent handler, listener or job is the usual cause;
 - **leak data across a boundary**: another tenant's, customer's or role's data in a payload, an export, a notification or a log. Filtering in the browser is not a boundary;
 - make a **data change untraceable**: stored data changed without the record, history entry or source reference that lets the change be explained or recomputed;
-- put a **credential, personal data or non-public client data** (real amounts, rates, prices, documents) into code, tests, fixtures, issues or pull requests, except what [security-and-data.md](security-and-data.md#personal-and-client-data) allows (public data and recorded exceptions);
+- put a **credential, personal data or non-public client data** (real amounts, rates, prices, documents) into code, tests, fixtures, issues or pull requests, except what [security-and-data.md](security-and-data.md#personal-and-client-data) allows (public data and its exports, an anonymised sample of faulty records, recorded exceptions);
 - **break a published contract without a migration path**: the public API of a released package, a webhook, REST or export payload that another system consumes, or an irreversible migration without a rollback plan.
 
 These are the findings a later fix does not repair. A project MAY add its own default Critical findings in its project-specific guidelines.

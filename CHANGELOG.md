@@ -6,6 +6,10 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ### Changed
 
+- Security and data: an anonymised sample of faulty records MAY go into an issue or task when needed to describe a problem, the original data never; the public data exception also covers exports of that public data, which need no anonymisation.
+- Security and data: an agent MAY write to data in the local environment with the owner's approval (for example an approved data fix), MUST NOT write to production data and SHOULD NOT write to staging data. The two lines that said "MUST NOT write to real data" and named the "approved writes" are now one rule; the approved writes to production are the reviewed migrations and commands, deployed by Jenkins.
+- Code review: projects and templates that still use the old severity names map Blocker to Critical, High to Major, Medium to Minor and Low to Nitpick.
+- Documentation: a generated PDF that is already committed is removed from Git with `git rm --cached`; workflow.md links to the rule.
 - README: the Docker way of installing the command in a repository without PHP names the `esoul-guidelines` image that eSoul-cz/ci-images#12 publishes.
 
 ## [0.3.1] - 2026-11-23
