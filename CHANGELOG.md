@@ -10,6 +10,7 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 - Workflow (general and `profile/internal`): the title shape is `Context: Result` (for example `Cart: Recalculate shipping when the address changes`), and the pull request title states the same result in English. How the title is mapped into a commit standard stays skill procedure (`esoul-task-create`, `gitmoji-commit`).
 - Tools (`framework/laravel`, `framework/lsr`): `esoul-guidelines check` is listed among the read-only checks (a "Guidelines" subsection), as the stage `Guidelines check` that the shared `laravelPipeline` and `lsrPipeline` now run by default for a project with `esoul-guidelines.lock`.
 - Deployment (`framework/laravel`): the pipeline's static checks include `Guidelines check`, which needs no ADR and is not an `extraChecks` entry. Deployment (`framework/lsr`): the delivery path describes the `lsrPipeline` that exists (PHP checks `composer phpstan:ci`, `composer cs`, `composer test:parallel`, `composer audit --locked`; frontend checks `eslint`, `format:check`, `tsc`, `test`, `pnpm audit`, `build`; the guidelines check) instead of a planned one, and drops the Target and "planned" paragraphs that no longer held.
+- Dependencies (`general`): the Target paragraph of "Install hardening" no longer says the Laravel and LSR templates lack the `pnpm-workspace.yaml` settings and an unfiltered `pnpm audit`: they have both; what remains is the critical-only default of `laravelPipeline`, which projects replace with `nodeStaticChecks`.
 
 ### Added
 
