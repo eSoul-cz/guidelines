@@ -1,11 +1,11 @@
 ---
 title: Deployment and runtime
 order: 140
-summary: Jenkins delivery of a static Astro site (a FROM scratch image through Komodo, or deployStaticSite), publish flow, planned pipeline steps, build arguments, preview protection, one NGINX site with the backend, proxy and headers.
+summary: Jenkins delivery of a static Astro site (a FROM scratch image through Komodo, or deployStaticSite), the shared pipeline steps, publish flow, build arguments, preview protection, one NGINX site with the backend, proxy and headers.
 ---
 # Project guidelines - Deployment and runtime
 
-Astro runtime detail added to the deployment scheme. There is no one-call shared pipeline step for Astro yet ([Planned steps](#planned-steps)): the `Jenkinsfile` composes the shared libraries (`testing`, `dockerHelpers`, `deploy`) itself, with the `Checks` stage first ([tools.md](tools.md#jenkins-checks-stage)). A site is **static**: what is deployed is the built `dist/` directory and the host NGINX serves it.
+Astro runtime detail added to the deployment scheme. The `Jenkinsfile` is one call of the shared `astroPipeline` step ([Pipeline steps](#pipeline-steps)), which runs the checks of [tools.md](tools.md#jenkins-checks-stage) first and then delivers on the deploy branches. A site is **static**: what is deployed is the built `dist/` directory and the host NGINX serves it.
 
 ## Delivery paths
 
@@ -28,14 +28,14 @@ push to a branch with a deploy rule, or Publish in the backend
 - `.dockerignore` keeps host `node_modules`, `.env`, runtime data, `docs/`, source photos and tests out of the build context. Native modules are installed inside the build, for the target platform.
 - The deploy hook of the stack creates (does not start) a container from the image, copies the assets into a new `releases/<id>/` directory, switches `current` atomically and prunes old releases. A new image therefore never leaves the old site behind, and a failed copy leaves the previous release live.
 - **Rollback is redeploying the previous image** (by digest or Git tag, [Environments and releases](#environments-and-releases)): the hook turns it into a new release and switches `current`.
-- **Hashed `_astro` files.** A page opened before the switch may request a lazy chunk from `/_astro/` that the new release no longer holds. The hook SHOULD share the hashed `_astro` files between releases as `deployStaticSite` does ([Site without a CMS](#site-without-a-cms-static-release)). **Target.** The hook does not share them until the one release script of [Planned steps](#planned-steps) exists; until then such a page gets a `404` for that chunk and works again after a reload.
+- **Hashed `_astro` files.** A page opened before the switch may request a lazy chunk from `/_astro/` that the new release no longer holds. The hook SHOULD share the hashed `_astro` files between releases as `deployStaticSite` does ([Site without a CMS](#site-without-a-cms-static-release)): it runs the same release script (`static-site-release.sh`, action `install`), which hardlinks them into `shared/`. **Target.** A hook that still copies the assets by hand does not share them, and such a page gets a `404` for that chunk and works again after a reload; which hook a stack runs is recorded in its manifest in the infrastructure repository.
 - The site holds no persistent state. The CMS media are the backend's bind-mounted public directory ([Reverse proxy and TLS](#reverse-proxy-and-tls)); the backend is a separate repository with its own pipeline, image and stack ([architecture.md](architecture.md#repository-layout)).
 
 ### Site without a CMS: static release
 
 For `A-static`, a truly static site. There is no image and no Komodo stack.
 
-A push to a branch with a deploy rule starts the Jenkins job: install, the `Checks` stage (which includes `pnpm build` and `pnpm verify`), then `deployStaticSite` uploads `dist/` to a new `releases/<id>/` directory of the server, shares the hashed `_astro` files between releases, switches the `current` link atomically and prunes old releases. A failed build leaves the previous version live; a rollback re-points `current` to an earlier release (a `rollbackStaticSite` step is planned). The manifest uses the `static-release` shape.
+A push to a branch with a deploy rule starts the Jenkins job: install, the checks (which include `pnpm build` and `pnpm verify`), then `deployStaticSite` uploads `dist/` to a new `releases/<id>/` directory of the server, shares the hashed `_astro` files between releases, switches the `current` link atomically and prunes old releases. A failed build leaves the previous version live; `rollbackStaticSite` re-points `current` to the previous or a named release. The manifest uses the `static-release` shape.
 
 ### Exceptions: SSR and `D-static-api`
 
@@ -46,15 +46,16 @@ A push to a branch with a deploy rule starts the Jenkins job: install, the `Chec
 - Migrations, seeds and settings validation run before the server listens; a failure exits the container instead of serving errors.
 - Persistent state (database, uploads, form backups, logs) is bind-mounted from the stack's run directory (`./data` in the `node-http` shape) and listed in `README.md`; the infrastructure's backups cover it.
 
-### Planned steps
+### Pipeline steps
 
-**Planned.** These steps do not exist in the shared libraries yet. A `Jenkinsfile` composes the paths above from the existing steps until they do, and the guidelines name them only so project people know what is coming:
+The steps live in the shared Jenkins libraries (eSoul-cz/jenkins-libraries); each has a `.txt` with its parameters, stage names and validation.
 
-- `rollbackStaticSite`: re-point `current` atomically to the previous release or to a named one.
-- One server layout and one release script for both paths: the Komodo copy hook streams the same script that `deployStaticSite` runs.
-- A check after the switch that the live site serves the release marker of the new release (`/.well-known/release` or a meta tag), with an automatic switch back when it does not.
-- `staticSitePipeline`, one call for the path without a CMS, and `astroCmsPipeline` for the image path.
-- A check after the deploy of the cache headers: HTML `no-cache`, hashed assets immutable.
+- `astroPipeline` (`pipelines` library): the whole `Jenkinsfile`, in one call. Mode `static` runs the checks and then `deployStaticSite` for a site without a CMS; mode `image` verifies the build, builds the `FROM scratch` image from the verified `dist/` (`dockerBuildMultiArch`) and redeploys the stack (`deployKomodoStack`), with an optional report of a CMS publish back to the backend (the `cms` callback). A site configures only what differs from its defaults.
+- `Guidelines check`: a stage of `astroPipeline`, on by default when the project has `esoul-guidelines.lock` (`guidelinesCheck: false` opts out); it runs `esoul-guidelines check` with the installer version the lock records, so a Node-only repository needs no PHP project around it.
+- `deployStaticSite` (`deploy` library): the atomic release of the path without a CMS. With `verify` it checks the live site after the switch (the release marker of the new release, the HTML and hashed-asset cache headers: HTML `no-cache`, hashed assets immutable) and switches back to the previous release when the check fails.
+- `rollbackStaticSite` (`deploy` library): re-points `current` atomically to the previous release or a named one, on a site of either path; nothing is deleted.
+- One server layout and one release script (`static-site-release.sh`) for both paths: `deployStaticSite`, `rollbackStaticSite` and the Komodo copy hook of an image run the same file.
+- `astroCmsPipeline` is not a step: the image path of a CMS site is `astroPipeline` in mode `image`.
 
 ### Publish flow (archetype `C-headless`)
 
