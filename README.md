@@ -18,7 +18,7 @@ vendor/bin/esoul-guidelines init            # asks the repository kind, detects 
 vendor/bin/esoul-guidelines sync            # writes docs/project_guidelines/*, AGENTS.md block, lock
 ```
 
-Commit `esoul-guidelines.json`, `esoul-guidelines.lock`, `docs/project_guidelines/` and `AGENTS.md`. A PHP project runs `sync` automatically after `composer update` ([below](#sync-on-composer-update)); how projects pick up new guideline versions is in [Releases and updates](#releases-and-updates).
+Commit `esoul-guidelines.json`, `esoul-guidelines.lock`, `docs/project_guidelines/` and `AGENTS.md`. A PHP project runs `sync` automatically after `composer update` ([below](#sync-on-composer-update)); how projects pick up new guideline versions is in [Releases and updates](#releases-and-updates). While the package is below 1.0, Composer's `^0.4` stops before 0.5.0: every new minor needs the constraint raised (same section).
 
 The package is published on [Packagist](https://packagist.org/packages/esoul-cz/guidelines); the eSoul Satis repository (`https://packages.esoul.cz`) mirrors it as a fallback.
 
@@ -62,7 +62,7 @@ esoul-guidelines init                         # in the repository root, as above
 esoul-guidelines sync
 ```
 
-- Update with `composer global update esoul-cz/guidelines`, then `sync` in each repository. CI runs `esoul-guidelines check` the same way.
+- Update to a patch release with `composer global update esoul-cz/guidelines`, to a new minor with `composer global require esoul-cz/guidelines:^0.5` (a constraint such as `^0.4` never reaches 0.5.0, see [Releases and updates](#releases-and-updates)), then `sync` in each repository. CI runs `esoul-guidelines check` the same way.
 
 **2. PHAR** (a machine that has PHP 8.4+ but no Composer): one self-contained file, attached to every [GitHub release](https://github.com/eSoul-cz/guidelines/releases) together with its checksum:
 
@@ -98,7 +98,8 @@ docker run --rm -v "$PWD:/app" -w /app rg.fr-par.scw.cloud/testing-images/esoul-
 
 - The package is released with **SemVer tags**. A release is a pull request that changes only the changelog, merged and then tagged; there is no tag per guideline change and no rolling `main` for projects.
 - **Release checklist.** (1) The changelog entry names the layers it changes and carries a `Skills affected:` line: `none`, or the skills of [eSoul-cz/skills](https://github.com/eSoul-cz/skills) whose text restates or points at a changed rule. (2) The tag is annotated (`v<version>`). (3) The GitHub release attaches the PHAR from `composer build:phar` and its `.sha256`. (4) A listed skill is reviewed in the skills repository after the release.
-- A project updates with `composer update esoul-cz/guidelines` and `sync` (the `post-update-cmd` above runs it), and commits the result.
+- **Below 1.0 every minor release needs the constraint raised.** Composer reads `^0.4` as `>=0.4.0 <0.5.0`, so `composer update esoul-cz/guidelines` installs 0.4 patch releases only and silently stays on 0.4.x when 0.5.0 is out (a project on `^0.3` was left on 0.3.5 this way). To update to the new minor, raise the constraint and update in one command: `composer require --dev esoul-cz/guidelines:^0.5 -W` (`-W` also updates the dependencies the new release needs). Composer then runs the project's `post-update-cmd`, so `sync` runs too; review the diff, `vendor/bin/esoul-guidelines check`, and commit `composer.json`, `composer.lock` and the synced files. Which version a project is on is `package_version` in `esoul-guidelines.lock`; what changed is in this changelog from that version on.
+- A patch release (`0.4.0` to `0.4.1`) needs no constraint change: `composer update esoul-cz/guidelines` and `sync` (the `post-update-cmd` above runs it), then commit the result.
 - The repository has no `CODEOWNERS`; review follows [workflow.md](resources/guidelines/general/workflow.md) like any other change.
 
 ## Commands
