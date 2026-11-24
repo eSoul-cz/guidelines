@@ -23,6 +23,8 @@ pnpm tsc
 pnpm test
 ```
 
+- When the frontend uses Wayfinder, CI generates the route modules (`php artisan wayfinder:generate`, with `WAYFINDER_TYPES_PREGENERATED=true` set) before `pnpm tsc` and `pnpm build`; without them the typecheck fails on missing imports.
+
 ## Formatting and lint autofixes
 
 ```bash

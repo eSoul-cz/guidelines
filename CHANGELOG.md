@@ -9,6 +9,11 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 - Deployment (`framework/laravel`): the pull-request test build always uses the layer cache and pulls its base images first (`testDockerBuild: [pull: false]` switches the pull off). `testDockerBuild: [noCache: true]` is no longer offered: `jenkins-libraries` deprecated the key on 2026-11-23 and ignores it.
 - Workflow (general and `profile/internal`): the title shape is `Context: Result` (for example `Cart: Recalculate shipping when the address changes`), and the pull request title states the same result in English. How the title is mapped into a commit standard stays skill procedure (`esoul-task-create`, `gitmoji-commit`).
 
+### Added
+
+- Domain (`general`): numbers, formulas and calculations come only from the client's materials or a recorded decision, never from memory or a guess; spreadsheet calculations are pinned with parity tests (moved from the `esoul-project-lifecycle` skill).
+- Tools: a "Known pitfalls" section in `framework/laravel` (strict-mode `timestamp()` and `ONLY_FULL_GROUP_BY` on MariaDB/MySQL, PHPStan on an empty `app/`), a lock-file bullet in `framework/lsr`, a dev-toolbar bullet in the `framework/astro` Playwright section and a Wayfinder generation bullet in `package/laravel-inertia` (moved from the lifecycle skill's stack profiles; the other pitfalls were already guideline rules).
+
 ## [0.4.0] - 2026-11-24
 
 Gitmoji is a recommended commit format, not a required one, and the engineering rules of the skills' quality bar are now guideline rules.
