@@ -7,6 +7,7 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 ### Changed
 
 - Deployment (`framework/laravel`): the pull-request test build always uses the layer cache and pulls its base images first (`testDockerBuild: [pull: false]` switches the pull off). `testDockerBuild: [noCache: true]` is no longer offered: `jenkins-libraries` deprecated the key on 2026-11-23 and ignores it.
+- Workflow (general and `profile/internal`): the title shape is `Context: Result` (for example `Cart: Recalculate shipping when the address changes`), and the pull request title states the same result in English. How the title is mapped into a commit standard stays skill procedure (`esoul-task-create`, `gitmoji-commit`).
 
 ## [0.4.0] - 2026-11-24
 

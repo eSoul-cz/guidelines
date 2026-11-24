@@ -9,12 +9,13 @@
   a vague request.
 - One request is one independently deliverable result. When separate work emerges during a task,
   record it separately instead of widening the current one.
-- The title names the result: a context followed by an action. When an issue or task exists, it
-  and the pull request carry the same English title; the pull request title is that title in the
-  project's commit standard, because it becomes the squash commit message
-  ([Pull requests](#pull-requests)). In a project whose tracker titles are Czech, the tracker
-  keeps its Czech titles and the pull request title is an English, descriptive title of the same
-  result that links them.
+- The title names the result in the shape `Context: Result`: the area or subject, a colon, then
+  what the work achieves (for example `Cart: Recalculate shipping when the address changes`).
+  When an issue or task exists, it and the pull request carry the same result; the pull request
+  title is that same result in English, and how it is written into the project's commit standard
+  is the [Pull requests](#pull-requests) rule. In a project whose tracker titles are Czech, the
+  tracker keeps its Czech titles and the pull request title is an English, descriptive title of
+  the same result that links them.
 - Titles carry **no prefix** such as `[BE]` or `[FE]`, and never a slice or phase identifier. The
   work category is a label on the issue (GitHub) and on the task (Freelo).
 - Work blocked by an open dependency, an open question or a `proposed` ADR is not ready to start
@@ -49,9 +50,9 @@
   ([code-review.md](code-review.md#findings-stay-in-the-pull-request)).
 - **The pull request title is the squash commit message**, so it is English and descriptive and
   follows the project's commit standard: in the recommended Gitmoji format
-  `:emoji: [optional-context] Message` ([Commits](#commits)). The message part is the title shared
-  with the issue and the task, when they exist (see [Tasking](#tasking) for projects with Czech
-  tracker titles).
+  `:emoji: [optional-context] Message` ([Commits](#commits)). It states the same result as the
+  title shared with the issue and the task, when they exist (see [Tasking](#tasking) for projects
+  with Czech tracker titles).
 - Set a reviewer when one is available; otherwise the owner's explicit go-ahead is enough. Set
   every contributor as **Assignee**.
 - Fill in the repository's pull request template. It links the issue (`Closes #<issue>`) when
