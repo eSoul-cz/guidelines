@@ -49,8 +49,8 @@
   never tracked in a repository file instead
   ([code-review.md](code-review.md#findings-stay-in-the-pull-request)).
 - **The pull request title is the squash commit message**, so it is English and descriptive and
-  follows the project's commit standard: in the recommended Gitmoji format
-  `:emoji: [optional-context] Message` ([Commits](#commits)). It states the same result as the
+  follows the author's commit standard (the recommended Gitmoji format
+  `:emoji: [optional-context] Message` when the author has none, [Commits](#commits)). It states the same result as the
   title shared with the issue and the task, when they exist (see [Tasking](#tasking) for projects
   with Czech tracker titles).
 - Set a reviewer when one is available; otherwise the owner's explicit go-ahead is enough. Set
