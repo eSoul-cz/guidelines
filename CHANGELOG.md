@@ -4,6 +4,26 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-24
+
+Gitmoji is a recommended commit format, not a required one, and the engineering rules of the skills' quality bar are now guideline rules.
+
+Skills affected: `gitmoji-commit`, `esoul-workflow`, `esoul-tasking` and `esoul-freelo-task-authoring` (commit format and pull request title), `esoul-workflow` and `esoul-review` (quality-bar rules: server boundary, root cause, one source of truth, queries, schema, partial updates, comments).
+
+### Changed
+
+- Workflow (general and `profile/internal`): commit messages and the pull request title are required to be English and descriptive of what they do. A developer MAY use their own commit standard; an agent of a developer who has none uses the recommended Gitmoji format (`:emoji: [optional-context] Message`). The pull request title is the squash commit message; an English title of the same result for projects with Czech tracker titles stays. The `gitmoji-commit` skill writes the recommended format.
+
+### Added
+
+- Workflow: a section "Fixing a bug": name the root cause before changing code, a workaround only with a follow-up issue, a regression test that fails on the cause.
+- Code review: a default Critical finding for a rule that only the interface enforces (every rule the interface shows is enforced and tested on the server), and a section "Default Major findings" for a visibility, scoping, eligibility or status rule that lives in more than one place.
+- Architecture (`framework/laravel`): sections "Schema changes only in migrations" (no schema change in handlers, jobs or controllers) and "Queries that stay correct on real data" (unique tiebreaker and a decided `NULL` order on sorted and paginated lists, joins on mapping tables match at most one row, counts from affected rows).
+- Architecture (`framework/lsr`): the section "Queries that stay correct on real data".
+- Requests and validation (`framework/laravel`): a section "Partial updates: not sent or cleared".
+- Frontend (`package/inertia-vue`): a composable with module-level state says so and its tests reset it.
+- Documentation: a section "Code comments": a comment explains a non-obvious why briefly, a long rationale goes into the pull request or an ADR.
+
 ## [0.3.5] - 2026-11-24
 
 Repairs for layer-dependency violations in the Laravel layer, and the classes Lunar stores by name in the Lunar layer.
