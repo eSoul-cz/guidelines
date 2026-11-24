@@ -10,10 +10,11 @@
 - One request is one independently deliverable result. When separate work emerges during a task,
   record it separately instead of widening the current one.
 - The title names the result: a context followed by an action. When an issue or task exists, it
-  and the pull request carry the same English title; the pull request title wraps it in the
-  commit format ([Pull requests](#pull-requests)). In a project whose tracker titles are Czech,
-  the tracker keeps its Czech titles and the pull request title is an English commit-style title
-  of the same result that links them.
+  and the pull request carry the same English title; the pull request title is that title in the
+  project's commit standard, because it becomes the squash commit message
+  ([Pull requests](#pull-requests)). In a project whose tracker titles are Czech, the tracker
+  keeps its Czech titles and the pull request title is an English, descriptive title of the same
+  result that links them.
 - Titles carry **no prefix** such as `[BE]` or `[FE]`, and never a slice or phase identifier. The
   work category is a label on the issue (GitHub) and on the task (Freelo).
 - Work blocked by an open dependency, an open question or a `proposed` ADR is not ready to start
@@ -46,9 +47,11 @@
   when that is impossible, its description says how to review it in parts. Review findings are
   never tracked in a repository file instead
   ([code-review.md](code-review.md#findings-stay-in-the-pull-request)).
-- The pull request title follows the commit format (`:emoji: [optional-context] Message`) because
-  it becomes the squash commit; the message part is the title shared with the issue and the task,
-  when they exist (see [Tasking](#tasking) for projects with Czech tracker titles).
+- **The pull request title is the squash commit message**, so it is English and descriptive and
+  follows the project's commit standard: in the recommended Gitmoji format
+  `:emoji: [optional-context] Message` ([Commits](#commits)). The message part is the title shared
+  with the issue and the task, when they exist (see [Tasking](#tasking) for projects with Czech
+  tracker titles).
 - Set a reviewer when one is available; otherwise the owner's explicit go-ahead is enough. Set
   every contributor as **Assignee**.
 - Fill in the repository's pull request template. It links the issue (`Closes #<issue>`) when
@@ -78,6 +81,6 @@
 2. Create the branch from an up-to-date default branch; a stacked pull request branches from its parent pull request's branch instead.
 3. Implement in small steps with behavioural tests ([testing.md](testing.md)).
 4. Format before each commit; run tests and static analysis once on the code that will be pushed (the stack's tools guideline, `tools.md`).
-5. Commit by intention with the `gitmoji-commit` skill and push.
+5. Commit by intention (the `gitmoji-commit` skill writes the recommended format) and push.
 6. Open the pull request from the template and work through CI and review until it is approved or the owner gives the go-ahead.
 7. The author merges (an agent only with the owner's explicit authorisation recorded in the pull request). The task, when one exists, is then moved to its finished state and the work is reported.
