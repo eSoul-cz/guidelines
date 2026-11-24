@@ -4,6 +4,12 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-11-24
+
+Repairs for layer-dependency violations in the Laravel layer, and the classes Lunar stores by name in the Lunar layer.
+
+Skills affected: `esoul-project-lifecycle` (Laravel and Lunar stack references: layer test and recorded exceptions).
+
 ### Added
 
 - Architecture (`framework/laravel`): a section "Fixing a layer-dependency violation" with the three repairs for what the layer test reports: persistence or a framework call in the domain core moves into the CQRS layer as a collaborator of its handler (A), a DTO the domain logic works with moves to `App\Domain\ValueObjects\<Module>` (B), and a handler's other infrastructure is framework glue, a persistence helper in the CQRS layer or a side effect behind a contract in `App\Application\Contract` (C). An exception to the layer rule is recorded in the project part of the file and in the layer test.
@@ -127,7 +133,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.3.4...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.3.5...HEAD
+[0.3.5]: https://github.com/eSoul-cz/guidelines/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/eSoul-cz/guidelines/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/eSoul-cz/guidelines/compare/v0.3.2...v0.3.3
 [0.3.2]: https://github.com/eSoul-cz/guidelines/compare/v0.3.1...v0.3.2
