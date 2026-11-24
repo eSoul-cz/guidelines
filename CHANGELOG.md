@@ -4,6 +4,10 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-24
+
+Project exceptions (an accepted ADR lets a project deviate from a rule, validated by `check`), the `Context: Result` title shape, a hotfix path, a rollback rule and the pipelines' guidelines check are now guideline rules; below 1.0 every minor needs the constraint raised (`^0.5`).
+
 Skills affected: `esoul-guidelines` (the update procedure for a 0.x minor, the CI check, project exceptions), `esoul-workflow` and `esoul-task-work` (title shape `Context: Result`, hotfix), `esoul-task-create` and `gitmoji-commit` (title shape `Context: Result`), `esoul-project-lifecycle` (numbers and pitfalls moved into the guidelines; retrofit conflicts become project exceptions).
 
 ### Changed
@@ -176,7 +180,9 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.3.5...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/eSoul-cz/guidelines/compare/v0.4.0...v0.5.0
+[0.4.0]: https://github.com/eSoul-cz/guidelines/compare/v0.3.5...v0.4.0
 [0.3.5]: https://github.com/eSoul-cz/guidelines/compare/v0.3.4...v0.3.5
 [0.3.4]: https://github.com/eSoul-cz/guidelines/compare/v0.3.3...v0.3.4
 [0.3.3]: https://github.com/eSoul-cz/guidelines/compare/v0.3.2...v0.3.3
