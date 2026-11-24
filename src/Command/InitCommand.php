@@ -62,7 +62,7 @@ final class InitCommand extends ProjectCommand
         }
 
         $profile = $internal ? [LayerRepository::PROFILE_INTERNAL] : [];
-        $config = ProjectConfig::create([...$profile, ...$selected], $existing->exclude ?? []);
+        $config = ProjectConfig::create([...$profile, ...$selected], $existing->exclude ?? [], $existing->exceptions ?? []);
         $config->save($root);
 
         $io->success(sprintf('Wrote %s with layers: %s.', ProjectConfig::FILE, implode(', ', $config->layers)));

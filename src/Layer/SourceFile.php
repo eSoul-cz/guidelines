@@ -21,4 +21,9 @@ final readonly class SourceFile
         public string $hash,
     ) {
     }
+
+    /** The same file with another body; the hash stays the one of the source on disk. */
+    public function withBody(string $body): self {
+        return new self($this->layer, $this->name, $this->relativePath, $this->frontmatter, $body, $this->hash);
+    }
 }

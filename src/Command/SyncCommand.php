@@ -8,6 +8,7 @@ use Esoul\Guidelines\Config\Lock;
 use Esoul\Guidelines\Config\ProjectConfig;
 use Esoul\Guidelines\Layer\LayerRepository;
 use Esoul\Guidelines\Sync\Change;
+use Esoul\Guidelines\Sync\ExceptionAudit;
 use Esoul\Guidelines\Sync\LineDiff;
 use Esoul\Guidelines\Sync\Renderer;
 use Esoul\Guidelines\Sync\Status;
@@ -34,6 +35,13 @@ final class SyncCommand extends ProjectCommand
     protected function handle(string $root, InputInterface $input, SymfonyStyle $io): int {
         $config = ProjectConfig::load($root);
         $targets = new Renderer($this->layers)->render($config);
+        $exceptionProblems = new ExceptionAudit($this->layers, $root)->problems($config);
+        if ($exceptionProblems !== []) {
+            $io->warning(array_merge(
+                ['Problems with the project exceptions (a missing or refused rule gets no marker); `esoul-guidelines check` fails until they are fixed:'],
+                array_map(static fn (string $m): string => ' - ' . $m, $exceptionProblems),
+            ));
+        }
         $sync = new Synchronizer($root, $this->packageVersion);
         $plan = $sync->plan($targets, Lock::load($root));
 

@@ -8,6 +8,7 @@ use Esoul\Guidelines\Config\ProjectConfig;
 use Esoul\Guidelines\GuidelinesException;
 use Esoul\Guidelines\Layer\LayerRepository;
 use Esoul\Guidelines\Layer\SourceFile;
+use Esoul\Guidelines\Markdown\Anchors;
 use Esoul\Guidelines\Merge\MergedGuideline;
 use Esoul\Guidelines\Merge\Merger;
 
@@ -19,6 +20,9 @@ final class Renderer
     public const string AGENTS_FILE = 'AGENTS.md';
 
     private const string LOCAL_NOTE = '> Local additions go below this managed block. Content outside the block is preserved when the guidelines are synced.';
+
+    /** The output directory is two levels below the project root, where the ADR paths of the exceptions start. */
+    private const string ADR_LINK_PREFIX = '../../';
 
     public function __construct(
         private readonly LayerRepository $layers,
@@ -37,7 +41,7 @@ final class Renderer
             }
             foreach ($this->layers->files($layer) as $file) {
                 if ( ! in_array($file->name, $config->exclude, true)) {
-                    $byName[$file->name][] = $file;
+                    $byName[$file->name][] = $this->withExceptionMarkers($file, $config);
                 }
             }
         }
@@ -75,6 +79,19 @@ final class Renderer
         return $targets;
     }
 
+    /** Adds the "Project exception" paragraph under every overridden heading of this source file. */
+    private function withExceptionMarkers(SourceFile $file, ProjectConfig $config): SourceFile {
+        $body = $file->body;
+        foreach ($config->exceptions as $exception) {
+            if ($exception->file !== $file->relativePath || $exception->isProtected()) {
+                continue;
+            }
+            $body = Anchors::insertUnder($body, $exception->anchor, $exception->marker(self::ADR_LINK_PREFIX)) ?? $body;
+        }
+
+        return $body === $file->body ? $file : $file->withBody($body);
+    }
+
     /**
      * @param list<MergedGuideline> $guidelines
      */
@@ -86,6 +103,10 @@ final class Renderer
             '',
             'Layers: ' . implode(', ', array_map(static fn (string $l): string => '`' . $l . '`', $config->layers)) . '.',
             '',
+            ...($config->exceptions === [] ? [] : [
+                'A rule marked **Project exception** is overridden for this project by the ADR it links; the text under the marker applies instead.',
+                '',
+            ]),
             '| Guideline | Covers | Layers |',
             '|---|---|---|',
         ];
