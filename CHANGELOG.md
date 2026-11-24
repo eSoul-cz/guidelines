@@ -4,6 +4,11 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Added
+
+- Architecture (`framework/laravel`): a section "Fixing a layer-dependency violation" with the three repairs for what the layer test reports: persistence or a framework call in the domain core moves into the CQRS layer as a collaborator of its handler (A), a DTO the domain logic works with moves to `App\Domain\ValueObjects\<Module>` (B), and a handler's other infrastructure is framework glue, a persistence helper in the CQRS layer or a side effect behind a contract in `App\Application\Contract` (C). An exception to the layer rule is recorded in the project part of the file and in the layer test.
+- Architecture (`package/lunar`): a section "Classes Lunar stores by name": a class whose fully qualified name Lunar keeps in the database (attribute field types, morph-mapped models without an alias, anything registered by class name) is not moved or renamed without a data migration, and is a recorded exception to the layer rules where its location breaks them.
+
 ## [0.3.4] - 2026-11-23
 
 The skills `final-pr-review` and `pre-pr-review` are one skill, `esoul-review`, and the title rule covers Czech projects.

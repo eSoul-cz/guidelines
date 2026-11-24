@@ -15,6 +15,14 @@ Lunar is the shop's domain model, so this layer makes one explicit exception to 
 - Every other rule of the core and of the dependency direction stays. `Illuminate\*` is still forbidden in the core (database, facades, HTTP, the container, the session), and persistence (queries, saves, transactions, locks) stays in the CQRS handlers.
 - The layer architecture test lists Illuminate namespaces and the application layers, not `Lunar\`, so it needs no change.
 
+### Classes Lunar stores by name
+
+Lunar saves the fully qualified class name of some classes in the database: the attribute field types (`lunar_attributes.type` and the JSON `attribute_data`), models in the morph map without an alias, and anything else registered by class name.
+
+- Such a class MUST NOT be moved or renamed without a data migration that rewrites the stored names, deployed with the code. A refactor that fixes a layer violation ([Fixing a layer-dependency violation](#fixing-a-layer-dependency-violation)) leaves these classes where they are.
+- Where the location of such a class breaks the layer rules, the class is a recorded exception: the project lists it in the project part of this file and in the layer test, with the column or registry that holds its name.
+- A morph map alias is the way to stop depending on a class name for a new model; an existing stored name is changed only by the migration above.
+
 ## Versions and upgrades
 
 - The project is on Lunar 1.x (Lunar 2 is still in alpha) and pins the minor line of `lunarphp/lunar` in `composer.json`. A Lunar addon (for example table-rate shipping) stays on the same minor line. The project MUST NOT require Lunar's sub-packages, Filament or Livewire directly; they follow Lunar.
