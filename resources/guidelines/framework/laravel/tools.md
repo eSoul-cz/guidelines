@@ -54,6 +54,14 @@ composer cs       # pint --test
 composer test     # php artisan test --parallel
 ```
 
+### Guidelines
+
+```bash
+vendor/bin/esoul-guidelines check  # drift of the rendered guidelines, the AGENTS.md block and the lock; never writes
+```
+
+CI runs it as the stage `Guidelines check` of the shared pipeline, from the project's own `vendor/` (see [deployment.md](deployment.md#pipeline)); a failure is fixed with `esoul-guidelines sync` after the content was moved out of the managed block, not by editing the block.
+
 ### Narrow runs
 
 ```bash

@@ -12,15 +12,14 @@ LSR runtime detail added to the deployment scheme: the RoadRunner image, the pip
 The template `Jenkinsfile` loads the shared libraries `dockerHelpers`, `testing`, `deploy` and `pipelines` and calls `lsrPipeline` with:
 
 - a prepare command (`php bin/console list --no-interaction`);
-- PHP checks: `composer phpstan:ci` and `composer test:parallel`, with `temp/tools` mounted as the tool cache;
-- frontend checks: `pnpm run eslint --quiet` and `pnpm run format:check`;
-- a smoke check that starts the production image from `docker-compose.ci.yml` and runs the `http-smoke` service against it (optional, as in the scheme);
+- PHP checks: `composer phpstan:ci`, `composer cs`, `composer test:parallel` and `composer audit --locked` (any advisory fails), with `temp/tools` mounted as the tool cache;
+- frontend checks: `pnpm run eslint`, `pnpm run format:check`, `pnpm run tsc`, `pnpm run test`, `pnpm audit` (any advisory fails) and `pnpm run build`;
+- the `Guidelines check` stage: `esoul-guidelines check` from the project's own `vendor/` ([tools.md](tools.md#guidelines)); it runs when the project has `esoul-guidelines.lock`, and `guidelinesCheck: false` switches it off;
+- a smoke check that starts the production image from `docker-compose.ci.yml` and runs the `http-smoke` service against it (optional, as in the scheme; with `lsrPipeline` it also runs on pull requests, on the image of the test build);
 - the production-target image build from `docker/Dockerfile`;
 - deployment of the image to the project's Komodo stack by the project's deploy rules (`main` and `master` in the template; see [Environments and releases](#environments-and-releases)).
 
-**Target.** The template's checks stop short of the read-only set in [tools.md](tools.md#read-only-verification): `composer cs`, `pnpm tsc` and `pnpm test` are not run yet. The template adds them (V2 template item).
-
-`lsrPipeline` is **planned**: the shared `pipelines` library has `laravelPipeline` only, so the template `Jenkinsfile` does not run until `lsrPipeline` exists. Its parameters mirror `laravelPipeline` and the `smoke` key is a proposal. Until then a project composes the same steps from the shared `testing`, `dockerHelpers` and `deploy` libraries.
+The step, its stages and its parameters are documented in `pipelines/vars/lsrPipeline.txt` of the shared libraries repository (eSoul-cz/jenkins-libraries).
 
 - The `Jenkinsfile` stays a small, readable pipeline: check, build, publish and deploy only. Release certification, evidence capture and other orchestration do not belong in it.
 

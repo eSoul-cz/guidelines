@@ -70,6 +70,14 @@ pnpm test
 pnpm build
 ```
 
+### Guidelines
+
+```bash
+vendor/bin/esoul-guidelines check  # drift of the rendered guidelines, the AGENTS.md block and the lock; never writes
+```
+
+CI runs it as the stage `Guidelines check` of the shared pipeline, from the project's own `vendor/` (see [deployment.md](deployment.md#delivery-path)); a failure is fixed with `esoul-guidelines sync` after the content was moved out of the managed block, not by editing the block.
+
 ## Formatting and lint autofixes
 
 Mutating commands are explicit developer actions: run them deliberately, inspect the diff, then rerun the read-only checks.
