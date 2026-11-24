@@ -82,3 +82,13 @@ How a change travels from a prepared issue to a merged pull request. The tasking
 - Name the **root cause** in one sentence before changing code (in the issue or the pull request description) and fix it where it lives, not where the symptom shows.
 - A workaround (an extra parameter passed around, a special case in the caller) is allowed only when the cause cannot be fixed in this change. The pull request says so and links a follow-up issue for the cause.
 - The regression test ([testing.md](testing.md#regression-tests)) fails on the cause, not only on the reported symptom.
+
+## Hotfix
+
+A hotfix is a fix for a defect that harms production now and cannot wait for the normal pace. It is [Fixing a bug](#fixing-a-bug) with the formalities shortened, never skipped.
+
+- **The issue is still created**, but it MAY be written after the fix is pushed, as long as it exists before the pull request is merged. The tracker task MAY skip `Backlog` and go straight to work without an estimate; the estimate and the work report are filled in afterwards.
+- **Review and the green `Jenkins` check still apply.** Skipping a reviewer or a failing check is a ruleset bypass, which only the owner authorises for that pull request, with the reason in its description ([code-review.md](code-review.md#who-reviews)).
+- **The dependency audit MAY be warn-only for the hotfix build**, so that a new advisory in an unrelated dependency does not block the deploy of the fix. The advisory becomes its own issue.
+- **Rollback is a redeploy of the previous image** (an earlier digest or Git tag, [Environments and releases](deployment.md#environments-and-releases)); only devops redeploy. When the fix is not ready, rolling back is the first option, not a patch under pressure.
+- **A follow-up issue records the root cause** whenever the hotfix is a workaround, and a regression test that fails on the cause ([Fixing a bug](#fixing-a-bug)) is added before that issue is closed. The pull request description says it is a hotfix.
