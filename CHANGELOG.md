@@ -4,6 +4,8 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+Skills affected: `esoul-guidelines` (the update procedure for a 0.x minor, the CI check), `esoul-workflow`, `esoul-task-create` and `gitmoji-commit` (title shape `Context: Result`), `esoul-project-lifecycle` (numbers and pitfalls moved into the guidelines).
+
 ### Changed
 
 - Deployment (`framework/laravel`): the pull-request test build always uses the layer cache and pulls its base images first (`testDockerBuild: [pull: false]` switches the pull off). `testDockerBuild: [noCache: true]` is no longer offered: `jenkins-libraries` deprecated the key on 2026-11-23 and ignores it.
