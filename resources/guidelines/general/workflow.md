@@ -76,3 +76,9 @@ How a change travels from a prepared issue to a merged pull request. The tasking
 5. Commit by intention (the `gitmoji-commit` skill writes the recommended format) and push.
 6. Open the pull request from the template and work through CI and review until it is approved.
 7. The author merges (an agent only with the owner's explicit authorisation recorded in the pull request). The task is then moved to its finished state and the work is reported.
+
+## Fixing a bug
+
+- Name the **root cause** in one sentence before changing code (in the issue or the pull request description) and fix it where it lives, not where the symptom shows.
+- A workaround (an extra parameter passed around, a special case in the caller) is allowed only when the cause cannot be fixed in this change. The pull request says so and links a follow-up issue for the cause.
+- The regression test ([testing.md](testing.md#regression-tests)) fails on the cause, not only on the reported symptom.
