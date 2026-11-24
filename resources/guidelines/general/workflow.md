@@ -16,7 +16,7 @@ How a change travels from a prepared issue to a merged pull request. The tasking
 - The title names the result: a context followed by an action. In a new project the issue, its tracker task and its pull request carry the same English title (descriptions and Freelo text MAY stay Czech); the pull request title is that title in the project's commit standard, because it becomes the squash commit message ([Pull requests](#pull-requests)). A project whose history and tracker titles are Czech keeps its Czech tracker titles; its pull request title is an English, descriptive title of the same result that links the issue.
 - Titles carry **no prefix** such as `[BE]` or `[FE]`, and never a slice or phase identifier. The work category is a label on the issue (GitHub) and on the task (Freelo).
 - Work blocked by an open dependency, an open question or a `proposed` ADR is not ready to start ([domain.md](domain.md#open-points-and-conflicts)).
-- Use the `esoul-tasking` skill to create issues and tasks; it previews the result and asks for approval before writing.
+- Use the `esoul-task-create` skill to create issues and tasks; it previews the result and asks for approval before writing.
 
 ## Branches
 

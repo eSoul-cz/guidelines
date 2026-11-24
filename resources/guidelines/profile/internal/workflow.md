@@ -19,7 +19,7 @@
   work category is a label on the issue (GitHub) and on the task (Freelo).
 - Work blocked by an open dependency, an open question or a `proposed` ADR is not ready to start
   ([domain.md](domain.md#open-points-and-conflicts)).
-- Use the `esoul-tasking` skill when an issue or task is created; it previews the result and asks
+- Use the `esoul-task-create` skill when an issue or task is created; it previews the result and asks
   for approval before writing.
 
 ## Branches
