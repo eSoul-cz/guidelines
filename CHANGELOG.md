@@ -4,6 +4,10 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Changed
+
+- Deployment (`framework/laravel`): the pull-request test build always uses the layer cache and pulls its base images first (`testDockerBuild: [pull: false]` switches the pull off). `testDockerBuild: [noCache: true]` is no longer offered: `jenkins-libraries` deprecated the key on 2026-11-23 and ignores it.
+
 ## [0.4.0] - 2026-11-24
 
 Gitmoji is a recommended commit format, not a required one, and the engineering rules of the skills' quality bar are now guideline rules.
