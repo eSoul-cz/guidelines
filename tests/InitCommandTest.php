@@ -47,6 +47,31 @@ final class InitCommandTest extends TestCase
         );
     }
 
+    public function test_detects_the_react_variant_of_the_laravel_inertia_layer(): void {
+        $this->seedLayers();
+        $this->layer('package/laravel-inertia', 'frontend.md', "# Project guidelines - Frontend\n");
+        $this->layer('package/laravel-inertia-react', 'frontend.md', "# Project guidelines - Frontend\n");
+        file_put_contents($this->project . '/composer.json', '{"require":{"laravel/framework":"^13.0","inertiajs/inertia-laravel":"^3.0"}}');
+        file_put_contents($this->project . '/package.json', '{"dependencies":{"@inertiajs/react":"^3.0","react":"^19.0"}}');
+
+        $tester = $this->run_('init');
+
+        self::assertSame(0, $tester->getStatusCode());
+        self::assertSame(
+            ['layers' => ['general', 'framework/laravel', 'package/laravel-inertia', 'package/laravel-inertia-react']],
+            json_decode($this->read('esoul-guidelines.json'), true),
+        );
+
+        file_put_contents($this->project . '/composer.json', '{"require":{"laravel/framework":"^13.0"}}');
+        unlink($this->project . '/esoul-guidelines.json');
+        $this->run_('init');
+
+        self::assertSame(
+            ['layers' => ['general', 'framework/laravel']],
+            json_decode($this->read('esoul-guidelines.json'), true),
+        );
+    }
+
     public function test_detects_the_filament_layer(): void {
         $this->seedLayers();
         $this->layer('package/filament', 'architecture.md', "# Project guidelines - Architecture\n");

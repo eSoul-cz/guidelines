@@ -29,6 +29,11 @@ final class StackDetector
         '@inertiajs/vue3' => 'package/inertia-vue',
     ];
 
+    /** @var array<string, array{0: string, 1: string}> layer => [detected layer, npm package] that must both be present (a client variant of a server layer) */
+    private const array LAYER_WITH_NPM = [
+        'package/laravel-inertia-react' => ['package/laravel-inertia', '@inertiajs/react'],
+    ];
+
     /** @var array<string, string> layer => layer it brings along (Lunar's admin is a Filament panel, though the project never requires Filament directly) */
     private const array IMPLIES = [
         'package/lunar' => 'package/filament',
@@ -50,9 +55,15 @@ final class StackDetector
                 $found[$layer] = true;
             }
         }
-        foreach ($this->dependencies($root . '/package.json', ['dependencies', 'devDependencies']) as $package) {
+        $npm = $this->dependencies($root . '/package.json', ['dependencies', 'devDependencies']);
+        foreach ($npm as $package) {
             if (isset(self::NPM[$package])) {
                 $found[self::NPM[$package]] = true;
+            }
+        }
+        foreach (self::LAYER_WITH_NPM as $layer => [$required, $package]) {
+            if (isset($found[$required]) && in_array($package, $npm, true)) {
+                $found[$layer] = true;
             }
         }
 
