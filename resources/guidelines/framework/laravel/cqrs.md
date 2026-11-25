@@ -87,8 +87,8 @@ php artisan make:cqrs-query Catalog/GetProductDetail --handler --return=ProductD
 
 ## Constructing commands and queries
 
-- **The constructor of a command (or of a query or DTO that has one) SHOULD hold only its promoted properties**; building the command from another object in its constructor is not done.
-- A static factory method on the command (`PlaceOrderCommand::fromCart($cart)`, also `fromRequest()`) MAY be used but is not recommended: prefer the mapping on the source, a form request's `to<Something>()` ([Mapping to commands and queries](requests-and-validation.md#mapping-to-commands-and-queries)), so that a command in `App\Domain\CQRS` does not depend on the source's layer.
+- **The constructor of a command (or of a query or DTO that has one) holds its promoted properties** (SHOULD hold only them) and does not take another object to build itself from. Creating the command by passing the values to the constructor directly (`new PlaceOrderCommand($cartId, $userId)`) is fine.
+- **Creating a command from another object:** the recommended way is a `to<Something>()` method on that other object (a form request's `toCommand()` is the example, [Mapping to commands and queries](requests-and-validation.md#mapping-to-commands-and-queries)). A public static factory method on the command itself (`PlaceOrderCommand::fromCart($cart)`, also `fromRequest()`) is also valid, but not recommended.
 
 ## Writing queries
 
