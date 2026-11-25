@@ -4,6 +4,12 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.5.4] - 2026-11-25
+
+The command-construction rule of 0.5.3 is relaxed on the owner's correction: the constructor holds the promoted properties, a `to<Something>()` method on the source object is the recommended way to create a command from another object, and a public static factory method on the command is valid but not recommended. Layers changed: `framework/laravel`, `package/lsr-cqrs`. A patch release: `composer update esoul-cz/guidelines` and `sync`.
+
+Skills affected: none.
+
 ### Changed
 
 - Command construction (`framework/laravel`, `package/lsr-cqrs`): relaxes the v0.5.3 rule on the owner's correction. The constructor holds the promoted properties (SHOULD hold only them) and does not take another object; creating the command by passing the values to it directly is fine. Creating it from another object: the recommended way is a `to<Something>()` method on that other object (a form request's `toCommand()`, `toQuery()` or `to<Dto>()`); a public static factory method on the command (`fromOrder($order)`, also `fromRequest()`) is also valid, but not recommended. 0.5.3 said MUST and required a named static constructor for any other source; 0.5.2 said a `fromRequest()` factory SHOULD NOT be used. The example in the CQRS file is removed.
@@ -226,7 +232,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.5.3...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.5.4...HEAD
+[0.5.4]: https://github.com/eSoul-cz/guidelines/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/eSoul-cz/guidelines/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/eSoul-cz/guidelines/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/eSoul-cz/guidelines/compare/v0.5.0...v0.5.1
