@@ -7,6 +7,7 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 ### Fixed
 
 - Command construction (`framework/laravel`, `package/lsr-cqrs`): the 0.5.2 mapping rule called building a DTO in the command's constructor "possible" and said a `fromRequest()` factory SHOULD NOT be used, which left the constructor's job open. A command's constructor now holds only its promoted properties and MUST NOT take another object to build itself from (the same for a query that has a constructor and for every DTO a request or handler hands over); building one from another object is a static named constructor on the command (`PlaceOrderCommand::fromCart($cart)`). A form request still maps itself with its public `toCommand()`, `toQuery()` or `to<Dto>()`, and the rule gives the reason: a command lives in `App\Domain\CQRS` and must not depend on a request of `App\Infrastructure`. A new "Constructing commands and queries" section in the CQRS file holds the rule with an example; Requests and validation links to it. The app templates' commands already followed it (no command constructor takes another object).
+- Rollback (`framework/lsr`): "rolling back means redeploying an earlier image by its digest or Git tag" was stale since 0.5.1 and contradicted the scheme. The LSR file now points to Rollback in the deployment scheme (the pipeline's `previous-<stack>` image) and to Monitoring a deployment.
 
 ### Changed
 
