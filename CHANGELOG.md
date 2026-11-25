@@ -4,6 +4,10 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Fixed
+
+- Command construction (`framework/laravel`, `package/lsr-cqrs`): the 0.5.2 mapping rule called building a DTO in the command's constructor "possible" and said a `fromRequest()` factory SHOULD NOT be used, which left the constructor's job open. A command's constructor now holds only its promoted properties and MUST NOT take another object to build itself from (the same for a query that has a constructor and for every DTO a request or handler hands over); building one from another object is a static named constructor on the command (`PlaceOrderCommand::fromCart($cart)`). A form request still maps itself with its public `toCommand()`, `toQuery()` or `to<Dto>()`, and the rule gives the reason: a command lives in `App\Domain\CQRS` and must not depend on a request of `App\Infrastructure`. A new "Constructing commands and queries" section in the CQRS file holds the rule with an example; Requests and validation links to it. The app templates' commands already followed it (no command constructor takes another object).
+
 ## [0.5.2] - 2026-11-25
 
 Three contradictions removed: the rollback is the named exception to "never by hand in Komodo", an enum field has one representation (the backing value), and a form request maps itself to a DTO. Layers changed: `general`, `framework/laravel`, `framework/astro`, `package/laravel-inertia`. A patch release: `composer update esoul-cz/guidelines` and `sync`.

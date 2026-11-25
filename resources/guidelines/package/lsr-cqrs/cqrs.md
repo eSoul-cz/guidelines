@@ -32,6 +32,7 @@ The package imposes no folder layout. When the project uses CQRS it SHOULD keep 
 - A command MUST represent an action or business logic of the application and SHOULD NOT wrap simple CRUD that an ORM model handles.
 - A command class MUST be a data transfer object that carries everything the command needs. It SHOULD NOT contain logic beyond naming its handler.
 - A command SHOULD be `readonly` and use constructor property promotion. Keep it serializable when async dispatch is possible: no open resources, closures, DB connections or service instances.
+- A command's constructor MUST hold only its promoted properties and MUST NOT take another object to build itself from. Building a command from another object is a static named constructor on the command (`SomeCommand::fromOrder($order)`), which returns `new self(...)`.
 - `getHandler()` returns a non-empty handler class name or DI service name. A class name is resolved by DI type (the first matching service wins, so do not register two handlers of one type); a service name is resolved by name.
 - The generic `CommandInterface<T>` PHPDoc declares the result type; it is not enforced at runtime, so the handler returns what the PHPDoc promises.
 - The handler class MUST contain the logic for executing the command and MUST guard the concrete command type at the start of `handle()` (an `instanceof` check or an assertion), so a mismatch never becomes partial work.
