@@ -4,6 +4,12 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.5.5] - 2026-11-25
+
+The 0.5.3 seeder rule for staging and production is clarified on the owner's correction: any deliberate seeder (the production seeder, demo seeders) may be run there by hand, only the general random-data seeder stays local-only, and deliberate seeders avoid Faker; the LSR deployment section also says `app:install` drops indexes that `migrations.neon` does not declare. Layers changed: `general`, `framework/laravel`, `framework/lsr`. A patch release: `composer update esoul-cz/guidelines` and `sync`.
+
+Skills affected: none (no skill restates the seeder rule or the index sentence).
+
 ### Changed
 
 - Seeders in staging and production (`general`, `framework/laravel`): clarifies the 0.5.3 rule on the owner's correction. What may run there, by hand only, is any **deliberate** seeder, not general random data to fill the database: usually the production seeder (what every environment needs: idempotent, create-only, no account) and **demo seeders** (deliberate demo content). The list is not exhaustive; a project MAY define other environments and seeder sets. A deliberate seeder SHOULD NOT depend on Faker, because deployed images install no development dependencies, and it creates no account with credentials outside local development. What stays local-only, MUST NOT run in staging or production and refuses to run there is the **general** seeder, the `DatabaseSeeder`-style seeding of synthetic development data. 0.5.3 said a seeder that uses Faker or synthetic data is local-only, which would also have barred a deliberate demo seeder. The Laravel file now describes the production seeder, the demo seeder and `DatabaseSeeder` separately.
@@ -237,7 +243,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.5.4...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.5.5...HEAD
+[0.5.5]: https://github.com/eSoul-cz/guidelines/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/eSoul-cz/guidelines/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/eSoul-cz/guidelines/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/eSoul-cz/guidelines/compare/v0.5.1...v0.5.2
