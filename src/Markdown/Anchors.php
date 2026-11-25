@@ -73,7 +73,7 @@ final class Anchors
         while (isset($lines[$next]) && trim($lines[$next]) === '') {
             ++$next;
         }
-        if (isset($lines[$next]) && trim($lines[$next]) === '<!-- replace -->') {
+        if (isset($lines[$next]) && preg_match('/^<!-- replace(:[^>]*)?\s*-->$/', trim($lines[$next])) === 1) {
             $at = $next + 1;
         }
         array_splice($lines, $at, 0, ['', $text]);
