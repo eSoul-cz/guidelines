@@ -4,6 +4,12 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-25
+
+Two rules corrected: a rollback deploys the image the pipeline recorded as `previous-<stack>`, and a form request transforms and merges only the fields the client sent. Layers changed: `general`, `framework/laravel`. A patch release: `composer update esoul-cz/guidelines` and `sync`.
+
+Skills affected: none (no skill of eSoul-cz/skills restates the changed rules).
+
 ### Fixed
 
 - Deployment (`general`): Rollback no longer takes "the digest the registry lists for the push before the current one" as the previous release: a build whose `Deploy` failed has pushed images that never ran, so that push could be the wrong one. The pipeline records what runs (`jenkins-libraries` 2026-11-25: after a successful `Deploy`, `deployed-<stack>` and `previous-<stack>` tags in the registry) and a rollback deploys `previous-<stack>`; images of a build whose `Deploy` failed are never recorded, and the old lookup remains only for deployments before the recording began. Workflow › Hotfix points to the same tag. ([#14](https://github.com/eSoul-cz/guidelines/issues/14))
@@ -185,7 +191,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/eSoul-cz/guidelines/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/eSoul-cz/guidelines/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/eSoul-cz/guidelines/compare/v0.3.5...v0.4.0
 [0.3.5]: https://github.com/eSoul-cz/guidelines/compare/v0.3.4...v0.3.5
