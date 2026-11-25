@@ -89,8 +89,8 @@ A partial update tells "field not sent" from "field cleared", so a user can empt
 
 ## Mapping to commands and queries
 
-- A form request SHOULD expose `toCommand()` or `toQuery()`, which turns the validated data into the command or query the controller dispatches. Building it in the constructor is possible but not recommended; a factory method on the command or query SHOULD NOT be used.
-- The mapping method is where request-shaped values become domain-shaped ones: a decimal string becomes a money value object, a local date becomes an instant, a percentage becomes a factor.
+- **A form request SHOULD map itself to a DTO through a public `to<Something>()` method**: `toCommand()` generally (a command is an interfaced DTO), `toQuery()` for a query, `to<Dto>()` for another DTO (for example `toFilter()`). The method builds the DTO from the validated scalars, and the controller dispatches what it returns (`$request->toCommand()`) instead of reading the request's fields itself. Building it in the command's constructor is possible but not recommended; a factory method on the command or query (`fromRequest()`) SHOULD NOT be used.
+- The mapping method is where request-shaped values become domain-shaped ones: a decimal string becomes a money value object, a local date becomes an instant ([Dates and time zone](#dates-and-time-zone)), a percentage becomes a factor, and the backing value of an enum becomes the case with `EnumClass::from()` ([Retrieving validated data](#retrieving-validated-data)). In a [partial update](#partial-updates-not-sent-or-cleared) it passes the "not sent" state for a key the client did not send, never `null`.
 - The mapping method passes the acting user (`$this->user()`) into every command and into every query whose result depends on who asks. The handler never reads it from the request.
 
 ## Testing
