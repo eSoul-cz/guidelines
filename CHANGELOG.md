@@ -4,6 +4,11 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Added
+
+- Layer `package/laravel-inertia-react` ([#19](https://github.com/eSoul-cz/guidelines/issues/19)): the React variant of `package/laravel-inertia` for a Laravel + Inertia project on React 19 with `@inertiajs/react` 3, TypeScript, shadcn/ui, `lucide-react` and Vitest with React Testing Library. It holds the React client rules under the section names of `package/inertia-vue` (project structure and locality, component architecture, hooks with module-level state, component files, TypeScript, Inertia data flow, forms, performance, frontend tests, design system, frontend commands), and replaces the Vue wording of `framework/laravel` and `package/laravel-inertia` (the architecture intro; frontend Stack, Inertia server side, Frontend commands; tools Versions, which also names React Testing Library, the React Hooks ESLint rules and `lucide-react`). `init` detects it when `package/laravel-inertia` is detected and `package.json` requires `@inertiajs/react`. A Vue project's rendered output does not change. A project that recorded an exception against `package/laravel-inertia/frontend.md#stack` because it uses React switches to the layer and drops the exception.
+- Installer: a targeted replace marker `<!-- replace: <layer>[, <layer>...] -->` replaces only the named earlier layers' content of a section or intro, in its place, and keeps the other layers' content (README: Merge model). The plain `<!-- replace -->` is unchanged.
+
 ## [0.5.5] - 2026-11-25
 
 The 0.5.3 seeder rule for staging and production is clarified on the owner's correction: any deliberate seeder (the production seeder, demo seeders) may be run there by hand, only the general random-data seeder stays local-only, and deliberate seeders avoid Faker; the LSR deployment section also says `app:install` drops indexes that `migrations.neon` does not declare. Layers changed: `general`, `framework/laravel`, `framework/lsr`. A patch release: `composer update esoul-cz/guidelines` and `sync`.

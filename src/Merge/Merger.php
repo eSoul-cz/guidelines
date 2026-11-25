@@ -15,7 +15,8 @@ use Esoul\Guidelines\Markdown\Document;
  * - Sections are keyed by normalised H2 text. A later layer's same-key content is appended inside
  *   the section, attributed with `<!-- from: <layer> -->`; new keys are appended at the end.
  * - Content before the first H2 (intro) is concatenated the same way.
- * - A later-layer section/intro starting with `<!-- replace -->` replaces the earlier content.
+ * - A later-layer section/intro starting with `<!-- replace -->` replaces the earlier content;
+ *   `<!-- replace: <layer>[, <layer>...] -->` replaces only the named layers' content, in its place.
  */
 final class Merger
 {
@@ -104,23 +105,60 @@ final class Merger
      * @param list<array{0: string, 1: string}> $parts [layer, text]
      */
     private function joinParts(array $parts, string $primaryLayer): string {
+        /** @var list<array{0: string, 1: string}> $rendered [layer, text] */
         $rendered = [];
         foreach ($parts as [$layer, $text]) {
             $replace = false;
-            if (str_starts_with(ltrim($text), self::REPLACE_MARKER)) {
+            $targets = [];
+            if (preg_match(Document::REPLACE_PATTERN, ltrim($text), $match) === 1) {
                 $replace = true;
-                $text = ltrim(substr(ltrim($text), strlen(self::REPLACE_MARKER)), "\n");
-                if ($text === '') {
-                    continue;
-                }
+                $targets = ($match[1] ?? '') !== '' ? preg_split('/\s*,\s*/', $match[1], -1, PREG_SPLIT_NO_EMPTY) : [];
+                $text = ltrim(substr(ltrim($text), strlen($match[0])), "\n");
+            }
+            $part = [$layer, ($layer !== $primaryLayer ? '<!-- from: ' . $layer . ' -->' . "\n" : '') . $text];
+
+            if ($targets !== [] && $targets !== false) {
+                $rendered = $this->replaceLayers($rendered, $targets, $text === '' ? null : $part);
+
+                continue;
+            }
+            if ($replace && $text === '') {
+                continue;
             }
             if ($replace && $layer !== $primaryLayer) {
                 $rendered = [];
             }
-            $rendered[] = ($layer !== $primaryLayer ? '<!-- from: ' . $layer . ' -->' . "\n" : '') . $text;
+            $rendered[] = $part;
         }
 
-        return implode("\n\n", $rendered);
+        return implode("\n\n", array_column($rendered, 1));
+    }
+
+    /**
+     * Puts `$part` where the first target layer's content was (all the targets' content is removed), or at
+     * the end when no target contributed; a null part only removes the targets' content.
+     *
+     * @param list<array{0: string, 1: string}> $rendered [layer, text]
+     * @param list<string> $targets
+     * @param array{0: string, 1: string}|null $part
+     * @return list<array{0: string, 1: string}>
+     */
+    private function replaceLayers(array $rendered, array $targets, ?array $part): array {
+        $result = [];
+        $placed = false;
+        foreach ($rendered as $existing) {
+            if ( ! in_array($existing[0], $targets, true)) {
+                $result[] = $existing;
+            } elseif ( ! $placed && $part !== null) {
+                $result[] = $part;
+                $placed = true;
+            }
+        }
+        if ( ! $placed && $part !== null) {
+            $result[] = $part;
+        }
+
+        return $result;
     }
 
     private function titleFromH1(?string $h1): ?string {

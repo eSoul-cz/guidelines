@@ -73,6 +73,57 @@ final class MergerTest extends TestCase
         );
     }
 
+    public function test_a_targeted_replace_marker_replaces_only_that_layers_content_in_its_place(): void {
+        $merged = new Merger()->merge([
+            $this->source('framework/laravel', "# T\n\n## A\n\nframework rule\n"),
+            $this->source('package/client', "## A\n\nclient rule\n"),
+            $this->source('package/server', "## A\n\nserver rule\n\n## B\n\nserver only\n"),
+            $this->source('package/server-variant', "## A\n\n<!-- replace: package/server -->\nvariant rule\n\n## B\n\n<!-- replace: package/server -->\n"),
+        ])->markdown;
+
+        self::assertSame(
+            "# T\n\n## A\n\nframework rule\n\n<!-- from: package/client -->\nclient rule\n\n<!-- from: package/server-variant -->\nvariant rule\n\n## B",
+            $merged,
+        );
+    }
+
+    public function test_a_targeted_replace_marker_keeps_the_place_of_the_replaced_content(): void {
+        $merged = new Merger()->merge([
+            $this->source('general', "# T\n\n## A\n\ngeneral rule\n"),
+            $this->source('package/server', "## A\n\nserver rule\n"),
+            $this->source('package/other', "## A\n\nother rule\n"),
+            $this->source('package/server-variant', "## A\n\n<!-- replace: package/server -->\nvariant rule\n"),
+        ])->markdown;
+
+        self::assertSame(
+            "# T\n\n## A\n\ngeneral rule\n\n<!-- from: package/server-variant -->\nvariant rule\n\n<!-- from: package/other -->\nother rule",
+            $merged,
+        );
+    }
+
+    public function test_a_targeted_replace_marker_can_name_several_layers(): void {
+        $merged = new Merger()->merge([
+            $this->source('framework/laravel', "# T\n\nframework intro\n\n## A\n\nframework rule\n"),
+            $this->source('package/client', "## A\n\nclient rule\n"),
+            $this->source('package/server', "## A\n\nserver rule\n"),
+            $this->source('package/server-variant', "<!-- replace: framework/laravel -->\nvariant intro\n\n## A\n\n<!-- replace: framework/laravel, package/server -->\nvariant rule\n"),
+        ])->markdown;
+
+        self::assertSame(
+            "# T\n\n<!-- from: package/server-variant -->\nvariant intro\n\n## A\n\n<!-- from: package/server-variant -->\nvariant rule\n\n<!-- from: package/client -->\nclient rule",
+            $merged,
+        );
+    }
+
+    public function test_a_targeted_replace_marker_appends_when_the_target_contributed_nothing(): void {
+        $merged = new Merger()->merge([
+            $this->source('general', "# T\n\n## A\n\nold rule\n"),
+            $this->source('package/variant', "## A\n\n<!-- replace: package/absent -->\nvariant rule\n"),
+        ])->markdown;
+
+        self::assertSame("# T\n\n## A\n\nold rule\n\n<!-- from: package/variant -->\nvariant rule", $merged);
+    }
+
     public function test_headings_inside_code_fences_are_not_sections(): void {
         $merged = new Merger()->merge([
             $this->source('general', "# T\n\n## A\n\n```md\n## Not a heading\n```\n"),
