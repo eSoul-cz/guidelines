@@ -5,22 +5,21 @@ declare(strict_types=1);
 namespace Esoul\Guidelines\Tests;
 
 use Esoul\Guidelines\Layer\LayerRepository;
-use Esoul\Guidelines\Layer\SourceFile;
 use Esoul\Guidelines\Markdown\Document;
 use Esoul\Guidelines\Merge\Merger;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/** The bundled `package/laravel-inertia-react` layer against the `package/laravel-inertia` layer it adapts to React. */
+/** The bundled `package/laravel-inertia-react` layer against the layers whose Vue wording it replaces. */
 final class InertiaReactLayerTest extends TestCase
 {
-    private const string BASE = 'package/laravel-inertia';
-
     private const string REACT = 'package/laravel-inertia-react';
 
-    private const string MARKER = '<!-- replace: ' . self::BASE . ' -->';
+    /** Layers a React project selects with the React layer, whose text must not name Vue in its output. */
+    private const array BASES = ['framework/laravel', 'package/laravel-inertia'];
 
-    /** The only differences a React section may have from the Vue text it replaces (besides additions around it). */
+    private const string INTRO = '(intro)';
+
+    /** The only differences a React replacement may have from the text it replaces (besides additions around it). */
     private const array VUE_TO_REACT = [
         'Inertia 3, Vue 3' => 'Inertia 3 (`@inertiajs/react`), React 19',
         'Inertia with Vue' => 'Inertia (`@inertiajs/react`) with React',
@@ -28,47 +27,46 @@ final class InertiaReactLayerTest extends TestCase
         'Vue' => 'React',
     ];
 
-    /** @return iterable<string, array{string}> */
-    public static function files(): iterable {
-        foreach (LayerRepository::bundled()->files(self::REACT) as $file) {
-            yield $file->name => [$file->name];
-        }
-    }
-
     /**
-     * A section the React layer replaces keeps the base layer's text with only Vue named as React, so a later change to
-     * the base section that is not carried over to the React layer fails here.
+     * A part the React layer replaces keeps the replaced layer's current text with only Vue named as React, so a later
+     * change to that text that is not carried over to the React layer fails here.
      */
-    #[DataProvider('files')]
-    public function test_every_replaced_section_carries_the_current_base_text_with_vue_named_as_react(string $name): void {
-        $base = $this->sections($this->file(self::BASE, $name));
+    public function test_every_replacement_carries_the_current_text_it_replaces_with_vue_named_as_react(): void {
         $replaced = 0;
-        foreach ($this->sections($this->file(self::REACT, $name)) as $key => $body) {
-            if ( ! str_starts_with($body, self::MARKER)) {
-                continue;
-            }
-            ++$replaced;
-            self::assertArrayHasKey($key, $base, sprintf('%s.md replaces "%s", which %s does not have.', $name, $key, self::BASE));
-            self::assertStringContainsString(strtr($base[$key], self::VUE_TO_REACT), $body, sprintf('%s.md › %s no longer matches %s.', $name, $key, self::BASE));
-        }
-
-        foreach ($base as $key => $body) {
-            if (str_contains($body, 'Vue')) {
-                self::assertStringStartsWith(self::MARKER, $this->sections($this->file(self::REACT, $name))[$key] ?? '', sprintf('%s.md › %s names Vue but the React layer does not replace it.', $name, $key));
+        foreach ($this->parts(self::REACT) as $name => $parts) {
+            foreach ($parts as $key => $body) {
+                $targets = $this->targets($body);
+                foreach ($targets as $target) {
+                    ++$replaced;
+                    $base = $this->parts($target)[$name][$key] ?? null;
+                    self::assertNotNull($base, sprintf('%s.md › %s replaces %s, which has no such part.', $name, $key, $target));
+                    self::assertStringContainsString(strtr($base, self::VUE_TO_REACT), $body, sprintf('%s.md › %s no longer matches %s.', $name, $key, $target));
+                }
             }
         }
         self::assertGreaterThan(0, $replaced);
     }
 
-    public function test_a_react_project_renders_react_and_a_vue_project_renders_vue(): void {
-        $react = $this->render(['framework/laravel', self::BASE, self::REACT]);
-        $vue = $this->render(['framework/laravel', 'package/inertia-vue', self::BASE]);
+    public function test_every_part_of_the_base_layers_that_names_vue_is_replaced(): void {
+        $react = $this->parts(self::REACT);
+        foreach (self::BASES as $layer) {
+            foreach ($this->parts($layer) as $name => $parts) {
+                foreach ($parts as $key => $body) {
+                    if (str_contains($body, 'Vue')) {
+                        self::assertContains($layer, $this->targets($react[$name][$key] ?? ''), sprintf('%s/%s.md › %s names Vue but the React layer does not replace it.', $layer, $name, $key));
+                    }
+                }
+            }
+        }
+    }
 
-        foreach (['frontend', 'tools'] as $name) {
-            self::assertStringNotContainsString('shadcn-vue', $react[$name]);
-            self::assertStringNotContainsString('Vue 3', $react[$name]);
-            self::assertStringNotContainsString('Vue sections', $react[$name]);
-            self::assertStringNotContainsString(self::REACT, $vue[$name]);
+    public function test_a_react_project_renders_react_and_a_vue_project_renders_vue(): void {
+        $react = $this->render(['framework/laravel', 'package/laravel-inertia', self::REACT]);
+        $vue = $this->render(['framework/laravel', 'package/inertia-vue', 'package/laravel-inertia']);
+
+        foreach (['architecture', 'frontend', 'tools'] as $name) {
+            self::assertStringNotContainsString('Vue', str_replace('Vue is not used next to it.', '', $react[$name]), $name);
+            self::assertStringNotContainsString(self::REACT, $vue[$name], $name);
         }
         self::assertStringContainsString('Inertia (`@inertiajs/react`) with React', $react['frontend']);
         self::assertStringContainsString('React 19', $react['tools']);
@@ -77,23 +75,29 @@ final class InertiaReactLayerTest extends TestCase
         self::assertStringContainsString('Vue 3', $vue['tools']);
     }
 
-    private function file(string $layer, string $name): SourceFile {
-        foreach (LayerRepository::bundled()->files($layer) as $file) {
-            if ($file->name === $name) {
-                return $file;
-            }
+    /** @return list<string> layers named by the replace marker at the start of `$body` */
+    private function targets(string $body): array {
+        if (preg_match(Document::REPLACE_PATTERN, $body, $match) !== 1 || ($match[1] ?? '') === '') {
+            return [];
         }
-        self::fail(sprintf('%s has no %s.md.', $layer, $name));
+
+        $targets = preg_split('/\s*,\s*/', $match[1], -1, PREG_SPLIT_NO_EMPTY);
+
+        return $targets === false ? [] : $targets;
     }
 
-    /** @return array<string, string> section key => trimmed body */
-    private function sections(SourceFile $file): array {
-        $sections = [];
-        foreach (Document::parse($file->body)->sections as $section) {
-            $sections[$section->key] = trim($section->body);
+    /** @return array<string, array<string, string>> file name => (section key or intro => trimmed text) */
+    private function parts(string $layer): array {
+        $parts = [];
+        foreach (LayerRepository::bundled()->files($layer) as $file) {
+            $document = Document::parse($file->body);
+            $parts[$file->name] = [self::INTRO => trim($document->intro)];
+            foreach ($document->sections as $section) {
+                $parts[$file->name][$section->key] = trim($section->body);
+            }
         }
 
-        return $sections;
+        return $parts;
     }
 
     /**

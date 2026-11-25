@@ -7,6 +7,9 @@ namespace Esoul\Guidelines\Markdown;
 /** A guideline body split into H1, intro (before the first H2) and H2 sections. */
 final readonly class Document
 {
+    /** `<!-- replace -->`, or `<!-- replace: <layer>[, <layer>...] -->`, at the start of a section or intro (see Merger). */
+    public const string REPLACE_PATTERN = '/^<!-- replace(?::\s*([a-z0-9][a-z0-9\/-]*(?:\s*,\s*[a-z0-9][a-z0-9\/-]*)*))?\s*-->/';
+
     /**
      * @param list<Section> $sections
      */

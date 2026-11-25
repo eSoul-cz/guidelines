@@ -51,7 +51,7 @@ final class Anchors
 
     /**
      * Inserts `$text` (one paragraph) directly under the heading with the given anchor.
-     * When the section starts with `<!-- replace -->`, the text goes below that line so the merge still sees it first.
+     * When the section starts with a replace marker (`<!-- replace -->`, `<!-- replace: <layer> -->`), the text goes below that line so the merge still sees it first.
      *
      * @return string|null the new body, or null when no heading has the anchor
      */
@@ -73,7 +73,7 @@ final class Anchors
         while (isset($lines[$next]) && trim($lines[$next]) === '') {
             ++$next;
         }
-        if (isset($lines[$next]) && preg_match('/^<!-- replace(:[^>]*)?\s*-->$/', trim($lines[$next])) === 1) {
+        if (isset($lines[$next]) && preg_match(Document::REPLACE_PATTERN, trim($lines[$next])) === 1) {
             $at = $next + 1;
         }
         array_splice($lines, $at, 0, ['', $text]);

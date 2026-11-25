@@ -11,7 +11,11 @@ Paths under `<js-root>/` are written relative to the JavaScript asset root; any 
 
 ## Stack
 
-<!-- replace: package/laravel-inertia -->
+<!-- replace: framework/laravel, package/laravel-inertia -->
+Vite builds the frontend assets, styled with Tailwind CSS, on Node with pnpm. `package.json` and its lockfile are authoritative for versions ([tools.md](tools.md#versions)).
+
+A Filament admin panel is a separate user interface: the Inertia and React rules do not apply to it. Only the Vite, Tailwind CSS and command rules of this file hold for its theme.
+
 The pages are Inertia (`@inertiajs/react`) with React and TypeScript, with Laravel Wayfinder for routes, shadcn/ui for the design system's primitives and Vitest for frontend tests, on top of the Vite and Tailwind CSS setup above. `<js-root>` is `resources/js`. The structure, design system, component, TypeScript, Inertia data flow, forms and frontend test rules are the React sections of this file; this layer adds the Laravel server side, Wayfinder and bundling.
 
 ## Inertia server side
