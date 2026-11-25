@@ -4,6 +4,10 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Changed
+
+- Command construction (`framework/laravel`, `package/lsr-cqrs`): relaxes the v0.5.3 rule (owner correction). A command's constructor (or that of a query or DTO that has one) SHOULD hold only its promoted properties, where 0.5.3 said MUST and forbade taking another object. A static factory method on the command (`fromOrder($order)`, also `fromRequest()`) is allowed but not recommended, where 0.5.2 said a `fromRequest()` factory SHOULD NOT be used and 0.5.3 required a named static constructor for any other source; the recommended way stays the mapping on the source, a form request's public `toCommand()`, `toQuery()` or `to<Dto>()`. The example in the CQRS file is removed.
+
 ## [0.5.3] - 2026-11-25
 
 The production start entrypoint and the monitored production deployment become rules, and the command-construction wording of 0.5.2 is corrected. Layers changed: `general`, `framework/laravel`, `framework/lsr`, `framework/astro`, `package/lsr-cqrs`. The owner decided one patch release for the corrections and the new rules: `composer update esoul-cz/guidelines` and `sync`; the constraint `^0.5` already allows it.
