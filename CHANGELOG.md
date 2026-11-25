@@ -7,6 +7,7 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 ### Fixed
 
 - Deployment (`general`): Rollback no longer takes "the digest the registry lists for the push before the current one" as the previous release: a build whose `Deploy` failed has pushed images that never ran, so that push could be the wrong one. The pipeline records what runs (`jenkins-libraries` 2026-11-25: after a successful `Deploy`, `deployed-<stack>` and `previous-<stack>` tags in the registry) and a rollback deploys `previous-<stack>`; images of a build whose `Deploy` failed are never recorded, and the old lookup remains only for deployments before the recording began. Workflow › Hotfix points to the same tag. ([#14](https://github.com/eSoul-cz/guidelines/issues/14))
+- Requests and validation (`framework/laravel`): "Every property is transformed in `passedValidation()` and set with `merge()`" contradicted "Partial updates: not sent or cleared". Only the keys the client sent (`has()` / `array_key_exists`) are transformed and merged, and a sent `null` stays `null`, because every typed accessor fills a default for a missing or null key (`boolean()` gives `false`, `integer()` gives `0`, `string()` gives `''`); the rule has a short example. ([#15](https://github.com/eSoul-cz/guidelines/issues/15))
 
 ## [0.5.0] - 2026-11-24
 
