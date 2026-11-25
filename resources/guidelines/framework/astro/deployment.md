@@ -43,7 +43,7 @@ A push to a branch with a deploy rule starts the Jenkins job: install, the check
 
 - It is built with `dockerBuildMultiArch` and deployed with `deployKomodoStack`; the image holds only what runs, runs as an unprivileged user under an init process, has a healthcheck and stops gracefully on `SIGTERM`.
 - Where the host NGINX serves client files, the deploy hook copies them out of the image into the run directory (`./client`) on **every** deploy, so a new image never leaves the old site behind.
-- Migrations, seeds and settings validation run before the server listens; a failure exits the container instead of serving errors.
+- Settings validation runs before the server listens, and an invalid setting exits the container. Migrations run next and a failing migration does not stop the container ([production start entrypoint](#the-production-start-entrypoint)): the start logs `Migration failed` on standard error and the server listens anyway. The start never runs the seeds; a developer runs them by hand in the container (`pnpm seed`).
 - Persistent state (database, uploads, form backups, logs) is bind-mounted from the stack's run directory (`./data` in the `node-http` shape) and listed in `README.md`; the infrastructure's backups cover it.
 
 ### Pipeline steps
