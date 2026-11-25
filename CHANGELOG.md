@@ -4,6 +4,10 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Changed
+
+- Seeders in staging and production (`general`, `framework/laravel`): clarifies the 0.5.3 rule on the owner's correction. The specialised set that MAY run there, by hand only, is the production seeder (what every environment needs: idempotent, create-only, no account) **and demo seeders** (deliberate demo content; they MAY use Faker or factories, and create no account with credentials outside local development, as Sessions and accounts requires). What stays local-only, MUST NOT run in staging or production and refuses to run there is the **general** seeder, the `DatabaseSeeder`-style seeding of synthetic development data. 0.5.3 said a seeder that uses Faker or synthetic data is local-only, which would also have barred a deliberate demo seeder. The Laravel file now describes the production seeder, the demo seeder and `DatabaseSeeder` separately.
+
 ## [0.5.4] - 2026-11-25
 
 The command-construction rule of 0.5.3 is relaxed on the owner's correction: the constructor holds the promoted properties, a `to<Something>()` method on the source object is the recommended way to create a command from another object, and a public static factory method on the command is valid but not recommended. Layers changed: `framework/laravel`, `package/lsr-cqrs`. A patch release: `composer update esoul-cz/guidelines` and `sync`.
