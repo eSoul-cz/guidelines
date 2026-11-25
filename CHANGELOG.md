@@ -4,6 +4,12 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-25
+
+A Laravel + Inertia project on React gets its own layer, `package/laravel-inertia-react`, and the installer gets a targeted replace marker that a variant layer uses to swap another layer's text. Layers changed: `package/laravel-inertia-react` (new). A Vue project's rendered output does not change. A new minor: `composer require --dev esoul-cz/guidelines:^0.6 -W`; a React project then adds `package/laravel-inertia-react` after `package/laravel-inertia` in `esoul-guidelines.json` (or reruns `init`), drops an exception against `package/laravel-inertia/frontend.md#stack` and runs `sync`.
+
+Skills affected: `esoul-guidelines` (only if it lists the layers or the detected packages).
+
 ### Added
 
 - Layer `package/laravel-inertia-react` ([#19](https://github.com/eSoul-cz/guidelines/issues/19)): the React variant of `package/laravel-inertia` for a Laravel + Inertia project on React 19 with `@inertiajs/react` 3, TypeScript, shadcn/ui, `lucide-react` and Vitest with React Testing Library. It holds the React client rules under the section names of `package/inertia-vue` (project structure and locality, component architecture, hooks with module-level state, component files, TypeScript, Inertia data flow, forms, performance, frontend tests, design system, frontend commands), and replaces the Vue wording of `framework/laravel` and `package/laravel-inertia` (the architecture intro; frontend Stack, Inertia server side, Frontend commands; tools Versions, which also names React Testing Library, the React Hooks ESLint rules and `lucide-react`). `init` detects it when `package/laravel-inertia` is detected and `package.json` requires `@inertiajs/react`. A Vue project's rendered output does not change. A project that recorded an exception against `package/laravel-inertia/frontend.md#stack` because it uses React switches to the layer and drops the exception.
@@ -248,7 +254,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.5.5...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/eSoul-cz/guidelines/compare/v0.5.5...v0.6.0
 [0.5.5]: https://github.com/eSoul-cz/guidelines/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/eSoul-cz/guidelines/compare/v0.5.3...v0.5.4
 [0.5.3]: https://github.com/eSoul-cz/guidelines/compare/v0.5.2...v0.5.3
