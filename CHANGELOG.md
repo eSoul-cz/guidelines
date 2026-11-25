@@ -4,6 +4,10 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Fixed
+
+- Deployment (`general`): Rollback no longer takes "the digest the registry lists for the push before the current one" as the previous release: a build whose `Deploy` failed has pushed images that never ran, so that push could be the wrong one. The pipeline records what runs (`jenkins-libraries` 2026-11-25: after a successful `Deploy`, `deployed-<stack>` and `previous-<stack>` tags in the registry) and a rollback deploys `previous-<stack>`; images of a build whose `Deploy` failed are never recorded, and the old lookup remains only for deployments before the recording began. Workflow › Hotfix points to the same tag. ([#14](https://github.com/eSoul-cz/guidelines/issues/14))
+
 ## [0.5.0] - 2026-11-24
 
 Project exceptions (an accepted ADR lets a project deviate from a rule, validated by `check`), the `Context: Result` title shape, a hotfix path, a rollback rule and the pipelines' guidelines check are now guideline rules; below 1.0 every minor needs the constraint raised (`^0.5`).
