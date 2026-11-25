@@ -4,6 +4,21 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-11-25
+
+Three contradictions removed: the rollback is the named exception to "never by hand in Komodo", an enum field has one representation (the backing value), and a form request maps itself to a DTO. Layers changed: `general`, `framework/laravel`, `framework/astro`, `package/laravel-inertia`. A patch release: `composer update esoul-cz/guidelines` and `sync`.
+
+Skills affected: none (no skill of eSoul-cz/skills restates the rollback, the enum representation or the request mapping; `esoul-review` only points at the unchanged Partial updates rule).
+
+### Fixed
+
+- Deployment (`general`): "never by hand in Komodo" and the Rollback bullet contradicted each other. The rollback is now the one named exception, written the same way in "How an application reaches production", in Rollback and in the list of what not to introduce: in an incident, devops (the people with Komodo access) set the stack's `image_tag` to `previous-<stack>` and deploy the stack in Komodo. Afterwards the hotfix issue records the rollback (when, which image, who), the stack goes back to the manifest's `image_tag` with the next deploy of the fix through Jenkins (an `apply` resets `image_tag` but is not a deploy, so the rolled-back containers keep running until that deploy), and until then nobody redeploys the stack by hand at `latest`, which still points at the broken image. Workflow › Hotfix and the Astro delivery path (`previous-<stack>` instead of "digest or Git tag") say the same and link to it. ([#16](https://github.com/eSoul-cz/guidelines/issues/16))
+- Requests and validation (`framework/laravel`): an enum field had three representations (`enum()` in `passedValidation()`, "only scalars", and `type-of<EnumClass>`). It holds the backing value, validated with `Rule::enum()`, annotated `value-of<EnumClass>` (PHPStan has no `type-of<>`; `value-of<>` resolves to the backing type), and the mapping method turns it into the case with `EnumClass::from()`; `enum()` is no longer in the accessor list and one example shows the property, the rule and the mapping. ([#17](https://github.com/eSoul-cz/guidelines/issues/17))
+
+### Changed
+
+- Requests and validation (`framework/laravel`): one SHOULD for the mapping: a form request maps itself to a DTO through a public `to<Something>()` method (`toCommand()` generally, `toQuery()`, `to<Dto>()`) that builds it from the validated scalars, converting enums with `::from()`, dates per the time-zone rule and passing the "not sent" state in a partial update. Architecture and CQRS (`framework/laravel`) and Inertia frontend (`package/laravel-inertia`) link to it instead of describing the mapping. ([#17](https://github.com/eSoul-cz/guidelines/issues/17))
+
 ## [0.5.1] - 2026-11-25
 
 Two rules corrected: a rollback deploys the image the pipeline recorded as `previous-<stack>`, and a form request transforms and merges only the fields the client sent. Layers changed: `general`, `framework/laravel`. A patch release: `composer update esoul-cz/guidelines` and `sync`.
@@ -191,7 +206,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.5.2...HEAD
+[0.5.2]: https://github.com/eSoul-cz/guidelines/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/eSoul-cz/guidelines/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/eSoul-cz/guidelines/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/eSoul-cz/guidelines/compare/v0.3.5...v0.4.0
