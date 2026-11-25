@@ -4,6 +4,12 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-11-25
+
+The production start entrypoint and the monitored production deployment become rules, and the command-construction wording of 0.5.2 is corrected. Layers changed: `general`, `framework/laravel`, `framework/lsr`, `framework/astro`, `package/lsr-cqrs`. The owner decided one patch release for the corrections and the new rules: `composer update esoul-cz/guidelines` and `sync`; the constraint `^0.5` already allows it.
+
+Skills affected: `esoul-workflow` (one Guardrails bullet pointing at the new rules; no other skill restated them).
+
 ### Fixed
 
 - Command construction (`framework/laravel`, `package/lsr-cqrs`): the 0.5.2 mapping rule called building a DTO in the command's constructor "possible" and said a `fromRequest()` factory SHOULD NOT be used, which left the constructor's job open. A command's constructor now holds only its promoted properties and MUST NOT take another object to build itself from (the same for a query that has a constructor and for every DTO a request or handler hands over); building one from another object is a static named constructor on the command (`PlaceOrderCommand::fromCart($cart)`). A form request still maps itself with its public `toCommand()`, `toQuery()` or `to<Dto>()`, and the rule gives the reason: a command lives in `App\Domain\CQRS` and must not depend on a request of `App\Infrastructure`. A new "Constructing commands and queries" section in the CQRS file holds the rule with an example; Requests and validation links to it. The app templates' commands already followed it (no command constructor takes another object).
@@ -216,7 +222,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/eSoul-cz/guidelines/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/eSoul-cz/guidelines/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/eSoul-cz/guidelines/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/eSoul-cz/guidelines/compare/v0.4.0...v0.5.0
