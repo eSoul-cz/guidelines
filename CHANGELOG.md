@@ -4,9 +4,11 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
-The pipelines leave out what a build's changed files cannot affect, and the deployment guidelines say so. Layers changed: `general` (`workflow.md`), `framework/laravel`, `framework/lsr`, `framework/astro` (`deployment.md`).
+## [0.6.2] - 2026-11-26
 
-Skills affected: none (`esoul-jenkins-libraries`, which describes the parameter, lives in the libraries' repository and is updated there).
+The pipelines leave out what a build's changed files cannot affect (`changeFilter`), and the framework-free core of a Laravel application MAY use the DTOs of `App\Application\Dto`, with the interfaces that core types implement living in `App\Domain`. Layers changed: `general` (`workflow.md`), `framework/laravel` (architecture, `cqrs.md`, deployment), `framework/lsr`, `framework/astro` (`deployment.md`). A patch release: `composer update esoul-cz/guidelines` and `sync`.
+
+Skills affected: none that restate the changed rules (`esoul-jenkins-libraries`, which describes the `changeFilter` parameter, lives in the libraries' repository and is updated there; no skill restates the layer rules, a grep for `Application\Dto` and "application layer" in the skills finds nothing; `esoul-testing` still says "every push is a full build" in one line of advice).
 
 ### Changed
 
@@ -275,7 +277,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/eSoul-cz/guidelines/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/eSoul-cz/guidelines/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/eSoul-cz/guidelines/compare/v0.5.5...v0.6.0
 [0.5.5]: https://github.com/eSoul-cz/guidelines/compare/v0.5.4...v0.5.5
