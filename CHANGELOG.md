@@ -4,6 +4,14 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+The pipelines leave out what a build's changed files cannot affect, and the deployment guidelines say so. Layers changed: `general` (`workflow.md`), `framework/laravel`, `framework/lsr`, `framework/astro` (`deployment.md`).
+
+Skills affected: none (`esoul-jenkins-libraries`, which describes the parameter, lives in the libraries' repository and is updated there).
+
+### Changed
+
+- Pipelines (`framework/laravel`, `framework/lsr`, `framework/astro`, `general`): a build runs what its change can affect (`changeFilter` of `laravelPipeline`, `lsrPipeline` and `astroPipeline`, on by default since 2026-11-26). A build that changes only documentation runs only the guidelines check, and a merge of such a change to a branch with a deploy rule builds and deploys nothing; a pull request of a Laravel or LSR application runs the checks of the side it touches; a merge that touches the application still runs every stage. A top-level path the pipeline does not know is named in the `Jenkinsfile` (`changeFilter.areas`) instead of switching the filter off. "Every push starts a full build" and "a merge to a branch with a deploy rule starts a deployment" are corrected accordingly.
+
 ## [0.6.1] - 2026-11-26
 
 An application that renders its pages on the server and has its own admin (Astro `B-admin`) MAY keep the redirects from an old site in the application, managed by the client in the admin, instead of a map in the host NGINX site; the redirect rules themselves stay. Layers changed: `general`, `framework/astro`. A patch release: `composer update esoul-cz/guidelines` and `sync`.
