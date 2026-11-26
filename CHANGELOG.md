@@ -4,6 +4,12 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Changed
+
+- Redirects from an old site (`general`, `framework/astro`): an application that renders its pages on the server and has its own admin (Astro `B-admin`) MAY keep the redirects in the application, managed by the client in the admin, instead of a map in the host NGINX site. The rules stay (301 or 410, canonical target, no chain or loop, the old slug redirects after a slug change); the initial list ships as a migration, and host redirects (`www`, an old domain) stay in the manifest. `framework/astro` › Server code describes the shape: one table, a middleware lookup only for requests that would end in 404, validation on save. A static site keeps the redirects in NGINX.
+
+Skills affected: none.
+
 ## [0.6.0] - 2026-11-25
 
 A Laravel + Inertia project on React gets its own layer, `package/laravel-inertia-react`, and the installer gets a targeted replace marker that a variant layer uses to swap another layer's text. Layers changed: `package/laravel-inertia-react` (new). A Vue project's rendered output does not change. A new minor: `composer require --dev esoul-cz/guidelines:^0.6 -W`; a React project then adds `package/laravel-inertia-react` after `package/laravel-inertia` in `esoul-guidelines.json` (or reruns `init`), drops an exception against `package/laravel-inertia/frontend.md#stack` and runs `sync`.
