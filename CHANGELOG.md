@@ -4,6 +4,12 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-26
+
+An application that renders its pages on the server and has its own admin (Astro `B-admin`) MAY keep the redirects from an old site in the application, managed by the client in the admin, instead of a map in the host NGINX site; the redirect rules themselves stay. Layers changed: `general`, `framework/astro`. A patch release: `composer update esoul-cz/guidelines` and `sync`.
+
+Skills affected: none.
+
 ### Changed
 
 - Redirects from an old site (`general`, `framework/astro`): an application that renders its pages on the server and has its own admin (Astro `B-admin`) MAY keep the redirects in the application, managed by the client in the admin, instead of a map in the host NGINX site. The rules stay (301 or 410, canonical target, no chain or loop, the old slug redirects after a slug change); the initial list ships as a migration, and host redirects (`www`, an old domain) stay in the manifest. `framework/astro` › Server code describes the shape: one table, a middleware lookup only for requests that would end in 404, validation on save. A static site keeps the redirects in NGINX.
@@ -260,7 +266,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.6.1...HEAD
+[0.6.1]: https://github.com/eSoul-cz/guidelines/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/eSoul-cz/guidelines/compare/v0.5.5...v0.6.0
 [0.5.5]: https://github.com/eSoul-cz/guidelines/compare/v0.5.4...v0.5.5
 [0.5.4]: https://github.com/eSoul-cz/guidelines/compare/v0.5.3...v0.5.4
