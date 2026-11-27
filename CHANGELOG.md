@@ -4,6 +4,12 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+### Added
+
+- AI connector (`general`): new `ai-connector.md` (order 52) for applications that offer a remote MCP server to a client's assistant. Rules: opt-in switch, off by default; OAuth with scopes and no static tokens; tools act as the signed-in user through Application commands and queries; forbidden tools (code, templates, configuration, deployment, users and permissions, permanent deletion, raw queries, third-party calls); drafts and revisions with a human publish step; upload and SSRF limits; audit log, rate limiting and revocation; minimal personal data recorded in an ADR; tests per tool; a Czech client guide. Implements ADR-0004 (proposed, esoul-infrastructure PR #3). `security-and-data.md` › Authorization links to it. New file, no renamed heading, so no project exception breaks.
+
+Skills affected: none.
+
 ## [0.6.2] - 2026-11-26
 
 The pipelines leave out what a build's changed files cannot affect (`changeFilter`), and the framework-free core of a Laravel application MAY use the DTOs of `App\Application\Dto`, with the interfaces that core types implement living in `App\Domain`. Layers changed: `general` (`workflow.md`), `framework/laravel` (architecture, `cqrs.md`, deployment), `framework/lsr`, `framework/astro` (`deployment.md`). A patch release: `composer update esoul-cz/guidelines` and `sync`.
