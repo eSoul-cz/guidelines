@@ -54,6 +54,7 @@ Every eSoul project handles somebody else's data. This file states the rules tha
 - A response carries only what the acting user may see. A figure or record the user may not see is **absent from the payload**, not hidden in the page.
 - An export, a notification and a background job apply the same rules as the screen they serve.
 - The acting user is taken from the authenticated session or token, never from the request body or query.
+- An AI connector (a remote MCP server for a client's assistant) follows the extra rules in [ai-connector.md](ai-connector.md): opt-in, OAuth with scopes, tools that act as the signed-in user, forbidden actions and an audit log.
 
 ### Authorization tests
 
