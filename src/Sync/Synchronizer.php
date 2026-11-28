@@ -6,6 +6,7 @@ namespace Esoul\Guidelines\Sync;
 
 use Esoul\Guidelines\Config\Lock;
 use Esoul\Guidelines\Config\LockEntry;
+use Esoul\Guidelines\Config\LockSource;
 use Esoul\Guidelines\Config\ProjectConfig;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -72,8 +73,9 @@ final class Synchronizer
      * Applies the plan. Blocking changes are written too; the caller decides (`--force`) beforehand.
      *
      * @param list<Target> $targets
+     * @param array<int|string, LockSource> $sources the lock records of the guideline sources
      */
-    public function apply(Plan $plan, array $targets, ProjectConfig $config): void {
+    public function apply(Plan $plan, array $targets, ProjectConfig $config, array $sources = []): void {
         foreach ($plan->changes as $change) {
             match ($change->status) {
                 Status::Create => $this->writeBlock($change, create: true),
@@ -91,7 +93,7 @@ final class Synchronizer
         foreach ($targets as $target) {
             $files[$target->path] = new LockEntry($target->block, $target->hash(), $target->sources);
         }
-        $lock = new Lock($this->packageVersion, $config->layers, $config->exclude, $files);
+        $lock = new Lock($this->packageVersion, $config->layers, $config->exclude, $files, $sources);
         $json = $lock->toJson();
         if ( ! is_file($this->root . '/' . Lock::FILE) || file_get_contents($this->root . '/' . Lock::FILE) !== $json) {
             $this->fs->dumpFile($this->root . '/' . Lock::FILE, $json);

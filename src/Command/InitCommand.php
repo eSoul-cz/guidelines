@@ -6,6 +6,7 @@ namespace Esoul\Guidelines\Command;
 
 use Esoul\Guidelines\Config\ProjectConfig;
 use Esoul\Guidelines\Detect\StackDetector;
+use Esoul\Guidelines\Layer\LayerId;
 use Esoul\Guidelines\Layer\LayerRepository;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -28,7 +29,7 @@ final class InitCommand extends ProjectCommand
             $io->note('Detected, but no guideline layer exists yet: ' . implode(', ', $unavailable));
         }
 
-        $isStack = static fn (string $l): bool => $l !== LayerRepository::GENERAL && ! str_starts_with($l, 'profile/');
+        $isStack = static fn (string $l): bool => $l !== LayerRepository::GENERAL && ! str_starts_with($l, 'profile/') && LayerId::source($l) === null;
         $default = $existing !== null
             ? array_values(array_filter($existing->layers, $isStack))
             : $detected;
@@ -62,7 +63,9 @@ final class InitCommand extends ProjectCommand
         }
 
         $profile = $internal ? [LayerRepository::PROFILE_INTERNAL] : [];
-        $config = ProjectConfig::create([...$profile, ...$selected], $existing->exclude ?? [], $existing->exceptions ?? []);
+        // The layers of guideline sources are not detected or offered here: keep them, after the stack layers.
+        $fromSources = array_values(array_filter($existing->layers ?? [], static fn (string $l): bool => LayerId::source($l) !== null));
+        $config = ProjectConfig::create([...$profile, ...$selected, ...$fromSources], $existing->exclude ?? [], $existing->exceptions ?? [], $existing->sources ?? []);
         $config->save($root);
 
         $io->success(sprintf('Wrote %s with layers: %s.', ProjectConfig::FILE, implode(', ', $config->layers)));

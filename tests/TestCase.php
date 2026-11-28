@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Esoul\Guidelines\Tests;
 
 use Esoul\Guidelines\Application;
+use Esoul\Guidelines\GuidelinesException;
 use Esoul\Guidelines\Layer\LayerRepository;
+use Esoul\Guidelines\Source\GitRunner;
 use PHPUnit\Framework\TestCase as BaseTestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\Filesystem\Filesystem;
@@ -17,6 +19,12 @@ abstract class TestCase extends BaseTestCase
     protected string $layersDir;
 
     protected string $project;
+
+    /** Replaces the `git` CLI in the application under test; null runs the real one. */
+    protected ?GitRunner $git = null;
+
+    /** The installer version the application under test reports; a non-release (`test`) satisfies any source constraint. */
+    protected string $installerVersion = 'test';
 
     protected function setUp(): void {
         $this->tmp = sys_get_temp_dir() . '/esoul-guidelines-test-' . bin2hex(random_bytes(6));
@@ -49,6 +57,27 @@ abstract class TestCase extends BaseTestCase
         file_put_contents($this->project . '/esoul-guidelines.json', $json);
     }
 
+    /** @return array<mixed> the decoded JSON file of the project */
+    protected function json(string $relative): array {
+        $data = json_decode($this->read($relative), true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($data);
+
+        return $data;
+    }
+
+    /** Asserts that `$action` throws a {@see GuidelinesException} whose message contains `$message`. */
+    protected function assertFailsWith(string $message, callable $action): void {
+        try {
+            $action();
+        } catch (GuidelinesException $e) {
+            self::assertStringContainsString($message, $e->getMessage());
+
+            return;
+        }
+
+        self::fail('Expected a GuidelinesException containing: ' . $message);
+    }
+
     protected function read(string $relative): string {
         return (string) file_get_contents($this->project . '/' . $relative);
     }
@@ -57,19 +86,20 @@ abstract class TestCase extends BaseTestCase
      * Runs a command interactively with the given answers (one per question; an empty string accepts the default).
      *
      * @param list<string> $answers
+     * @param array<string, mixed> $input arguments and options
      */
-    protected function runInteractive(string $command, array $answers): CommandTester {
-        $app = new Application(new LayerRepository($this->layersDir), 'test');
+    protected function runInteractive(string $command, array $answers, array $input = []): CommandTester {
+        $app = new Application(new LayerRepository($this->layersDir), $this->installerVersion, $this->git);
         $tester = new CommandTester($app->find($command));
         $tester->setInputs($answers);
-        $tester->execute(['--working-dir' => $this->project], ['interactive' => true]);
+        $tester->execute($input + ['--working-dir' => $this->project], ['interactive' => true]);
 
         return $tester;
     }
 
     /** @param array<string, mixed> $input */
     protected function run_(string $command, array $input = []): CommandTester {
-        $app = new Application(new LayerRepository($this->layersDir), 'test');
+        $app = new Application(new LayerRepository($this->layersDir), $this->installerVersion, $this->git);
         $tester = new CommandTester($app->find($command));
         $tester->execute($input + ['--working-dir' => $this->project], ['interactive' => false]);
 

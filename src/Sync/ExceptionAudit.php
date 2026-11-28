@@ -7,14 +7,14 @@ namespace Esoul\Guidelines\Sync;
 use Esoul\Guidelines\Config\ProjectConfig;
 use Esoul\Guidelines\Config\RuleException;
 use Esoul\Guidelines\GuidelinesException;
-use Esoul\Guidelines\Layer\LayerRepository;
+use Esoul\Guidelines\Layer\LayerCatalog;
 use Esoul\Guidelines\Markdown\Anchors;
 
 /** Validates the recorded project exceptions against the selected layers and the project's ADR files. */
 final readonly class ExceptionAudit
 {
     public function __construct(
-        private LayerRepository $layers,
+        private LayerCatalog $layers,
         private string $root,
     ) {
     }

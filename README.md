@@ -8,6 +8,7 @@ What it does:
 
 - merges guideline files from the selected **layers** (`general`, `profile/*`, `framework/*`, `package/*`) into `docs/project_guidelines/<name>.md`;
 - generates `docs/project_guidelines/index.md` and a managed block in `AGENTS.md` that points agents to the index and lists the rules every task must follow;
+- optionally takes layers from other repositories, the project's **guideline sources**, and keeps a reviewed copy of the selected files in the project ([Guideline sources](#guideline-sources));
 - records what it wrote in `esoul-guidelines.lock` so local edits inside generated blocks are detected (drift) and a CI `check` can fail on drift or outdated content.
 
 ## Install
@@ -85,7 +86,7 @@ esoul-guidelines sync
 **3. Docker** (a machine or pipeline with Docker and no PHP): an image of the same release, built by [eSoul-cz/ci-images](https://github.com/eSoul-cz/ci-images) from that release's PHAR (checked against its `.sha256`). **After [eSoul-cz/ci-images#12](https://github.com/eSoul-cz/ci-images/pull/12) merges** and the next nightly build ran, it is published as `rg.fr-par.scw.cloud/testing-images/esoul-guidelines` (log in with `docker login rg.fr-par.scw.cloud`) with the tags `0.3.1` (the release), `0.3` and `latest`; until then use the PHAR or Composer.
 
 ```bash
-# in the repository root; arguments are those of esoul-guidelines (init, sync, check, list)
+# in the repository root; arguments are those of esoul-guidelines (init, sync, check, list, update, source:add)
 docker run --rm -v "$PWD:/app" -w /app rg.fr-par.scw.cloud/testing-images/esoul-guidelines:0.3.1 init
 docker run --rm -v "$PWD:/app" -w /app rg.fr-par.scw.cloud/testing-images/esoul-guidelines:0.3.1 sync
 ```
@@ -107,9 +108,11 @@ docker run --rm -v "$PWD:/app" -w /app rg.fr-par.scw.cloud/testing-images/esoul-
 | Command | Purpose |
 |---|---|
 | `init [--no-interaction]` | Asks whether the repository is a **client/application** repository (default) or an **internal** repository (guidelines, templates, libraries, packages, infrastructure); internal adds the `profile/internal` layer. The kind is never detected from the repository. `--no-interaction` keeps client, unless the existing config already has `profile/internal`. Then detects the stack from `composer.json` / `package.json` (`laravel/framework`, `laravel/framework` together with `inertiajs/inertia-laravel`, `lsr/core`, `lsr/cqrs`, `astro`, `filament/filament`, `lunarphp/lunar` (which also adds `package/filament`), `@inertiajs/vue3`, `@inertiajs/react` together with the `package/laravel-inertia` detection (adds `package/laravel-inertia-react`), `infection/infection`, `esoul-cz/phpunit-test-evidence`), asks you to confirm the layers (multiselect; entry `none` selects no stack layer, for example in an internal documentation repository) and writes `esoul-guidelines.json`. `--no-interaction` accepts the detection (or an existing config). Detected stacks without a layer yet are reported and skipped. |
-| `sync [--dry-run] [--force]` | Renders and writes. Refuses to overwrite a managed block whose current hash differs from the lock (a local edit), listing the files, unless `--force`. `--dry-run` prints a summary (`-v` also lists unchanged files, `-vv` prints the changed lines) and writes nothing. |
-| `check` | For CI. Exit 1 on **drift** (a managed block differs from the lock, or is missing), **outdated** content (the lock differs from a fresh render, or the config/layers changed) or an invalid **project exception** (its rule, layer or ADR file is missing, or it is refused). Exit 0 otherwise. |
-| `list` | Lists the available layers and their files (`*` = selected in the project). |
+| `sync [--dry-run] [--force]` | Renders and writes. Refuses to overwrite a managed block whose current hash differs from the lock (a local edit), listing the files, unless `--force`. `--dry-run` prints a summary (`-v` also lists unchanged files, `-vv` prints the changed lines) and writes nothing. A guideline source is fetched (with `git`) only when its copy lacks a selected layer or the lock has no record of it, at the locked commit; a copy edited by hand is refused unless `--force`. |
+| `update [source...] [--dry-run] [--force]` | Moves each named source (default: every configured one) to the head of its `ref`, re-copies the selected layers, re-renders and prints the lines the source's `CHANGELOG.md` gained since the pinned commit. A source with no new commit changes nothing. Needs `git` ([Guideline sources](#guideline-sources)). |
+| `source:add <url> [--ref=main]` | Fetches the repository, reads its `guidelines/source.json`, adds `sources.<name>` to the config, offers its layers (interactive; `--no-interaction` adds none and prints them) and runs `sync`. Needs `git`. |
+| `check` | For CI. Exit 1 on **drift** (a managed block differs from the lock, or is missing), **outdated** content (the lock differs from a fresh render, or the config/layers changed) or an invalid **project exception** (its rule, layer or ADR file is missing, or it is refused). Exit 0 otherwise. It also fails when a source copy under `.esoul/guidelines/` was edited by hand, lacks a selected layer or is missing from the lock. It never fetches and needs neither `git` nor the network. |
+| `list` | Lists the available layers and their files (`*` = selected in the project), with the layers of every guideline source whose copy is present, written `<source>:<layer>`. |
 
 All commands accept `-d|--working-dir=<project root>` (default: current directory).
 
@@ -125,6 +128,8 @@ All commands accept `-d|--working-dir=<project root>` (default: current director
 - `layers` is ordered: earlier layers come first when files are merged. `general` is always first (added when missing). Keep the order `general`, `profile/*`, `framework/*`, `package/*` (what `init` writes): a profile replaces sections of `general` before a framework or package layer appends to them. `profile/internal` is optional and only for internal repositories; client and application repositories omit it.
 - `exclude` lists output file names (with or without `.md`) the project does not want. Removing a layer from the config removes its contribution on the next `sync`.
 - `exceptions` records the rules the project deliberately does not follow, each with what applies instead and the accepted ADR; `sync` marks them in the generated files and `check` validates them ([Project exceptions](#project-exceptions)). `init` keeps them.
+
+- `sources` adds guideline sources, `{"<name>": {"url": "...", "ref": "main"}}`; their layers are written `<source>:<layer>` in `layers` and in exception rules ([Guideline sources](#guideline-sources)). `init` keeps them and appends their layers after the stack layers.
 
 ## Layer authoring rules
 
@@ -175,10 +180,61 @@ Your own additions here are preserved forever.
 
 - Everything outside the block is never touched. The same applies to `AGENTS.md`: the tool owns only `<!-- esoul-guidelines:begin agents -->...end`; other content (for example `<laravel-boost-guidelines>`) is left alone. A missing `AGENTS.md` is created, a missing `CLAUDE.md` is created with `@AGENTS.md`.
 - A block that is missing from an existing file is re-inserted (at the top of a guideline file, at the end of `AGENTS.md`).
-- `esoul-guidelines.lock` (JSON, committed) stores `schema_version`, the package version (Composer installed metadata, fallback `dev`), the selected layers and exclusions and, per managed block, the sha256 of the block content and the source files with their hashes. Line endings and blank lines around the block are ignored by the hash. It does not pin guideline versions per layer: the package version identifies the guidelines, and the hashes detect what changed.
+- `esoul-guidelines.lock` (JSON, committed) stores `schema_version`, the package version (Composer installed metadata, fallback `dev`), the selected layers and exclusions, the guideline sources (`url`, `ref`, `commit` and the hash of each copied file; [Guideline sources](#guideline-sources)) and, per managed block, the sha256 of the block content and the source files with their hashes. Line endings and blank lines around the block are ignored by the hash. It does not pin guideline versions per layer: the package version identifies the guidelines, and the hashes detect what changed.
 - **Drift** = current block hash differs from the lock (someone edited inside the block, or the lock has no entry for it). `sync` refuses and lists the files; move the change below the block or use `--force` to discard it.
 - **Outdated** = the lock matches the block but a fresh render differs (guidelines package updated, layers or exclusions changed). `sync` updates it.
 - A file that is no longer produced (layer or file removed) loses its managed block on `sync`; local content around it is kept, and the file is deleted only when nothing else is left (never `AGENTS.md`). A removed block with local edits is also refused without `--force`.
+
+## Guideline sources
+
+A project can take guideline layers from repositories other than this package: a client's private house rules, rules for a private library, a third party's rules for its product, or the guidelines of an external template addon. The merge is the one of [Merge model](#merge-model); a source only supplies layers. The design is [ADR-0006](https://github.com/eSoul-cz/esoul-infrastructure/blob/master/docs/adr/0006-guideline-sources.md).
+
+**A source repository** contains:
+
+- `guidelines/<group>/<name>/<topic>.md` (or `guidelines/<name>/<topic>.md`), in the shape of `resources/guidelines/` and with the same authoring rules and frontmatter;
+- `guidelines/source.json`: `{"name": "acme", "description": "Acme house rules", "installer": "^0.7"}`. `name` is lowercase letters, digits and hyphens and is the prefix of its layers everywhere; `installer` is a Composer-style constraint on the version of this installer; unknown keys are an error;
+- a `CHANGELOG.md` at the repository root, which `update` reads.
+
+The same repository may also be an external template addon.
+
+**Config.** `esoul-guidelines.json` lists the source and selects its layers with the prefix:
+
+```json
+{
+    "sources": {"acme": {"url": "git@github.com:acme/guidelines.git", "ref": "main"}},
+    "layers": ["general", "framework/laravel", "acme:package/sso"],
+    "exceptions": [
+        {"rule": "acme:package/sso/auth.md#tokens", "instead": "...", "adr": "docs/adr/0053-token-lifetime.md"}
+    ]
+}
+```
+
+- The key must equal `name` in the source's `source.json`, so `acme:...` means the same in every project. Two sources with the same name are an error, and so is a `<source>:` prefix in `layers` or in an exception rule that no `sources` entry defines.
+- `url` is anything `git clone` accepts; `ref` is a branch or a tag (default `main`). The installer runs the `git` CLI, so it uses the developer's own SSH keys and credentials and stores no secret.
+- Bundled layers stay unprefixed. Layers merge in config order, so put a source's layers where they should merge: after the bundled layers they adapt.
+- The `<!-- from: ... -->` marker, the index, the lock and an exception's `rule` all show the prefixed id (`acme:package/sso`, `acme:package/sso/auth.md#tokens`).
+
+**Committed copy.** `sync` copies the files of the selected layers and the source's `source.json` into `.esoul/guidelines/<source>/` (the same paths as in the source's `guidelines/`), and the project commits the copy. The copy is generated: edit the source, never the copy. The lock (`schema_version` 2) records, per source, `url`, `ref`, the `commit` the copy was made from and the sha256 of every copied file; the blocks list their source files with the prefix (`"acme:package/sso/auth.md": "<sha256>"`). A lock of schema 1 is read, and `sync` rewrites it as schema 2 (a project without sources gets no `sources` key).
+
+**When it fetches.**
+
+- `sync` fetches a source only when the copy lacks a layer the config selects (or a file the lock records), when the lock has no record of the source, or when `url` or `ref` changed. It checks out the **locked commit**; a source without a lock entry is fetched at the head of its `ref`. A second `sync` with no config change runs no `git` command and writes no file. A layer that is no longer selected loses its files from the copy without a fetch, and a source that is no longer configured loses its copy.
+- `sync` refuses to overwrite a copy that was edited or extended by hand, and lists the files; `--force` restores it from the locked commit.
+- `source:add <url> [--ref=main]` reads `guidelines/source.json`, adds `sources.<name>` and offers the layers (without a terminal it adds none and prints them, for you to list under `layers`), then runs `sync`.
+- `update [source...]` moves each pin to the head of its `ref`, re-copies, re-renders and prints the lines the source's `CHANGELOG.md` gained between the old and the new commit, to put into the pull request. A source with no new commit changes nothing. `--dry-run` fetches into a temporary directory and writes nothing.
+- A source whose `source.json` has another `name` than its config key, a missing layer, an unreachable URL or ref, or an `installer` constraint that excludes the running installer is an error that names the cause (git's own message for a git failure). A development build (`dev`) satisfies every constraint.
+
+**`check` stays offline.** It renders from the committed copy and never runs `git`, so CI needs no network and no credentials. On top of what it checks today it fails when:
+
+- a file under `.esoul/guidelines/` was edited, added or deleted by hand (it differs from the lock; the message names the file);
+- a selected source layer is missing from the copy, or a configured source is missing from the lock (or the lock records another `url` or `ref`);
+- the copied `source.json` names another source or an `installer` constraint that excludes the running installer.
+
+**Merge authority.** The merge semantics are the same for every source: appending, `<!-- replace -->` and `<!-- replace: a, b -->` (layer ids with a prefix, `<!-- replace: framework/laravel, acme:package/sso -->`). A source is chosen deliberately by the project, so it may replace a section of a bundled file without a project exception, `security-and-data` included: choosing a source is a decision a reviewer must see, and the pull request that adds one (an ADR for a third-party source) says so. The rule that no exception may waive a rule in a file named `security-and-data` applies to every source. A source can break when the bundled layers change (a replaced section is renamed): nothing checks a source on its own, the projects that use it find out on `sync` or `check`.
+
+**Pairing with a template addon.** An external template addon that is also a guideline source may add its source in its `merge/esoul-guidelines.json` with `"url": "@addon"`, which the `app-templates` builder substitutes with the URL the addon was applied from before it runs `esoul-guidelines sync`. The two pins stay independent (the template record's `commit` and the lock's `commit`); updating the addon also runs `esoul-guidelines update` on the source with the same URL. This installer never reads `@addon`: it is a placeholder until the builder replaced it.
+
+**Distribution.** `sync`, `update` and `source:add` need the `git` CLI on the `PATH` (the PHAR and the Docker image included, so the image needs `git` and the credentials of the developer, for example a mounted SSH agent). `check` needs neither, and a project without sources never starts a process.
 
 ## Project exceptions
 
@@ -207,12 +263,12 @@ A project MAY deviate from a guideline rule, with the owner's approval and an ac
 }
 ```
 
-- **`rule`** is `<layer>/<file>.md#<anchor>`: the source file in the layer (the paths `list` prints) and the heading anchor in it. The anchor is the GitHub slug of an `##`, `###` or `####` heading: lower case, backticks and punctuation dropped, spaces become hyphens, a repeated heading in the file gets `-1`, `-2` (`Classes Lunar stores by name` is `#classes-lunar-stores-by-name`). The layer is part of the reference, so the same heading text in two layers is two different rules. An exception covers the whole section under the heading; `instead` says which part of it.
+- **`rule`** is `<layer>/<file>.md#<anchor>`: the source file in the layer (the paths `list` prints) and the heading anchor in it. A layer of a guideline source is prefixed: `acme:package/sso/auth.md#tokens` ([Guideline sources](#guideline-sources)). The anchor is the GitHub slug of an `##`, `###` or `####` heading: lower case, backticks and punctuation dropped, spaces become hyphens, a repeated heading in the file gets `-1`, `-2` (`Classes Lunar stores by name` is `#classes-lunar-stores-by-name`). The layer is part of the reference, so the same heading text in two layers is two different rules. An exception covers the whole section under the heading; `instead` says which part of it.
 - **`instead`** is one short sentence: what applies in this project in place of the rule.
 - **`adr`** is the path of the accepted ADR that records the decision and the owner's approval, relative to the project root.
 - **Rendering.** `sync` puts one paragraph directly under the overridden heading in the managed block, `> **Project exception:** <instead> ([ADR](../../<adr>))`, and a sentence in the index that explains the marker. A reader (or an agent) sees the override where the rule is, not in a separate list.
 - **Validation.** `check` exits 1 when the layer is not selected or the file is excluded, when the file or the heading no longer exists in the installed guidelines (a rename is the usual cause; the message lists the anchors of the file), when the ADR file does not exist, or when the entry is refused. `sync` prints the same problems as a warning, gives the entry no marker and still exits 0, so `composer update` never stops on them; an exception whose ADR is missing still gets its marker. A malformed entry (a missing key, a rule that does not match the pattern, an absolute or `..` ADR path, the same rule twice) stops both commands with a message.
-- **Never exceptable.** The security and production-data rules stay hard: every rule in a `security-and-data.md` (`general/security-and-data.md`: secrets, personal and client data, anonymized dumps, production access, authorization, sessions and accounts) is refused by `check`, and `sync` writes no marker for it. A guideline that is wrong for every project is changed in the guidelines, in its own pull request.
+- **Never exceptable.** The security and production-data rules stay hard: every rule in a `security-and-data.md` (in any layer of any source; `general/security-and-data.md`: secrets, personal and client data, anonymized dumps, production access, authorization, sessions and accounts) is refused by `check`, and `sync` writes no marker for it. A guideline that is wrong for every project is changed in the guidelines, in its own pull request.
 - **What is not a project exception.** A project rule that only adds to a guideline goes below the managed block. A rule the project wants to drop for good or does not use (a layer, a whole file) is the config's `layers` and `exclude`. An exception is for a rule that applies to the project and that the project deliberately does not follow.
 
 The principle (owner): rules are overridden per project, never silently. A **new project** follows the rules closely and asks before it deviates. A **migration of a running project** is lenient: the project is not rewritten to fit the templates, compromises are expected, and each kept deviation is recorded here with its ADR. The agent never decides an exception alone: it asks the person, who gets the owner's approval. The `esoul-guidelines` skill and the retrofit procedure of `esoul-project-lifecycle` describe the working steps; [documentation.md](resources/guidelines/general/documentation.md#project-exceptions) holds the rule that projects follow.
@@ -241,7 +297,7 @@ composer cs              # PHP-CS-Fixer dry run with esoul-cz/coding-standard; `
 bin/esoul-guidelines list
 ```
 
-Tests cover the risky logic only: H2 merge (including a replaced section), managed block replacement, drift refusal and `--force`, `check` (outdated vs drift), layer removal, the `init` repository-kind choice, and project exceptions (parsing, the anchors, the rendered marker, `check` for a missing rule, layer or ADR, the refusal of the security rules).
+Tests cover the risky logic only: H2 merge (including a replaced section), managed block replacement, drift refusal and `--force`, `check` (outdated vs drift), layer removal, the `init` repository-kind choice, and project exceptions (parsing, the anchors, the rendered marker, `check` for a missing rule, layer or ADR, the refusal of the security rules) and guideline sources (against real local git repositories in temporary directories, no network: copy, lock schema 2, offline `check`, no fetch on a second `sync`, `update` with its changelog lines, `source:add`, and every error).
 
 CI is the `Jenkinsfile`: one call to `phpPackagePipeline` from the eSoul Jenkins libraries. It runs composer validate, PHPStan, the code style
 check and composer audit, then PHPUnit on PHP 8.5, and PHPUnit on 8.4 and 8.6 after Composer re-resolved the dependencies on that version. A

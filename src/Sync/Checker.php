@@ -14,9 +14,10 @@ final class Checker
     }
 
     /**
-     * @param list<Target> $targets fresh render
+     * @param list<Target>|null $targets fresh render; null when the selected layers cannot be rendered (a source copy lacks
+     *                                   one), so only what needs no render is checked: the lock and the drift
      */
-    public function check(ProjectConfig $config, array $targets, ?Lock $lock): CheckResult {
+    public function check(ProjectConfig $config, ?array $targets, ?Lock $lock): CheckResult {
         if ($lock === null) {
             return new CheckResult([], [sprintf('%s not found. Run `esoul-guidelines sync` and commit the lock file.', Lock::FILE)]);
         }
@@ -35,6 +36,10 @@ final class Checker
             }
         }
 
+        if ($targets === null) {
+            return new CheckResult($drift, $lock->layers !== $config->layers || $lock->exclude !== $config->exclude ? [$this->layersDiffer()] : []);
+        }
+
         $produced = [];
         foreach ($targets as $target) {
             $produced[$target->path] = true;
@@ -51,9 +56,13 @@ final class Checker
             }
         }
         if ($lock->layers !== $config->layers || $lock->exclude !== $config->exclude) {
-            $outdated[] = sprintf('%s differs from the layers/exclusions recorded in %s. Run `esoul-guidelines sync`.', ProjectConfig::FILE, Lock::FILE);
+            $outdated[] = $this->layersDiffer();
         }
 
         return new CheckResult($drift, $outdated);
+    }
+
+    private function layersDiffer(): string {
+        return sprintf('%s differs from the layers/exclusions recorded in %s. Run `esoul-guidelines sync`.', ProjectConfig::FILE, Lock::FILE);
     }
 }

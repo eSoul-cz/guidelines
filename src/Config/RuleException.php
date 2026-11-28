@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Esoul\Guidelines\Config;
 
 use Esoul\Guidelines\GuidelinesException;
+use Esoul\Guidelines\Layer\LayerId;
 
 /**
  * A recorded project exception: one guideline rule the project deliberately does not follow, with what applies
@@ -15,12 +16,12 @@ final readonly class RuleException
     /** Source files named like this, in any layer, hold the security and production-data rules, which cannot be excepted. */
     public const string PROTECTED_FILE = 'security-and-data';
 
-    private const string RULE_PATTERN = '#^((?:general|[a-z0-9][a-z0-9-]*/[a-z0-9][a-z0-9-]*)/([a-z0-9][a-z0-9-]*)\.md)\#([^\s\#]+)$#u';
+    private const string RULE_PATTERN = '#^((?:[a-z0-9][a-z0-9-]*:)?(?:general|[a-z0-9][a-z0-9-]*/[a-z0-9][a-z0-9-]*)/([a-z0-9][a-z0-9-]*)\.md)\#([^\s\#]+)$#u';
 
     public function __construct(
-        /** `<layer>/<file>.md#<anchor>`, e.g. `package/lunar/architecture.md#money`. */
+        /** `<layer>/<file>.md#<anchor>`, e.g. `package/lunar/architecture.md#money`; a source layer is `acme:package/sso/auth.md#tokens`. */
         public string $rule,
-        /** Source file of the rule relative to the layers, e.g. `package/lunar/architecture.md`. */
+        /** Source file of the rule relative to the layers, e.g. `package/lunar/architecture.md` or `acme:package/sso/auth.md`. */
         public string $file,
         /** Output file name without `.md`, e.g. `architecture`. */
         public string $name,
@@ -48,7 +49,7 @@ final readonly class RuleException
         /** @var array{rule: string, instead: string, adr: string} $data */
         $rule = trim($data['rule']);
         if (preg_match(self::RULE_PATTERN, $rule, $m) !== 1) {
-            throw new GuidelinesException(sprintf('%s: rule "%s" must look like "<layer>/<file>.md#<heading-anchor>", for example "package/lunar/architecture.md#money".', $where, $rule));
+            throw new GuidelinesException(sprintf('%s: rule "%s" must look like "<layer>/<file>.md#<heading-anchor>" ("<source>:<layer>/<file>.md#<heading-anchor>" for a source), for example "package/lunar/architecture.md#money".', $where, $rule));
         }
 
         $adr = trim($data['adr']);
@@ -62,6 +63,11 @@ final readonly class RuleException
     /** @return array{rule: string, instead: string, adr: string} */
     public function toArray(): array {
         return ['rule' => $this->rule, 'instead' => $this->instead, 'adr' => $this->adr];
+    }
+
+    /** The guideline source of the rule (`acme` in `acme:package/sso/auth.md#tokens`); null for a bundled layer. */
+    public function source(): ?string {
+        return LayerId::source($this->file);
     }
 
     /** The security and production-data rules stay hard: no exception is accepted for them. */

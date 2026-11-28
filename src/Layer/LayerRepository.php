@@ -6,10 +6,14 @@ namespace Esoul\Guidelines\Layer;
 
 use Esoul\Guidelines\GuidelinesException;
 use Esoul\Guidelines\Markdown\Frontmatter;
+use Esoul\Guidelines\Source\CopyTree;
 
 /**
  * Reads guideline layers from `<baseDir>/<layer>/*.md` where a layer id is `general`
  * or `<group>/<name>` (`profile/internal`, `framework/laravel`, `package/filament`, ...).
+ *
+ * With a `$source` the repository reads the layers of a guideline source: every id it reports and accepts carries
+ * the prefix (`acme:package/sso`), and so do the layer and the path of its source files.
  */
 final class LayerRepository
 {
@@ -24,7 +28,10 @@ final class LayerRepository
     /** @var list<string>|null */
     private ?array $layers = null;
 
-    public function __construct(private readonly string $baseDir) {
+    public function __construct(
+        private readonly string $baseDir,
+        private readonly ?string $source = null,
+    ) {
     }
 
     public static function bundled(): self {
@@ -32,7 +39,7 @@ final class LayerRepository
     }
 
     /**
-     * @return list<string> `general` first, then `profile/*`, `framework/*`, `package/*`, then the rest.
+     * @return list<string> `general` first, then `profile/*`, `framework/*`, `package/*`, then the rest (prefixed with the source).
      */
     public function layers(): array {
         if ($this->layers !== null) {
@@ -59,6 +66,9 @@ final class LayerRepository
             default => 4,
         };
         usort($layers, static fn (string $a, string $b): int => [$rank($a), $a] <=> [$rank($b), $b]);
+        if (($source = $this->source) !== null) {
+            $layers = array_map(static fn (string $layer): string => LayerId::join($source, $layer), $layers);
+        }
 
         return $this->layers = $layers;
     }
@@ -71,14 +81,25 @@ final class LayerRepository
      * @return list<SourceFile> ordered by file name
      */
     public function files(string $layer): array {
-        if (preg_match(self::LAYER_PATTERN, $layer) !== 1 || ! $this->has($layer)) {
+        $bare = $this->source === null ? $layer : LayerId::bare($layer);
+        if (preg_match(self::LAYER_PATTERN, $bare) !== 1 || ! $this->has($layer)) {
             throw new GuidelinesException(sprintf('Unknown guideline layer "%s". Available: %s.', $layer, implode(', ', $this->layers())));
         }
 
-        $dir = $this->baseDir . '/' . $layer;
+        $dir = $this->baseDir . '/' . $bare;
+        if ($this->source !== null && ! CopyTree::isPlain($this->baseDir, $bare, true)) {
+            throw new GuidelinesException(sprintf('The layer directory of %s is a symlink or lies behind one; guideline sources are never read through symlinks.', $layer));
+        }
         $names = [];
         foreach (self::entries($dir) as $entry) {
-            if (str_ends_with($entry, '.md') && is_file($dir . '/' . $entry)) {
+            if ( ! str_ends_with($entry, '.md') || ! file_exists($dir . '/' . $entry)) {
+                continue;
+            }
+            // A guideline source is never read through a symlink: it could point anywhere on the machine.
+            if ($this->source !== null && ! CopyTree::isPlain($this->baseDir, $bare . '/' . $entry, false)) {
+                throw new GuidelinesException(sprintf('%s/%s is a symlink or lies behind one; guideline sources are never read through symlinks.', $layer, $entry));
+            }
+            if (is_file($dir . '/' . $entry)) {
                 $names[] = substr($entry, 0, -3);
             }
         }
@@ -114,7 +135,7 @@ final class LayerRepository
         }
         $dirs = [];
         foreach (self::entries($dir) as $entry) {
-            if ($entry[0] !== '.' && is_dir($dir . '/' . $entry)) {
+            if ($entry[0] !== '.' && is_dir($dir . '/' . $entry) && ($this->source === null || ! is_link($dir . '/' . $entry))) {
                 $dirs[] = $entry;
             }
         }

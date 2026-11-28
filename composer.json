@@ -6,8 +6,10 @@
     "bin": ["bin/esoul-guidelines"],
     "require": {
         "php": "^8.4",
+        "composer/semver": "^3.4",
         "symfony/console": "^7.4 || ^8.0",
         "symfony/filesystem": "^7.4 || ^8.0",
+        "symfony/process": "^7.4 || ^8.0",
         "symfony/yaml": "^7.4 || ^8.0"
     },
     "require-dev": {

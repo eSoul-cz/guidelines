@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Esoul\Guidelines\Sync;
 
 use Esoul\Guidelines\Config\ProjectConfig;
-use Esoul\Guidelines\GuidelinesException;
-use Esoul\Guidelines\Layer\LayerRepository;
+use Esoul\Guidelines\Layer\LayerCatalog;
 use Esoul\Guidelines\Layer\SourceFile;
 use Esoul\Guidelines\Markdown\Anchors;
 use Esoul\Guidelines\Merge\MergedGuideline;
@@ -25,7 +24,7 @@ final class Renderer
     private const string ADR_LINK_PREFIX = '../../';
 
     public function __construct(
-        private readonly LayerRepository $layers,
+        private readonly LayerCatalog $layers,
         private readonly Merger $merger = new Merger(),
     ) {
     }
@@ -36,9 +35,6 @@ final class Renderer
     public function render(ProjectConfig $config): array {
         $byName = [];
         foreach ($config->layers as $layer) {
-            if ( ! $this->layers->has($layer)) {
-                throw new GuidelinesException(sprintf('Unknown guideline layer "%s". Available: %s.', $layer, implode(', ', $this->layers->layers())));
-            }
             foreach ($this->layers->files($layer) as $file) {
                 if ( ! in_array($file->name, $config->exclude, true)) {
                     $byName[$file->name][] = $this->withExceptionMarkers($file, $config);
