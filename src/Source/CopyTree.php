@@ -104,7 +104,7 @@ final class CopyTree
     }
 
     /** Whether `$dir/$relative` is a regular file (or directory) with no symlink in `$dir` or on the way to it. */
-    private static function isPlain(string $dir, string $relative, bool $directory): bool {
+    public static function isPlain(string $dir, string $relative, bool $directory): bool {
         if (is_link($dir)) {
             return false;
         }

@@ -89,6 +89,9 @@ final readonly class SourceAudit
      * @return list<string>
      */
     private function manifestProblems(string $name, string $dir, string $copy): array {
+        if (is_link($dir) || is_link($dir . '/' . SourceManifest::FILE)) {
+            return [sprintf('%s: %s%s is a symlink; the copy is generated and never holds one: run `esoul-guidelines sync --force`.', $name, $copy, SourceManifest::FILE)];
+        }
         if ( ! is_file($dir . '/' . SourceManifest::FILE)) {
             return []; // reported as missing from the copy
         }

@@ -6,6 +6,7 @@ namespace Esoul\Guidelines\Layer;
 
 use Esoul\Guidelines\GuidelinesException;
 use Esoul\Guidelines\Markdown\Frontmatter;
+use Esoul\Guidelines\Source\CopyTree;
 
 /**
  * Reads guideline layers from `<baseDir>/<layer>/*.md` where a layer id is `general`
@@ -88,7 +89,14 @@ final class LayerRepository
         $dir = $this->baseDir . '/' . $bare;
         $names = [];
         foreach (self::entries($dir) as $entry) {
-            if (str_ends_with($entry, '.md') && is_file($dir . '/' . $entry)) {
+            if ( ! str_ends_with($entry, '.md') || ! file_exists($dir . '/' . $entry)) {
+                continue;
+            }
+            // A guideline source is never read through a symlink: it could point anywhere on the machine.
+            if ($this->source !== null && ! CopyTree::isPlain($this->baseDir, $bare . '/' . $entry, false)) {
+                throw new GuidelinesException(sprintf('%s/%s is a symlink or lies behind one; guideline sources are never read through symlinks.', $layer, $entry));
+            }
+            if (is_file($dir . '/' . $entry)) {
                 $names[] = substr($entry, 0, -3);
             }
         }

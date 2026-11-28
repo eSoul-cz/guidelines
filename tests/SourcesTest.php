@@ -537,6 +537,30 @@ final class SourcesTest extends SourceTestCase
         self::assertSame(1, $this->run_('check')->getStatusCode());
     }
 
+    public function test_check_and_list_never_read_a_symlinked_layer_file_or_manifest_of_the_copy(): void {
+        $this->run_('sync');
+        $secret = $this->project . '/../outside-secret.md';
+        file_put_contents($secret, "# Secret\n\n## Leak\n\nSECRET-CONTENT-7f3a\n");
+        $path = $this->project . '/' . self::COPY . '/package/sso/auth.md';
+        unlink($path);
+        symlink($secret, $path);
+
+        $check = $this->run_('check');
+        self::assertSame(1, $check->getStatusCode());
+        self::assertStringNotContainsString('SECRET-CONTENT-7f3a', $check->getDisplay());
+        $list = $this->run_('list');
+        self::assertStringNotContainsString('SECRET-CONTENT-7f3a', $list->getDisplay());
+        self::assertStringNotContainsString('SECRET-CONTENT-7f3a', (string) file_get_contents($this->project . '/docs/project_guidelines/auth.md'));
+
+        unlink($path);
+        copy($this->repo . '/guidelines/package/sso/auth.md', $path);
+        $manifest = $this->project . '/' . self::COPY . '/source.json';
+        $outsideManifest = $this->project . '/../outside-source.json';
+        rename($manifest, $outsideManifest);
+        symlink($outsideManifest, $manifest);
+        self::assertStringContainsString('source.json is a symlink', $this->run_('check')->getDisplay());
+    }
+
     public function test_a_failure_that_is_not_a_git_error_still_removes_the_clone(): void {
         $git = new class (new ProcessGitRunner()) implements GitRunner {
             public function __construct(private readonly GitRunner $inner) {
