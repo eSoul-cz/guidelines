@@ -12,6 +12,7 @@ Skills affected: none yet.
 
 - `framework/laravel/tools.md` › Known pitfalls links `architecture.md#persistence`, which exists (it linked a `#migrations` heading that does not) ([#29](https://github.com/eSoul-cz/guidelines/issues/29)). The LSR link to `architecture.md#migrations` resolves and stays.
 - `framework/laravel/tools.md` › Where tools run: the first setup copies `.env.example` to `.env` before `composer install`, because `package:discover` boots the application and an application that needs a variable from `.env` fails there otherwise ([#28](https://github.com/eSoul-cz/guidelines/issues/28)).
+- `framework/laravel/requests-and-validation.md` › Validation rules: only a date-time the user enters is converted to an instant; a calendar date or a time of day stays `DATE`/`TIME`, as `domain.md` › Time and dates already says ([#18](https://github.com/eSoul-cz/guidelines/issues/18)). No LSR file carries the sentence.
 
 ## [0.7.0] - 2026-11-28
 
