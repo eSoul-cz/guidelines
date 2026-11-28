@@ -15,6 +15,7 @@ Skills affected: none yet.
 - `framework/laravel/requests-and-validation.md` › Validation rules: only a date-time the user enters is converted to an instant; a calendar date or a time of day stays `DATE`/`TIME`, as `domain.md` › Time and dates already says ([#18](https://github.com/eSoul-cz/guidelines/issues/18)). No LSR file carries the sentence.
 - `package/laravel-inertia-react/frontend.md` › Component files: any module a lazy resolver loads by its default export (not only an Inertia page module) default-exports its component; the function stays named ([#27](https://github.com/eSoul-cz/guidelines/issues/27)).
 - `general/deployment.md` › Observability: OTLP over HTTP/protobuf (`:4318`) is the default, gRPC (`:4317`, needs the PHP `grpc` extension) is optional per project, and logs go to standard output and error, with OTLP logs optional ([#26](https://github.com/eSoul-cz/guidelines/issues/26)). No framework deployment text names gRPC.
+- Demo accounts ([#24](https://github.com/eSoul-cz/guidelines/issues/24)): `general/security-and-data.md` › Sessions and accounts, `general/deployment.md` › The production start entrypoint and `framework/laravel/deployment.md` › Migrations and seeders: on an instance that holds only invented data a demo seeder MAY create demo accounts whose passwords come from the stack's secrets, never from code. Every other seeder still creates no account outside local development.
 
 ## [0.7.0] - 2026-11-28
 
