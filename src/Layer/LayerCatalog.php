@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Esoul\Guidelines\Layer;
 
 use Esoul\Guidelines\GuidelinesException;
+use Esoul\Guidelines\Source\CopyTree;
 
 /**
  * Every layer a project can select: the bundled layers and the layers of its guideline sources, read from the
@@ -76,6 +77,9 @@ final class LayerCatalog
     private function repository(string $source): ?LayerRepository {
         if ( ! LayerId::isValidSource($source) || ! is_dir($this->dir($source))) {
             return null;
+        }
+        if ( ! isset($this->sourceDirs[$source]) && ! CopyTree::isPlain($this->root, self::COPY_DIR . '/' . $source, true)) {
+            throw new GuidelinesException(sprintf('%s/%s/ is a symlink or lies behind one; the copy of a guideline source is never read through symlinks.', self::COPY_DIR, $source));
         }
 
         return $this->sources[$source] ??= new LayerRepository($this->dir($source), $source);

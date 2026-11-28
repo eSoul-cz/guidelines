@@ -561,6 +561,29 @@ final class SourcesTest extends SourceTestCase
         self::assertStringContainsString('source.json is a symlink', $this->run_('check')->getDisplay());
     }
 
+    public function test_a_symlinked_layer_directory_of_the_copy_is_never_read(): void {
+        $this->run_('sync');
+        $layer = $this->project . '/' . self::COPY . '/package/sso';
+        $outside = $this->project . '/../outside-layer';
+        rename($layer, $outside);
+        symlink($outside, $layer);
+
+        self::assertSame(1, $this->run_('check')->getStatusCode());
+        self::assertSame(1, $this->run_('sync')->getStatusCode());
+    }
+
+    public function test_a_symlinked_parent_of_the_copy_is_never_read(): void {
+        $this->run_('sync');
+        $parent = $this->project . '/.esoul/guidelines';
+        $outside = $this->project . '/../outside-guidelines';
+        rename($parent, $outside);
+        symlink($outside, $parent);
+
+        $check = $this->run_('check');
+        self::assertSame(1, $check->getStatusCode());
+        self::assertStringContainsString('symlink', $check->getDisplay());
+    }
+
     public function test_a_failure_that_is_not_a_git_error_still_removes_the_clone(): void {
         $git = new class (new ProcessGitRunner()) implements GitRunner {
             public function __construct(private readonly GitRunner $inner) {

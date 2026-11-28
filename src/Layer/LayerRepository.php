@@ -87,6 +87,9 @@ final class LayerRepository
         }
 
         $dir = $this->baseDir . '/' . $bare;
+        if ($this->source !== null && ! CopyTree::isPlain($this->baseDir, $bare, true)) {
+            throw new GuidelinesException(sprintf('The layer directory of %s is a symlink or lies behind one; guideline sources are never read through symlinks.', $layer));
+        }
         $names = [];
         foreach (self::entries($dir) as $entry) {
             if ( ! str_ends_with($entry, '.md') || ! file_exists($dir . '/' . $entry)) {
@@ -132,7 +135,7 @@ final class LayerRepository
         }
         $dirs = [];
         foreach (self::entries($dir) as $entry) {
-            if ($entry[0] !== '.' && is_dir($dir . '/' . $entry)) {
+            if ($entry[0] !== '.' && is_dir($dir . '/' . $entry) && ($this->source === null || ! is_link($dir . '/' . $entry))) {
                 $dirs[] = $entry;
             }
         }
