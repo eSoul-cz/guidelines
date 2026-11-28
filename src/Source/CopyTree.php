@@ -9,21 +9,22 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 
-/** The files of a committed source copy (`.esoul/guidelines/<source>/`). */
+/**
+ * The files of a committed source copy (`.esoul/guidelines/<source>/`), or of a fetched checkout.
+ *
+ * A symlink is never followed: it could point anywhere on the machine (a private key, say) and put that file into the
+ * copy, which is committed. A symlink is no file here; {@see files()} lists it so that it is reported, and
+ * {@see symlinks()} finds the ones a checkout brings.
+ */
 final class CopyTree
 {
     /**
-     * @return list<string> paths relative to `$dir`, with `/`, sorted; empty when the directory does not exist
+     * @return list<string> paths (files and symlinks) relative to `$dir`, with `/`, sorted; empty when the directory does not exist
      */
     public static function files(string $dir): array {
-        if ( ! is_dir($dir)) {
-            return [];
-        }
-
         $files = [];
-        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS));
-        foreach ($iterator as $file) {
-            if ($file instanceof SplFileInfo && $file->isFile()) {
+        foreach (self::entries($dir) as $file) {
+            if ($file->isLink() || $file->isFile()) {
                 $files[] = substr($file->getPathname(), strlen($dir) + 1);
             }
         }
@@ -33,16 +34,34 @@ final class CopyTree
     }
 
     /**
+     * @return list<string> the symlinks anywhere under `$dir` (directories and files), relative to it, sorted
+     */
+    public static function symlinks(string $dir): array {
+        $links = [];
+        foreach (self::entries($dir) as $file) {
+            if ($file->isLink()) {
+                $links[] = substr($file->getPathname(), strlen($dir) + 1);
+            }
+        }
+        sort($links);
+
+        return $links;
+    }
+
+    /**
      * The `.md` files directly inside the layer directory `$dir/<layer>`, as paths relative to `$dir`.
      *
      * @return list<string>
      */
     public static function layerFiles(string $dir, string $layer): array {
+        if ( ! self::isPlain($dir, $layer, true)) {
+            return [];
+        }
         $scanned = scandir($dir . '/' . $layer);
         $names = $scanned === false ? [] : $scanned;
         $files = [];
         foreach ($names as $name) {
-            if (str_ends_with($name, '.md') && is_file($dir . '/' . $layer . '/' . $name)) {
+            if (str_ends_with($name, '.md') && self::isPlain($dir, $layer . '/' . $name, false)) {
                 $files[] = $layer . '/' . $name;
             }
         }
@@ -51,8 +70,9 @@ final class CopyTree
         return $files;
     }
 
+    /** The sha256 of a regular file; null when it is missing, is a symlink, or lies behind a symlinked directory. */
     public static function hash(string $dir, string $relative): ?string {
-        $hash = is_file($dir . '/' . $relative) ? hash_file('sha256', $dir . '/' . $relative) : false;
+        $hash = self::isPlain($dir, $relative, false) ? hash_file('sha256', $dir . '/' . $relative) : false;
 
         return $hash === false ? null : $hash;
     }
@@ -62,5 +82,40 @@ final class CopyTree
         $slash = strrpos($relative, '/');
 
         return $slash === false ? null : substr($relative, 0, $slash);
+    }
+
+    /**
+     * @return iterable<SplFileInfo> every entry under `$dir`; symlinked directories are listed, not entered
+     */
+    private static function entries(string $dir): iterable {
+        if (is_link($dir) || ! is_dir($dir)) {
+            return;
+        }
+
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::SELF_FIRST,
+        );
+        foreach ($iterator as $file) {
+            if ($file instanceof SplFileInfo) {
+                yield $file;
+            }
+        }
+    }
+
+    /** Whether `$dir/$relative` is a regular file (or directory) with no symlink in `$dir` or on the way to it. */
+    private static function isPlain(string $dir, string $relative, bool $directory): bool {
+        if (is_link($dir)) {
+            return false;
+        }
+        $path = $dir;
+        foreach (explode('/', $relative) as $part) {
+            $path .= '/' . $part;
+            if (is_link($path)) {
+                return false;
+            }
+        }
+
+        return $directory ? is_dir($path) : is_file($path);
     }
 }

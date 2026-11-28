@@ -27,12 +27,13 @@ final readonly class SourceAudit
         $problems = [];
 
         foreach ($config->sources as $name => $spec) {
+            $name = (string) $name; // PHP made an array key of a numeric name (`"123"`) an int
             $locked = $lock?->sources[$name] ?? null;
             $dir = LayerCatalog::copyDir($this->root, $name);
             $copy = LayerCatalog::COPY_DIR . '/' . $name . '/';
 
             foreach (LayerId::selected($config->layers, $name) as $layer) {
-                if (array_all(CopyTree::files($dir), static fn (string $relative): bool => CopyTree::layerOf($relative) !== $layer)) {
+                if (CopyTree::layerFiles($dir, $layer) === []) { // the same test as the catalog: a layer is a directory with a .md file
                     $problems[] = sprintf('%s: the selected layer "%s" is missing from the copy %s. Run `esoul-guidelines sync`.', $name, LayerId::join($name, $layer), $copy);
                 }
             }
@@ -53,6 +54,7 @@ final readonly class SourceAudit
         }
 
         foreach (array_keys($lock->sources ?? []) as $name) {
+            $name = (string) $name;
             if ( ! isset($config->sources[$name])) {
                 $problems[] = sprintf('%s: the source is in %s but no longer configured. Run `esoul-guidelines sync` to remove its copy.', $name, Lock::FILE);
             }

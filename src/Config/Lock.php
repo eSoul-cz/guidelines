@@ -24,7 +24,7 @@ final readonly class Lock
      * @param list<string> $layers
      * @param list<string> $exclude
      * @param array<string, LockEntry> $files output path (relative to the project root) => entry
-     * @param array<string, LockSource> $sources guideline source name => where its committed copy came from
+     * @param array<int|string, LockSource> $sources guideline source name (an int key for a numeric name) => where its committed copy came from
      */
     public function __construct(
         public string $packageVersion,
@@ -42,7 +42,8 @@ final readonly class Lock
         }
 
         try {
-            $data = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+            $json = (string) file_get_contents($path);
+            $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             throw new GuidelinesException(sprintf('%s is not valid JSON: %s', self::FILE, $e->getMessage()), 0, $e);
         }
@@ -70,13 +71,13 @@ final readonly class Lock
             self::stringList(array_key_exists('layers', $data) ? $data['layers'] : [], 'layers'),
             self::stringList(array_key_exists('exclude', $data) ? $data['exclude'] : [], 'exclude'),
             $files,
-            $schema >= 2 ? self::sources(array_key_exists('sources', $data) ? $data['sources'] : []) : [],
+            $schema >= 2 ? self::sources(array_key_exists('sources', $data) ? $data['sources'] : [], JsonObjectKeys::isObject($json, 'sources')) : [],
         );
     }
 
     /** @return array<string, LockSource> */
-    private static function sources(mixed $value): array {
-        if ( ! is_array($value) || ($value !== [] && array_is_list($value))) {
+    private static function sources(mixed $value, bool $isObject): array {
+        if ( ! is_array($value) || ($value !== [] && ! $isObject)) {
             throw new GuidelinesException(sprintf('%s: "sources" must be an object.', self::FILE));
         }
 
@@ -141,17 +142,23 @@ final readonly class Lock
         }
 
         $sources = [];
-        $names = array_keys($this->sources);
-        sort($names);
+        $names = array_map(strval(...), array_keys($this->sources)); // a name like "0" is an int key
+        sort($names, SORT_STRING);
         foreach ($names as $name) {
             $sources[$name] = $this->sources[$name]->toArray();
         }
 
-        return json_encode([
+        $document = [
             'schema_version' => self::SCHEMA_VERSION,
             'package_version' => $this->packageVersion,
             'layers' => $this->layers,
             'exclude' => $this->exclude,
-        ] + ($sources !== [] ? ['sources' => $sources] : []) + ['files' => $files], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
+        ];
+        if ($sources !== []) {
+            $document['sources'] = (object) $sources; // an object even for a source named "0"
+        }
+        $document['files'] = $files;
+
+        return json_encode($document, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
     }
 }

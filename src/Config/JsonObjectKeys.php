@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Esoul\Guidelines\Config;
 
 /**
- * `json_decode()` keeps the last of two equal keys of an object. This reads the keys of one member of the top-level
- * object of a document that is already known to be valid JSON, to find the repeated ones.
+ * What `json_decode($json, true)` loses about one member of the top-level object of a document that is already known
+ * to be valid JSON: the last of two equal keys is kept, and `{"0": …}` cannot be told from `[…]`.
  */
 final class JsonObjectKeys
 {
@@ -26,6 +26,13 @@ final class JsonObjectKeys
         $reader->value(0, false);
 
         return array_values(array_unique($reader->duplicates));
+    }
+
+    /** Whether `$member` is a JSON object (`{…}`), not an array: only the syntax tells `{"0": {…}}` from `[{…}]`. */
+    public static function isObject(string $json, string $member): bool {
+        $data = json_decode($json);
+
+        return is_object($data) && is_object(get_object_vars($data)[$member] ?? null);
     }
 
     private function value(int $depth, bool $collect): void {

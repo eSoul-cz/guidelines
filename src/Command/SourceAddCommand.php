@@ -74,7 +74,7 @@ final class SourceAddCommand extends SyncingCommand
             $io->listing($layers);
         }
 
-        $updated = ProjectConfig::create([...$config->layers, ...$selected], $config->exclude, $config->exceptions, [...$config->sources, $name => new SourceSpec($name, $url, $ref)]);
+        $updated = ProjectConfig::create([...$config->layers, ...$selected], $config->exclude, $config->exceptions, $config->sources + [$name => new SourceSpec($name, $url, $ref)]);
         $updated->save($root);
         $io->success(sprintf('Added the source "%s" to %s%s.', $name, ProjectConfig::FILE, $selected === [] ? '' : ' with the layers ' . implode(', ', $selected)));
 

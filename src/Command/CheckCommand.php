@@ -11,7 +11,6 @@ use Esoul\Guidelines\Layer\LayerId;
 use Esoul\Guidelines\Layer\LayerRepository;
 use Esoul\Guidelines\Source\SourceAudit;
 use Esoul\Guidelines\Sync\Checker;
-use Esoul\Guidelines\Sync\CheckResult;
 use Esoul\Guidelines\Sync\ExceptionAudit;
 use Esoul\Guidelines\Sync\Renderer;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -33,10 +32,8 @@ final class CheckCommand extends ProjectCommand
         // Offline: the sources are read from their committed copies, never fetched.
         $sourceProblems = new SourceAudit($root, $this->packageVersion)->problems($config, $lock);
         $renderable = array_all($config->layers, static fn (string $layer): bool => LayerId::source($layer) === null || $catalog->has($layer));
-        $result = $renderable
-            ? new Checker($root)->check($config, new Renderer($catalog)->render($config), $lock)
-            : new CheckResult([], []);
-        $result = $result
+        // A layer a copy lacks cannot be rendered (the audit reports it); the lock and the drift are still checked.
+        $result = new Checker($root)->check($config, $renderable ? new Renderer($catalog)->render($config) : null, $lock)
             ->withExceptions(new ExceptionAudit($catalog, $root)->problems($config))
             ->withSources($sourceProblems);
 

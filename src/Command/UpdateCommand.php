@@ -30,6 +30,6 @@ final class UpdateCommand extends SyncingCommand
             throw new GuidelinesException(sprintf('No guideline source is configured in %s. Add one with `esoul-guidelines source:add <url>`.', ProjectConfig::FILE));
         }
 
-        return $this->synchronize($root, $io, (bool) $input->getOption('dry-run'), (bool) $input->getOption('force'), $names === [] ? array_keys($config->sources) : $names);
+        return $this->synchronize($root, $io, (bool) $input->getOption('dry-run'), (bool) $input->getOption('force'), $names === [] ? array_map(strval(...), array_keys($config->sources)) : $names);
     }
 }

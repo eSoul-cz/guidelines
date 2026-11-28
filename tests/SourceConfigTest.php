@@ -6,6 +6,7 @@ namespace Esoul\Guidelines\Tests;
 
 use Esoul\Guidelines\Config\JsonObjectKeys;
 use Esoul\Guidelines\Config\Lock;
+use Esoul\Guidelines\Config\LockSource;
 use Esoul\Guidelines\Config\ProjectConfig;
 use Esoul\Guidelines\GuidelinesException;
 use Esoul\Guidelines\Layer\LayerRepository;
@@ -163,6 +164,25 @@ final class SourceConfigTest extends TestCase
         self::assertSame('abc', $lock->sources['acme']->commit);
         self::assertSame(['source.json' => 'h'], $lock->sources['acme']->files);
         self::assertStringContainsString('"commit": "abc"', $lock->toJson());
+    }
+
+    public function test_a_source_named_zero_is_written_and_read_as_an_object_in_the_config_and_the_lock(): void {
+        $this->config('{"layers": ["general", "0:package/sso"], "sources": {"0": {"url": "u"}}}');
+
+        $config = ProjectConfig::load($this->project);
+        $config->save($this->project);
+
+        self::assertStringContainsString('"sources": {', $this->read('esoul-guidelines.json'));
+        self::assertSame('u', ProjectConfig::load($this->project)->sources[0]->url);
+
+        $lock = new Lock('dev', ['general'], [], [], ['0' => new LockSource('u', 'main', 'abc', ['source.json' => 'h'])]);
+        file_put_contents($this->project . '/esoul-guidelines.lock', $lock->toJson());
+
+        self::assertStringContainsString('"sources": {', $this->read('esoul-guidelines.lock'));
+        self::assertSame('abc', Lock::load($this->project)?->sources[0]->commit);
+
+        $this->config('{"sources": [{"url": "u"}]}');
+        $this->assertFailsWith('must be an object', fn () => ProjectConfig::load($this->project));
     }
 
     public function test_init_keeps_the_sources_and_the_source_layers(): void {

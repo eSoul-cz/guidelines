@@ -19,7 +19,7 @@ final class LayerCatalog
     private array $sources = [];
 
     /**
-     * @param array<string, string> $sourceDirs source name => directory with the layers, instead of the committed copy
+     * @param array<int|string, string> $sourceDirs source name => directory with the layers, instead of the committed copy
      */
     public function __construct(
         private readonly LayerRepository $bundled,

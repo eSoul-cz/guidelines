@@ -103,4 +103,17 @@ final class SourceAddCommandTest extends SourceTestCase
         self::assertSame(1, $tester->getStatusCode());
         self::assertStringContainsString('esoul-guidelines init', $this->flat($tester->getDisplay()));
     }
+
+    public function test_adding_a_source_keeps_the_key_of_a_source_with_a_numeric_name(): void {
+        $numeric = $this->sourceRepo('123');
+        $this->config(json_encode(['sources' => ['123' => ['url' => $numeric]], 'layers' => ['general', '123:package/sso']], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
+
+        $tester = $this->run_('source:add', ['url' => $this->repo]);
+
+        self::assertSame(0, $tester->getStatusCode(), $tester->getDisplay());
+        $sources = $this->json('esoul-guidelines.json')['sources'];
+        self::assertIsArray($sources);
+        self::assertSame(['123', 'acme'], array_map(strval(...), array_keys($sources)));
+        self::assertSame(0, $this->run_('check')->getStatusCode());
+    }
 }

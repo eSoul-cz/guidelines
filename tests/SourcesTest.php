@@ -7,8 +7,11 @@ namespace Esoul\Guidelines\Tests;
 use Esoul\Guidelines\GuidelinesException;
 use Esoul\Guidelines\Source\CopyTree;
 use Esoul\Guidelines\Source\GitRunner;
+use Esoul\Guidelines\Source\ProcessGitRunner;
+use Esoul\Guidelines\Source\SourceFetcher;
 use Esoul\Guidelines\Sync\ManagedBlock;
 use LogicException;
+use RuntimeException;
 use Symfony\Component\Filesystem\Filesystem;
 
 final class SourcesTest extends SourceTestCase
@@ -485,6 +488,209 @@ final class SourcesTest extends SourceTestCase
         self::assertSame(0, $after->getStatusCode());
         self::assertMatchesRegularExpression('/\*\s+acme:package\/sso\s+auth\.md, testing\.md/', $after->getDisplay());
         self::assertStringNotContainsString('acme:package/billing', $after->getDisplay(), 'only the copied layers are known');
+    }
+
+    public function test_check_fails_on_a_selected_layer_without_an_md_file_and_still_checks_the_lock_and_the_drift(): void {
+        $this->run_('sync');
+        $copy = $this->project . '/' . self::COPY;
+        $lock = (string) file_get_contents($this->project . '/esoul-guidelines.lock');
+
+        // Only a non-markdown file is left of the layer: it is no layer, so it cannot be rendered.
+        new Filesystem()->remove($copy . '/package');
+        mkdir($copy . '/package/sso', 0777, true);
+        file_put_contents($copy . '/package/sso/notes.txt', 'notes');
+        $auth = $this->project . '/docs/project_guidelines/auth.md';
+        file_put_contents($auth, str_replace('5 minutes', '50 minutes', (string) file_get_contents($auth)));
+
+        $withLock = $this->flat($this->run_('check')->getDisplay());
+        self::assertStringContainsString('the selected layer "acme:package/sso" is missing from the copy', $withLock);
+        self::assertStringContainsString('managed block "' . $this->lock()->files['docs/project_guidelines/auth.md']->block . '" was edited locally', $withLock, 'the drift is still checked');
+
+        unlink($this->project . '/esoul-guidelines.lock');
+        $withoutLock = $this->run_('check');
+        self::assertSame(1, $withoutLock->getStatusCode());
+        self::assertStringContainsString('esoul-guidelines.lock not found', $this->flat($withoutLock->getDisplay()));
+        self::assertNotSame('', $lock);
+    }
+
+    public function test_a_source_layer_that_is_a_symlink_in_the_repository_is_refused_and_no_clone_is_left(): void {
+        symlink('/etc/hosts', $this->repo . '/guidelines/package/sso/tokens.md');
+        $this->gitIn($this->repo, ['add', '--all']);
+        $this->gitIn($this->repo, ['-c', 'user.name=Test', '-c', 'user.email=test@example.com', '-c', 'commit.gpgsign=false', 'commit', '--quiet', '-m', 'Link']);
+        $before = $this->tempClones();
+
+        $sync = $this->run_('sync');
+
+        self::assertSame(1, $sync->getStatusCode());
+        self::assertStringContainsString('symbolic links (guidelines/package/sso/tokens.md)', $this->flat($sync->getDisplay()));
+        self::assertDirectoryDoesNotExist($this->project . '/.esoul');
+        self::assertSame($before, $this->tempClones());
+    }
+
+    public function test_a_symlink_in_the_copy_is_never_read_and_check_fails(): void {
+        $this->run_('sync');
+        $path = $this->project . '/' . self::COPY . '/package/sso/auth.md';
+        unlink($path);
+        symlink($this->repo . '/guidelines/package/sso/auth.md', $path);
+
+        self::assertNull(CopyTree::hash($this->project . '/' . self::COPY, 'package/sso/auth.md'));
+        self::assertSame(1, $this->run_('check')->getStatusCode());
+    }
+
+    public function test_a_failure_that_is_not_a_git_error_still_removes_the_clone(): void {
+        $git = new class (new ProcessGitRunner()) implements GitRunner {
+            public function __construct(private readonly GitRunner $inner) {
+            }
+
+            public function run(array $arguments, ?string $cwd = null): string {
+                if (($arguments[0] ?? '') === 'checkout') {
+                    throw new RuntimeException('timed out');
+                }
+
+                return $this->inner->run($arguments, $cwd);
+            }
+        };
+        $before = $this->tempClones();
+
+        try {
+            new SourceFetcher($git)->fetch($this->repo, 'main');
+            self::fail('The fetch should have failed.');
+        } catch (RuntimeException $e) {
+            self::assertSame('timed out', $e->getMessage());
+        }
+
+        self::assertSame($before, $this->tempClones());
+    }
+
+    public function test_git_ignores_the_repository_variables_of_the_parent_process(): void {
+        putenv('GIT_DIR=' . $this->tmp . '/not-a-repository');
+        try {
+            $head = new ProcessGitRunner()->run(['rev-parse', 'HEAD'], $this->repo);
+        } finally {
+            putenv('GIT_DIR');
+        }
+
+        self::assertSame(trim($this->gitIn($this->repo, ['rev-parse', 'HEAD'])), trim($head));
+    }
+
+    public function test_pruning_does_not_walk_into_a_symlinked_directory_outside_the_copy(): void {
+        $this->configWithSource($this->repo, '"acme:package/sso", "acme:package/billing"');
+        $this->run_('sync');
+        $outside = $this->tmp . '/outside';
+        mkdir($outside . '/empty', 0777, true);
+        symlink($outside, $this->project . '/.esoul/guidelines/link');
+        $this->configWithSource($this->repo);
+
+        $sync = $this->run_('sync');
+
+        self::assertSame(0, $sync->getStatusCode(), $sync->getDisplay());
+        self::assertDirectoryDoesNotExist($this->project . '/' . self::COPY . '/package/billing');
+        self::assertDirectoryExists($outside . '/empty');
+    }
+
+    public function test_a_changed_ref_does_not_discard_a_hand_edited_copy_but_a_clean_one_follows_it(): void {
+        $this->run_('sync');
+        $this->gitIn($this->repo, ['tag', 'v1']);
+        $path = $this->project . '/' . self::COPY . '/package/sso/auth.md';
+        $original = (string) file_get_contents($path);
+        file_put_contents($path, $original . "\nHand edit.\n");
+        $this->configWithSource($this->repo, '"acme:package/sso"', 'v1');
+
+        $refused = $this->run_('sync');
+
+        self::assertSame(1, $refused->getStatusCode());
+        self::assertStringContainsString('was edited by hand', $this->flat($refused->getDisplay()));
+        self::assertSame($original . "\nHand edit.\n", file_get_contents($path));
+
+        file_put_contents($path, $original);
+        $clean = $this->run_('sync');
+
+        self::assertSame(0, $clean->getStatusCode(), $clean->getDisplay());
+        self::assertSame('v1', $this->lock()->sources['acme']->ref);
+        self::assertSame(0, $this->run_('check')->getStatusCode());
+    }
+
+    public function test_a_trusted_copy_whose_manifest_needs_a_newer_installer_is_an_error_like_in_check(): void {
+        $this->sourceRepoConstraint('^0.8');
+        $this->installerVersion = 'dev';
+        self::assertSame(0, $this->run_('sync')->getStatusCode());
+        $calls = $this->recorder->calls;
+
+        $this->installerVersion = '0.7.0';
+        $sync = $this->run_('sync');
+
+        self::assertSame(1, $sync->getStatusCode());
+        self::assertStringContainsString('needs esoul-guidelines "^0.8"', $this->flat($sync->getDisplay()));
+        self::assertSame($calls, $this->recorder->calls, 'the copy was judged without git');
+    }
+
+    public function test_update_at_the_same_commit_after_deselecting_a_layer_leaves_a_lock_without_its_files(): void {
+        $this->configWithSource($this->repo, '"acme:package/sso", "acme:package/billing"');
+        $this->run_('sync');
+        $this->configWithSource($this->repo);
+
+        $update = $this->run_('update');
+
+        self::assertSame(0, $update->getStatusCode(), $update->getDisplay());
+        self::assertDirectoryDoesNotExist($this->project . '/' . self::COPY . '/package/billing');
+        self::assertArrayNotHasKey('package/billing/invoices.md', $this->lock()->sources['acme']->files);
+        self::assertSame(0, $this->run_('check')->getStatusCode());
+    }
+
+    public function test_removing_a_source_refuses_a_copy_with_edited_or_added_files_until_forced(): void {
+        $this->run_('sync');
+        $copy = $this->project . '/' . self::COPY;
+        file_put_contents($copy . '/package/sso/auth.md', "# Edited\n");
+        file_put_contents($copy . '/package/sso/mine.md', "# Mine\n");
+        $this->config('{"layers": ["general", "framework/laravel"]}');
+
+        $refused = $this->run_('sync');
+
+        self::assertSame(1, $refused->getStatusCode());
+        $message = $this->flat($refused->getDisplay());
+        self::assertStringContainsString(self::COPY . '/package/sso/auth.md was edited by hand', $message);
+        self::assertStringContainsString(self::COPY . '/package/sso/mine.md was added by hand', $message);
+        self::assertFileExists($copy . '/package/sso/mine.md');
+
+        $forced = $this->run_('sync', ['--force' => true]);
+
+        self::assertSame(0, $forced->getStatusCode(), $forced->getDisplay());
+        self::assertDirectoryDoesNotExist($copy);
+    }
+
+    public function test_deselecting_a_layer_refuses_when_one_of_its_copied_files_was_edited(): void {
+        $this->configWithSource($this->repo, '"acme:package/sso", "acme:package/billing"');
+        $this->run_('sync');
+        $invoices = $this->project . '/' . self::COPY . '/package/billing/invoices.md';
+        file_put_contents($invoices, "# Mine\n");
+        $this->configWithSource($this->repo);
+
+        $sync = $this->run_('sync');
+
+        self::assertSame(1, $sync->getStatusCode());
+        self::assertStringContainsString(self::COPY . '/package/billing/invoices.md was edited by hand', $this->flat($sync->getDisplay()));
+        self::assertSame("# Mine\n", file_get_contents($invoices));
+    }
+
+    public function test_a_source_with_a_numeric_name_syncs_checks_and_updates(): void {
+        new Filesystem()->remove($this->repo);
+        $this->repo = $this->sourceRepo('123');
+        $this->config(json_encode(['sources' => ['123' => ['url' => $this->repo]], 'layers' => ['general', '123:package/sso']], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
+
+        $sync = $this->run_('sync');
+        self::assertSame(0, $sync->getStatusCode(), $sync->getDisplay());
+        self::assertSame(0, $this->run_('check')->getStatusCode());
+        self::assertSame(0, $this->run_('update')->getStatusCode());
+        self::assertSame(0, $this->run_('update', ['source' => ['123']])->getStatusCode());
+        self::assertSame(0, $this->run_('list')->getStatusCode());
+        self::assertSame(['package/sso/auth.md', 'package/sso/testing.md', 'source.json'], CopyTree::files($this->project . '/.esoul/guidelines/123'));
+    }
+
+    /** @return list<string> the temporary clones that fetching leaves behind */
+    private function tempClones(): array {
+        $found = glob(sys_get_temp_dir() . '/esoul-guidelines-source-*');
+
+        return $found === false ? [] : $found;
     }
 
     private function sourceRepoConstraint(string $installer): void {

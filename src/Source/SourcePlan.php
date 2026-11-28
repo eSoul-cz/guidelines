@@ -16,13 +16,13 @@ use Symfony\Component\Filesystem\Filesystem;
 final readonly class SourcePlan
 {
     /**
-     * @param array<string, string> $dirs source name => directory to render its layers from (fetched sources only)
-     * @param array<string, LockSource> $lockSources the lock records after the sync
+     * @param array<int|string, string> $dirs source name => directory to render its layers from (fetched sources only)
+     * @param array<int|string, LockSource> $lockSources the lock records after the sync
      * @param list<string> $lines what to tell the user, one line each
      * @param list<string> $edited copied files edited or added by hand, which the sync would overwrite
-     * @param array<string, list<string>> $changelog source name => lines its CHANGELOG.md gained (update only)
-     * @param array<string, Checkout> $checkouts source name => the checkout to copy from
-     * @param array<string, list<string>> $prune source name => copied files of deselected layers to delete
+     * @param array<int|string, list<string>> $changelog source name => lines its CHANGELOG.md gained (update only)
+     * @param array<int|string, Checkout> $checkouts source name => the checkout to copy from
+     * @param array<int|string, list<string>> $prune source name => copied files of deselected layers to delete
      * @param list<string> $removed sources that are no longer configured
      */
     public function __construct(
@@ -47,7 +47,7 @@ final readonly class SourcePlan
         $fs = new Filesystem();
 
         foreach ($this->checkouts as $name => $checkout) {
-            $dir = LayerCatalog::copyDir($this->root, $name);
+            $dir = LayerCatalog::copyDir($this->root, (string) $name); // a numeric source name is an int array key
             $fs->remove($dir);
             foreach (array_keys($this->lockSources[$name]->files) as $relative) {
                 $fs->copy($checkout->guidelinesDir() . '/' . $relative, $dir . '/' . $relative, true);
@@ -55,7 +55,7 @@ final readonly class SourcePlan
         }
         foreach ($this->prune as $name => $files) {
             foreach ($files as $relative) {
-                $fs->remove(LayerCatalog::copyDir($this->root, $name) . '/' . $relative);
+                $fs->remove(LayerCatalog::copyDir($this->root, (string) $name) . '/' . $relative);
             }
         }
         foreach ($this->removed as $name) {
@@ -75,13 +75,13 @@ final readonly class SourcePlan
     }
 
     private function removeEmptyDirs(string $dir): void {
-        if ( ! is_dir($dir)) {
-            return;
+        if (is_link($dir) || ! is_dir($dir)) {
+            return; // a symlink may lead out of the copy: its target is none of our business
         }
         $scanned = scandir($dir);
         $entries = $scanned === false ? [] : $scanned;
         foreach ($entries as $entry) {
-            if ($entry !== '.' && $entry !== '..' && is_dir($dir . '/' . $entry)) {
+            if ($entry !== '.' && $entry !== '..') {
                 $this->removeEmptyDirs($dir . '/' . $entry);
             }
         }

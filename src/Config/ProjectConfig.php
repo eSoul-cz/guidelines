@@ -21,7 +21,7 @@ final readonly class ProjectConfig
      * @param list<string> $layers `general` first, then the project's layers in config order
      * @param list<string> $exclude output file names without `.md`
      * @param list<RuleException> $exceptions recorded project exceptions to guideline rules
-     * @param array<string, SourceSpec> $sources guideline sources by name, in config order; their layers are `<source>:<layer>`
+     * @param array<int|string, SourceSpec> $sources guideline sources by name (an int key for a numeric name like "123"), in config order; their layers are `<source>:<layer>`
      */
     public function __construct(
         public array $layers,
@@ -35,7 +35,7 @@ final readonly class ProjectConfig
      * @param list<string> $layers
      * @param list<string> $exclude
      * @param list<RuleException> $exceptions
-     * @param array<string, SourceSpec> $sources
+     * @param array<int|string, SourceSpec> $sources
      */
     public static function create(array $layers, array $exclude = [], array $exceptions = [], array $sources = []): self {
         $layers = array_values(array_unique([LayerRepository::GENERAL, ...$layers]));
@@ -73,7 +73,7 @@ final readonly class ProjectConfig
             throw new GuidelinesException(sprintf('"layers" and "exclude" in %s must be lists of strings.', self::FILE));
         }
 
-        $sources = self::parseSources($data['sources'] ?? [], JsonObjectKeys::duplicates($json, 'sources'));
+        $sources = self::parseSources($data['sources'] ?? [], JsonObjectKeys::duplicates($json, 'sources'), JsonObjectKeys::isObject($json, 'sources'));
         $exceptions = self::parseExceptions($data['exceptions'] ?? []);
         self::assertKnownSources($layers, $exceptions, $sources);
 
@@ -82,13 +82,14 @@ final readonly class ProjectConfig
 
     /**
      * @param list<string> $duplicates keys that the `sources` object repeats
+     * @param bool $isObject whether `sources` is written as a JSON object (a source named "0" makes a PHP list of it)
      * @return array<string, SourceSpec>
      */
-    private static function parseSources(mixed $value, array $duplicates): array {
+    private static function parseSources(mixed $value, array $duplicates, bool $isObject): array {
         if ($duplicates !== []) {
             throw new GuidelinesException(sprintf('"sources" in %s lists the source "%s" more than once. Two sources cannot have the same name.', self::FILE, $duplicates[0]));
         }
-        if ( ! is_array($value) || ($value !== [] && array_is_list($value))) {
+        if ( ! is_array($value) || ($value !== [] && ! $isObject)) {
             throw new GuidelinesException(sprintf('"sources" in %s must be an object: {"<name>": {"url": "...", "ref": "main"}}.', self::FILE));
         }
 
@@ -103,7 +104,7 @@ final readonly class ProjectConfig
     /**
      * @param list<string> $layers
      * @param list<RuleException> $exceptions
-     * @param array<string, SourceSpec> $sources
+     * @param array<int|string, SourceSpec> $sources
      */
     private static function assertKnownSources(array $layers, array $exceptions, array $sources): void {
         foreach ($layers as $layer) {
@@ -145,7 +146,7 @@ final readonly class ProjectConfig
 
     public function save(string $root): void {
         $data = [
-            'sources' => array_map(static fn (SourceSpec $s): array => $s->toArray(), $this->sources),
+            'sources' => (object) array_map(static fn (SourceSpec $s): array => $s->toArray(), $this->sources), // an object even for a source named "0"
             'layers' => $this->layers,
             'exclude' => $this->exclude,
             'exceptions' => array_map(static fn (RuleException $e): array => $e->toArray(), $this->exceptions),

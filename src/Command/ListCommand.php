@@ -21,6 +21,7 @@ final class ListCommand extends ProjectCommand
         $layers = $catalog->layers();
         $missingCopies = [];
         foreach (array_keys($config->sources ?? []) as $source) {
+            $source = (string) $source; // a numeric name is an int array key
             if ($catalog->hasCopy($source)) {
                 $layers = [...$layers, ...$catalog->sourceLayers($source)];
             } else {

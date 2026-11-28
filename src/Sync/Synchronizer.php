@@ -73,7 +73,7 @@ final class Synchronizer
      * Applies the plan. Blocking changes are written too; the caller decides (`--force`) beforehand.
      *
      * @param list<Target> $targets
-     * @param array<string, LockSource> $sources the lock records of the guideline sources
+     * @param array<int|string, LockSource> $sources the lock records of the guideline sources
      */
     public function apply(Plan $plan, array $targets, ProjectConfig $config, array $sources = []): void {
         foreach ($plan->changes as $change) {

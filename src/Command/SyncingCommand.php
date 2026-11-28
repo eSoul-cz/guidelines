@@ -126,7 +126,7 @@ abstract class SyncingCommand extends ProjectCommand
     }
 
     /**
-     * @param array<string, list<string>> $changelog source name => lines its CHANGELOG.md gained
+     * @param array<int|string, list<string>> $changelog source name => lines its CHANGELOG.md gained
      */
     private function printChangelog(SymfonyStyle $io, array $changelog): void {
         foreach ($changelog as $name => $lines) {
