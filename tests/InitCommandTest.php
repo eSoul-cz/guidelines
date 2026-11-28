@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Esoul\Guidelines\Tests;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+
 final class InitCommandTest extends TestCase
 {
     public function test_no_interaction_accepts_the_detected_stack_and_skips_layers_without_a_source(): void {
@@ -114,6 +116,47 @@ final class InitCommandTest extends TestCase
             ['layers' => ['general', 'framework/laravel', 'package/mutation-testing', 'package/test-evidence']],
             json_decode($this->read('esoul-guidelines.json'), true),
         );
+    }
+
+    /** @return iterable<string, array{0: string, 1: list<string>}> */
+    public static function databaseEngines(): iterable {
+        yield 'mariadb' => ["APP_NAME=x\nDB_CONNECTION=mariadb\n", ['package/mariadb']];
+        yield 'mysql' => ["DB_CONNECTION=mysql\n", ['package/mariadb']];
+        yield 'quoted and commented' => ["DB_CONNECTION=\"mysql\" # the engine\n", ['package/mariadb']];
+        yield 'pgsql' => ["export DB_CONNECTION='pgsql'\n", ['package/postgres']];
+        yield 'the last setting wins' => ["DB_CONNECTION=pgsql\nDB_CONNECTION=mariadb\n", ['package/mariadb']];
+        yield 'sqlite only' => ["DB_CONNECTION=sqlite\n", []];
+        yield 'commented out' => ["# DB_CONNECTION=pgsql\n", []];
+        yield 'no setting' => ["APP_NAME=x\n", []];
+    }
+
+    /** @param list<string> $engine */
+    #[DataProvider('databaseEngines')]
+    public function test_detects_the_database_engine_layer_from_the_env_example(string $env, array $engine): void {
+        $this->seedLayers();
+        $this->layer('package/mariadb', 'architecture.md', "# Project guidelines - Architecture\n");
+        $this->layer('package/postgres', 'architecture.md', "# Project guidelines - Architecture\n");
+        file_put_contents($this->project . '/composer.json', '{"require":{"laravel/framework":"^13.0"}}');
+        file_put_contents($this->project . '/.env.example', $env);
+
+        $tester = $this->run_('init');
+
+        self::assertSame(0, $tester->getStatusCode());
+        self::assertSame(
+            ['layers' => ['general', 'framework/laravel', ...$engine]],
+            json_decode($this->read('esoul-guidelines.json'), true),
+        );
+    }
+
+    public function test_the_database_engine_is_not_detected_without_laravel(): void {
+        $this->seedLayers();
+        $this->layer('package/mariadb', 'architecture.md', "# Project guidelines - Architecture\n");
+        file_put_contents($this->project . '/composer.json', '{"require":{"lsr/core":"^0.7"}}');
+        file_put_contents($this->project . '/.env.example', "DB_CONNECTION=mariadb\n");
+
+        $this->run_('init');
+
+        self::assertSame(['layers' => ['general']], json_decode($this->read('esoul-guidelines.json'), true));
     }
 
     public function test_detects_the_lsr_cqrs_layer_after_the_framework(): void {

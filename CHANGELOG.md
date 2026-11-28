@@ -4,9 +4,9 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
-Engine layers, a fix-forward rule for rollbacks, OTLP over HTTP, demo accounts, and several small corrections from the Forecio adoption. Layers changed: `general`, `framework/laravel`, `framework/lsr`, `framework/astro`, `package/laravel-inertia-react`, new `package/mariadb` and `package/postgres`.
+Engine layers, a fix-forward rule for rollbacks, OTLP over HTTP, demo accounts, and several small corrections from the Forecio adoption. Layers changed: `general` (`deployment.md`, `security-and-data.md`), `framework/laravel` (architecture, deployment, requests-and-validation, testing, tools), `package/laravel-inertia-react`; new `package/mariadb` and `package/postgres`. **A minor release** (new layers; `init` detects them): templates and projects raise the constraint to `^0.8` (`composer require --dev esoul-cz/guidelines:^0.8 -W`).
 
-Skills affected: none yet.
+Skills affected: `esoul-project-lifecycle` (`references/stacks/laravel.md` lists the package layers a Laravel project selects: add the engine layer), `esoul-review` (`references/review-passes.md` repeats the MariaDB and MySQL migration pitfalls; read it against `package/mariadb`), `esoul-guidelines` (layer and detection list in `SKILL.md`: the engine layer from `DB_CONNECTION`). None changes behaviour.
 
 ### Fixed
 
@@ -17,6 +17,16 @@ Skills affected: none yet.
 - `general/deployment.md` › Observability: OTLP over HTTP/protobuf (`:4318`) is the default, gRPC (`:4317`, needs the PHP `grpc` extension) is optional per project, and logs go to standard output and error, with OTLP logs optional ([#26](https://github.com/eSoul-cz/guidelines/issues/26)). No framework deployment text names gRPC.
 - Demo accounts ([#24](https://github.com/eSoul-cz/guidelines/issues/24)): `general/security-and-data.md` › Sessions and accounts, `general/deployment.md` › The production start entrypoint and `framework/laravel/deployment.md` › Migrations and seeders: on an instance that holds only invented data a demo seeder MAY create demo accounts whose passwords come from the stack's secrets, never from code. Every other seeder still creates no account outside local development.
 - `general/deployment.md` › Environments and releases › Rollback: a rollback is safe only while the previous release can read what the current one wrote; when it cannot, fix forward ([#31](https://github.com/eSoul-cz/guidelines/issues/31), closed as not planned beyond this sentence).
+
+### Added
+
+- Engine layers ([#30](https://github.com/eSoul-cz/guidelines/issues/30)): `package/mariadb` (MariaDB and MySQL) and `package/postgres` hold what depends on the production database engine of a Laravel project. `package/mariadb`: a `MariaDB and MySQL` section in `architecture.md` (names within 64 characters, a native `ENUM` for a column with more than two values), the limit in `testing.md` › Database in tests, and the strict-mode (`timestamp()` without `nullable()` or a default, error 1067) and `ONLY_FULL_GROUP_BY` pitfalls in `tools.md` › Known pitfalls. `package/postgres`: a `PostgreSQL` section in `architecture.md` (names within 63 bytes, which PostgreSQL truncates silently; `enum()` is a `varchar` with a `CHECK`) and the limit in `testing.md`.
+- `init` detects the engine of a Laravel project from `DB_CONNECTION` in `.env.example` (`mariadb` or `mysql` adds `package/mariadb`, `pgsql` adds `package/postgres`, `sqlite` or no setting adds nothing; the last uncommented setting counts). The layer follows the framework layer in the config. `list` shows both.
+
+### Changed
+
+- `framework/laravel` keeps an engine-neutral rule under the same headings and points at the engine layer: `architecture.md` › Persistence (an enum column is mapped through a cast and constrained as the engine layer says; generated names stay within the production engine's identifier limit), `testing.md` › Database in tests (the identifier-length test checks the limit of the configured engine) and `tools.md` › Known pitfalls (the engine layer lists the traps). No heading was renamed or removed, so every project exception anchored on `framework/laravel/architecture.md#persistence`, `testing.md#database-in-tests` or `tools.md#known-pitfalls` still passes `check`.
+- **Existing Laravel projects:** add the engine layer after `framework/laravel` in `esoul-guidelines.json` (`package/mariadb` for MariaDB or MySQL, `package/postgres` for PostgreSQL) or rerun `esoul-guidelines init`, then `sync`. Without it the rendered text no longer states the identifier limit, the enum storage or the MariaDB pitfalls. A project that keeps its own identifier-length test keeps working; the template's test reads the limit of `DB_CONNECTION`.
 
 ## [0.7.0] - 2026-11-28
 

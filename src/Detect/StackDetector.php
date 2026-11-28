@@ -39,6 +39,13 @@ final class StackDetector
         'package/lunar' => 'package/filament',
     ];
 
+    /** @var array<string, string> `DB_CONNECTION` driver (Laravel) => engine layer; sqlite and the other drivers select none */
+    private const array DB_ENGINE = [
+        'mariadb' => 'package/mariadb',
+        'mysql' => 'package/mariadb',
+        'pgsql' => 'package/postgres',
+    ];
+
     /**
      * @return list<string> detected layers (without `general`), frameworks first
      */
@@ -66,6 +73,9 @@ final class StackDetector
                 $found[$layer] = true;
             }
         }
+        if (isset($found['framework/laravel']) && ($engine = $this->databaseLayer($root . '/.env.example')) !== null) {
+            $found[$engine] = true;
+        }
 
         foreach (self::IMPLIES as $layer => $implied) {
             if (isset($found[$layer])) {
@@ -77,6 +87,23 @@ final class StackDetector
         usort($layers, static fn (string $a, string $b): int => [str_starts_with($a, 'framework/') ? 0 : 1, $a] <=> [str_starts_with($b, 'framework/') ? 0 : 1, $b]);
 
         return $layers;
+    }
+
+    /** The database engine layer for the `DB_CONNECTION` of `.env.example`; null for sqlite, another driver or no setting. */
+    private function databaseLayer(string $file): ?string {
+        $lines = is_file($file) ? file($file, FILE_IGNORE_NEW_LINES) : false;
+        if ($lines === false) {
+            return null;
+        }
+
+        $driver = '';
+        foreach ($lines as $line) {
+            if (preg_match('/^\s*(?:export\s+)?DB_CONNECTION\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s#]*))/', $line, $match) === 1) {
+                $driver = strtolower(implode('', array_slice($match, 1)));
+            }
+        }
+
+        return self::DB_ENGINE[$driver] ?? null;
     }
 
     /**
