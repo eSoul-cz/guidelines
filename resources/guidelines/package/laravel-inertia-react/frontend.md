@@ -89,7 +89,7 @@ components/ProductSummary.tsx                          several branches
 - Contracts are named `type` aliases (`Props`), never inline object types in the component signature. Callback props are named `onXxx` and the handlers that implement them `handleXxx`.
 - Props MAY be destructured in the parameter list, with defaults there. A prop is not renamed through a destructuring alias to work around a collision; the contract is improved instead.
 - `forwardRef` is not used: in React 19 `ref` is an ordinary prop, declared in `Props` when a component exposes one.
-- Component files use PascalCase and application components have multi-word names. A component is a named export; an Inertia page module default-exports its page component, because the page resolver loads the module's default export, and that function is still named (`export default function ProductIndex()`).
+- Component files use PascalCase and application components have multi-word names. A component is a named export; a module that a lazy resolver loads by its default export (an Inertia page module, a component an `import.meta.glob` resolver loads by path) default-exports that component, and the function is still named (`export default function ProductIndex()`).
 - Inertia components that collide with native elements or design-system components are aliased on import: `Link as InertiaLink`, `Head as InertiaHead`, `Form as InertiaForm`.
 - Icons are React components imported by name from the icon package (`lucide-react`) and passed as components. They are never resolved from a string at runtime, and code never imports the whole namespace (`import * as icons from 'lucide-react'`) or the icons map: that keeps every icon in the bundle. Decorative icons are hidden from assistive technology.
 
