@@ -115,8 +115,8 @@ The servers run a few shared services, each applied from the infrastructure repo
 
 ## Observability
 
-- Every application exports traces, logs and metrics over OpenTelemetry OTLP to the host collector (gRPC on `host.docker.internal:4317`), with the standard `OTEL_*` variables.
-- Logs go to standard output and error. A log line names records by id and carries no personal data, amounts or file content ([security-and-data.md](security-and-data.md#personal-and-client-data)).
+- Every application exports traces and metrics over OpenTelemetry OTLP to the host collector, with the standard `OTEL_*` variables. The default is OTLP over HTTP/protobuf (`OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf`, endpoint `http://host.docker.internal:4318`), which needs no PHP extension. gRPC (`:4317`) is optional per project; from PHP it needs the `grpc` extension in the image.
+- Logs go to standard output and error, where the host collects container logs; exporting them over OTLP too is optional. A log line names records by id and carries no personal data, amounts or file content ([security-and-data.md](security-and-data.md#personal-and-client-data)).
 - Every production stack has an alert when its health check fails. **Target.** Coverage is not verified per stack.
 
 ## Backups
