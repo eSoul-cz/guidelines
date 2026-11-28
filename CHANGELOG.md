@@ -4,6 +4,14 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+Engine layers, a fix-forward rule for rollbacks, OTLP over HTTP, demo accounts, and several small corrections from the Forecio adoption. Layers changed: `general`, `framework/laravel`, `framework/lsr`, `framework/astro`, `package/laravel-inertia-react`, new `package/mariadb` and `package/postgres`.
+
+Skills affected: none yet.
+
+### Fixed
+
+- `framework/laravel/tools.md` › Known pitfalls links `architecture.md#persistence`, which exists (it linked a `#migrations` heading that does not) ([#29](https://github.com/eSoul-cz/guidelines/issues/29)). The LSR link to `architecture.md#migrations` resolves and stays.
+
 ## [0.7.0] - 2026-11-28
 
 A project can take guideline layers from repositories other than this package (guideline sources, [ADR-0006](https://github.com/eSoul-cz/esoul-infrastructure/blob/master/docs/adr/0006-guideline-sources.md)): a client's private house rules, rules for a private library, a third party's rules, or the guidelines of an external template addon. A source's layers are selected as `<source>:<layer>`, their text is copied into the project and committed, and `check` stays offline. The bundled layers do not change, and a project without sources renders the same output. **A minor release** (the next 0.x minor, because the lock schema and the layer and exception patterns change): templates and projects raise the constraint to `^0.7` (`composer require --dev esoul-cz/guidelines:^0.7 -W`) and the lock is rewritten as schema 2 on the next `sync`; commit it. Two things are new for the environment: `sync`, `update` and `source:add` run the `git` CLI (the PHAR and the Docker image need `git` for them, `check` needs neither), and the package requires `symfony/process` and `composer/semver`.
