@@ -4,7 +4,9 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
-Engine layers, a fix-forward rule for rollbacks, OTLP over HTTP, demo accounts, and several small corrections from the Forecio adoption. Layers changed: `general` (`deployment.md`, `security-and-data.md`), `framework/laravel` (architecture, deployment, requests-and-validation, testing, tools), `package/laravel-inertia-react`; new `package/mariadb` and `package/postgres`. **A minor release** (new layers; `init` detects them): templates and projects raise the constraint to `^0.8` (`composer require --dev esoul-cz/guidelines:^0.8 -W`).
+## [0.8.0] - 2026-11-28
+
+Two engine layers, `package/mariadb` and `package/postgres`, hold what depends on the production database engine of a Laravel project, and `init` detects them from `DB_CONNECTION`. OTLP over HTTP/protobuf becomes the default transport, an instance that holds only invented data MAY seed demo accounts, a rollback is safe only while the previous release can read what the current one wrote, only a date-time the user enters is converted to an instant (a calendar date stays a `DATE`), a React module a lazy resolver loads default-exports its component, and the Laravel tools text is corrected. Layers changed: `general` (`deployment.md`, `security-and-data.md`), `framework/laravel` (architecture, deployment, requests-and-validation, testing, tools), `package/laravel-inertia-react`; new `package/mariadb` and `package/postgres`. **A minor release** (new layers; `init` detects them): templates and projects raise the constraint to `^0.8` (`composer require --dev esoul-cz/guidelines:^0.8 -W`); a Laravel project adds `package/mariadb` or `package/postgres` to `esoul-guidelines.json` or reruns `init`.
 
 Skills affected: `esoul-project-lifecycle` (`references/stacks/laravel.md` lists the package layers a Laravel project selects: add the engine layer), `esoul-review` (`references/review-passes.md` repeats the MariaDB and MySQL migration pitfalls; read it against `package/mariadb`), `esoul-guidelines` (layer and detection list in `SKILL.md`: the engine layer from `DB_CONNECTION`). None changes behaviour.
 
@@ -328,7 +330,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/eSoul-cz/guidelines/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/eSoul-cz/guidelines/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/eSoul-cz/guidelines/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/eSoul-cz/guidelines/compare/v0.6.0...v0.6.1
