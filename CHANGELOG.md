@@ -4,6 +4,8 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-28
+
 A project can take guideline layers from repositories other than this package (guideline sources, [ADR-0006](https://github.com/eSoul-cz/esoul-infrastructure/blob/master/docs/adr/0006-guideline-sources.md)): a client's private house rules, rules for a private library, a third party's rules, or the guidelines of an external template addon. A source's layers are selected as `<source>:<layer>`, their text is copied into the project and committed, and `check` stays offline. The bundled layers do not change, and a project without sources renders the same output. **A minor release** (the next 0.x minor, because the lock schema and the layer and exception patterns change): templates and projects raise the constraint to `^0.7` (`composer require --dev esoul-cz/guidelines:^0.7 -W`) and the lock is rewritten as schema 2 on the next `sync`; commit it. Two things are new for the environment: `sync`, `update` and `source:add` run the `git` CLI (the PHAR and the Docker image need `git` for them, `check` needs neither), and the package requires `symfony/process` and `composer/semver`.
 
 Skills affected: `esoul-guidelines`, `esoul-project-update`, `esoul-project-lifecycle` (sources, `update`, prefixed layer ids and exception rules, the `.esoul/guidelines/` copy; one issue in [eSoul-cz/skills](https://github.com/eSoul-cz/skills), released with this minor).
@@ -17,6 +19,7 @@ Skills affected: `esoul-guidelines`, `esoul-project-update`, `esoul-project-life
 - `check` verifies the copies offline: it fails on a file under `.esoul/guidelines/` edited, added or deleted by hand (the message names the file), on a selected source layer missing from the copy, on a configured source missing from the lock, and on a `source.json` whose name or installer constraint does not hold. It never runs `git`.
 - Errors that name the cause: a config key that differs from the `name` in `source.json`, two sources with the same name, an unknown `<source>:` prefix in `layers` or `exceptions`, an `installer` constraint that excludes the running installer (a development build satisfies every constraint), and a git failure (git's own message).
 - `list` shows the layers of a source whose copy is present, with their prefix.
+- Symlinks are never followed in a source: a fetched source that contains one is refused (its clone is removed), and a copy whose files, layer directories or parents (`.esoul/`, `.esoul/guidelines/`) are or lie behind a symlink is refused by `sync`, `check` and `list` without reading the target.
 - README: "Guideline sources".
 
 ### Changed
@@ -301,7 +304,8 @@ The V1 review of every guideline layer: new layers and guidelines, tightened and
 
 - First release: the layered guidelines for general, Laravel, LSR and Astro projects with the `esoul-guidelines` installer (`init`, `sync`, `check`) and drift detection.
 
-[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/eSoul-cz/guidelines/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/eSoul-cz/guidelines/compare/v0.6.2...v0.7.0
 [0.6.2]: https://github.com/eSoul-cz/guidelines/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/eSoul-cz/guidelines/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/eSoul-cz/guidelines/compare/v0.5.5...v0.6.0
