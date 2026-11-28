@@ -4,6 +4,30 @@ All notable changes to `esoul-cz/guidelines` are recorded here. The format follo
 
 ## [Unreleased]
 
+A project can take guideline layers from repositories other than this package (guideline sources, [ADR-0006](https://github.com/eSoul-cz/esoul-infrastructure/blob/master/docs/adr/0006-guideline-sources.md)): a client's private house rules, rules for a private library, a third party's rules, or the guidelines of an external template addon. A source's layers are selected as `<source>:<layer>`, their text is copied into the project and committed, and `check` stays offline. The bundled layers do not change, and a project without sources renders the same output. **A minor release** (the next 0.x minor, because the lock schema and the layer and exception patterns change): templates and projects raise the constraint to `^0.7` (`composer require --dev esoul-cz/guidelines:^0.7 -W`) and the lock is rewritten as schema 2 on the next `sync`; commit it. Two things are new for the environment: `sync`, `update` and `source:add` run the `git` CLI (the PHAR and the Docker image need `git` for them, `check` needs neither), and the package requires `symfony/process` and `composer/semver`.
+
+Skills affected: `esoul-guidelines`, `esoul-project-update`, `esoul-project-lifecycle` (sources, `update`, prefixed layer ids and exception rules, the `.esoul/guidelines/` copy; one issue in [eSoul-cz/skills](https://github.com/eSoul-cz/skills), released with this minor).
+
+### Added
+
+- Guideline sources ([#32](https://github.com/eSoul-cz/guidelines/issues/32)): `esoul-guidelines.json` gains `"sources": {"<name>": {"url": "...", "ref": "main"}}`. A source repository holds `guidelines/<group>/<name>/<topic>.md`, `guidelines/source.json` (`name`, `description`, `installer`, a Composer-style constraint on the installer version; unknown keys are an error) and a `CHANGELOG.md`. Layer ids and exception rules take the prefix (`acme:package/sso`, `acme:package/sso/auth.md#tokens`); the merge, the `<!-- from: ... -->` marker and `<!-- replace: ... -->` work as for bundled layers, and the rule that no exception waives a `security-and-data` rule applies to every source.
+- Committed copy: `sync` copies the files of the selected source layers and `source.json` into `.esoul/guidelines/<source>/`. It fetches (with the `git` CLI and the developer's own credentials) only when the copy lacks a selected layer or the lock has no record of the source, at the locked commit, or at the head of `ref` for a source without a lock entry; a second `sync` without a config change runs no `git` command and writes no file. A copy edited by hand is refused unless `--force`.
+- `esoul-guidelines source:add <url> [--ref=main]`: reads `source.json`, adds `sources.<name>`, offers the source's layers (none, and a printed list, without a terminal) and runs `sync`.
+- `esoul-guidelines update [source...]`: moves each pin to the head of its `ref`, re-copies, re-renders and prints the lines the source's `CHANGELOG.md` gained since the old commit; no new commit changes nothing.
+- `check` verifies the copies offline: it fails on a file under `.esoul/guidelines/` edited, added or deleted by hand (the message names the file), on a selected source layer missing from the copy, on a configured source missing from the lock, and on a `source.json` whose name or installer constraint does not hold. It never runs `git`.
+- Errors that name the cause: a config key that differs from the `name` in `source.json`, two sources with the same name, an unknown `<source>:` prefix in `layers` or `exceptions`, an `installer` constraint that excludes the running installer (a development build satisfies every constraint), and a git failure (git's own message).
+- `list` shows the layers of a source whose copy is present, with their prefix.
+- README: "Guideline sources".
+
+### Changed
+
+- Lock `schema_version` 2: a `sources` object (`url`, `ref`, `commit` and the sha256 of each copied file per source; absent for a project without sources), and the blocks' `sources` keys carry the prefix for a source file. A lock of schema 1 is still read, `check` passes on it for a project without sources, and `sync` rewrites it as schema 2.
+- The layer pattern, the exception rule pattern and the `<!-- replace: ... -->` layer list accept the `<source>:` prefix. A source name is lowercase `[a-z0-9][a-z0-9-]*`.
+- `init` keeps `sources` and the prefixed layers of an existing config (the prefixed layers go after the stack layers).
+- Dependencies: `symfony/process` (`^7.4 || ^8.0`) and `composer/semver` (`^3.4`).
+
+Skills affected: see above.
+
 ## [0.6.2] - 2026-11-26
 
 The pipelines leave out what a build's changed files cannot affect (`changeFilter`), and the framework-free core of a Laravel application MAY use the DTOs of `App\Application\Dto`, with the interfaces that core types implement living in `App\Domain`. Layers changed: `general` (`workflow.md`), `framework/laravel` (architecture, `cqrs.md`, deployment), `framework/lsr`, `framework/astro` (`deployment.md`). A patch release: `composer update esoul-cz/guidelines` and `sync`.
