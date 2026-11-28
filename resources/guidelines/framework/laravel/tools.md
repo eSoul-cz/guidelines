@@ -37,8 +37,8 @@ Lint, static analysis, formatting and the tests MAY run on the host (PHP, Compos
 A fresh checkout or git worktree has no `vendor/` and no `.env`:
 
 ```bash
-composer install
 cp .env.example .env
+composer install
 php artisan key:generate
 ```
 
